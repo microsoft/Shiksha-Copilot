@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "vellm-textbook-ingestion"       # Name of your package (use underscores or dashes, no spaces)
+name = "ingestion-pipeline"       # Name of your package (use underscores or dashes, no spaces)
 version = "1.0.0"         # Semantic version of the package
 description = "Texbook digitization and metadata extraction pipeline"
 authors = ["Kavyansh Chourasia <kchourasia@microsoft.com>"]
@@ -13,16 +13,20 @@ packages = [
 
 # Where you declare runtime dependencies
 [tool.poetry.dependencies]
-python = "~3.10"
+python = "^3.10"
 pytesseract = "^0.3.9"
+azure-ai-formrecognizer = "^3.3.3"
 pdf2image = "^1.16.0"
-Pillow = "^9.0.0"
+litellm = "^1.65.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"             # For testing
 pytest-asyncio = "^0.20.2"    # For async test support
 black = "^23.1"
 flake8 = "^6.0"
+
+[tool.poetry.extras]
+flash = ["flash-attn"]
 
 # Build system requirements per PEP 517 / PEP 518
 [build-system]
@@ -33,4 +37,4 @@ build-backend = "poetry.core.masonry.api"
 asyncio_mode = "auto"  # Automatically configures asyncio mode
 testpaths = ["tests"]  # Directory where tests are located
 log_cli = true         # Enables logging during test execution
-log_level = "DEBUG"    # Sets the log level
+log_level = "INFO"    # Sets the log level
