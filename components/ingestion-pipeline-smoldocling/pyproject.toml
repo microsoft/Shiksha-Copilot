@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "vellm-textbook-ingestion-smoldocling"       # Name of your package (use underscores or dashes, no spaces)
+version = "1.0.0"         # Semantic version of the package
+description = "Texbook data extraction using smoldocling"
+authors = ["Kavyansh Chourasia <kchourasia@microsoft.com>"]
+readme = "README.md"      # Path to your README file
+license = "MIT"           # License, e.g., MIT, Apache-2.0, etc.
+keywords = ["textbook", "LLM", "OCR"]  # Search keywords for PyPI
+
+packages = [
+  { include = "smoldocling_extractor", from = "src" }
+]
+
+# Where you declare runtime dependencies
+[tool.poetry.dependencies]
+python = "^3.10"
+ingestion-pipeline = { path = "../ingestion-pipeline", develop = true }
+docling-core = "^2.24.0"
+torch = "^2.6.0"
+transformers = "^4.50.2"
+pdf2image = "^1.17.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"             # For testing
+pytest-asyncio = "^0.20.2"    # For async test support
+black = "^23.1"
+flake8 = "^6.0"
+
+# Build system requirements per PEP 517 / PEP 518
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"  # Automatically configures asyncio mode
+testpaths = ["tests"]  # Directory where tests are located
+log_cli = true         # Enables logging during test execution
+log_level = "DEBUG"    # Sets the log level
