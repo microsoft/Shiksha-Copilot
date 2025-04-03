@@ -22,7 +22,7 @@ pypdf2 = "^3.0.1"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"             # For testing
 pytest-asyncio = "^0.20.2"    # For async test support
-black = "^23.1"
+black = "^24.3"
 flake8 = "^6.0"
 
 # Build system requirements per PEP 517 / PEP 518
