@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "vellm-llm-queue"       # Name of your package (use underscores or dashes, no spaces)
+version = "1.0.0"         # Semantic version of the package
+description = "LLM Queue to queue incoming llm requests and execute them based on specified rate limits"
+authors = ["Kavyansh Chourasia <kchourasia@microsoft.com>"]
+readme = "README.md"      # Path to your README file
+license = "MIT"           # License, e.g., MIT, Apache-2.0, etc.
+keywords = ["llm", "load-balancer", "python"]  # Search keywords for PyPI
+# homepage = "https://github.com/your-org/my-package"  # Project homepage
+# repository = "https://github.com/your-org/my-package"
+# documentation = "https://readthedocs.org/projects/my-package/"  # If applicable
+
+# List of packages (source code) Poetry should include.
+# Usually you have a "src" directory with the same name as your package.
+packages = [
+  { include = "llm_queue", from = "src" }
+]
+
+# Where you declare runtime dependencies
+# TODO: Cleanup
+[tool.poetry.dependencies]
+PyYAML = "^6.0"
+python = "~3.10"
+pydantic = "2.10.3"
+pydantic_core = "2.27.1"
+asyncpg = "0.30.0"
+asyncio = "3.4.3" 
+urllib3 = "1.26.16"
+glob2 = "0.7"
+bcrypt = "4.2.1"
+nltk = "3.9.1"
+tiktoken = "0.8.0"
+aioredis = "^2.0.1"
+# Optional: If this package depends on another local package in your monorepo,
+# you could reference it by path during local dev:
+# some_other_package = { path = "../some_other_package", develop = true }
+
+# Development-only dependencies (not included when users install your library)
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.0"             # For testing
+pytest-asyncio = "^0.20.2"    # For async test support
+black = "^23.1"
+flake8 = "^6.0"
+
+# Build system requirements per PEP 517 / PEP 518
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"  # Automatically configures asyncio mode
+testpaths = ["tests"]  # Directory where tests are located
+log_cli = true         # Enables logging during test execution
+log_level = "DEBUG"    # Sets the log level
