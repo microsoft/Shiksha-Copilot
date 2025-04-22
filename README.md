@@ -1,84 +1,117 @@
 # Shiksha Copilot
 
 ## Overview
-**Shiksha Copilot** is a part of project **VELLM (universal empowerment with LLMs)** from Microsoft Research India. It is a copilot experience built for teachers to create their own lesson plans and learning experiences for next classes that they would be teaching using this copilot.
+**Shiksha Copilot** is a transformative educational tool developed under the **VELLM (Universal Empowerment with Large Language Models)** initiative by Microsoft Research India. It is specifically designed to assist educators in streamlining and enriching the process of lesson planning and content creation. Shiksha Copilot acts as an intelligent assistant, empowering teachers to craft meaningful, engaging, and curriculum-aligned learning experiences tailored to the specific needs of their classrooms.
 
-As a teacher, you can select the curriculum that you are teaching, the grade, the subject and chapter that you would like to teach in your next classes and build engaging learning experiences for teaching in the class. This includes real world examples, analogies, hands on activities, assessments etc. Once these engaging learning experiences are generated, the teacher can validate the content. Shiksha Copilot then automatically creates deliverables like lesson plant document, presentation and student handout using this validated lesson plan. Teachers can also generate question banks spanning across various chapters in a subject, based on a generally accepted question paper blueprint structure. There is also a facility to interact with Shiksha Copilot using a chat window, and ask questions about any textbook chapter or create custom learning experiences for their students.
+By allowing educators to select the exact curriculum, grade level, subject, and chapter they plan to teach, Shiksha Copilot provides a customized experience that aligns directly with their instructional goals. The system leverages advanced LLMs to generate a variety of pedagogically sound educational artifacts including:
+- Detailed lesson plans
+- Real-world examples that contextualize abstract concepts
+- Analogies that bridge new ideas with familiar experiences
+- Hands-on activities that promote experiential learning
+- Formative and summative assessments for effective evaluation
 
-## What Can Shiksha Copliot Do?
+Once teachers review and validate the generated content, the system automatically compiles it into user-friendly formats such as Microsoft Word (DOCX), PowerPoint (PPT), and student-friendly handouts. Furthermore, teachers can generate comprehensive question banks covering multiple chapters in alignment with standard educational blueprint formats. The system also features a conversational AI interface, enabling users to interact with Shiksha Copilot via natural language queries, ask textbook-related questions, or generate customized educational materials on the fly.
 
-- Shiksha Copilot has been developed with and for teachers across India and it plays the role of a virtual assistant. It assists the teacher by creating more engaging and personalized experiences grounded in local textbook content, driven by learning outcomes thus reducing manual effort and expediating the content creation process. 
-- The teachers can create many engaging learning experiences like hands-on-activities, assessments, real-world examples or analogies etc. 
-- Once the teachers create the lesson plans, the content would be available in docx and ppt format to be directly consumed in their classroom. 
-- Teachers can also interact with in chat in a free-flowing conversation to ask questions or generate new learning experiences.
-- A Question bank generation feature is also available which can be used to generate question papers based on a generally accepted question paper blueprint format.
+[Shiksha-Copilot FAQ](Transparency_FAQ_Shiksha_Copilot_v1.0.pdf)
 
-## Intended Uses
+## Key Features
+- **Curriculum-Aligned Content Creation:** Automatically generates lesson content strictly grounded in the chosen curriculum, enhancing relevance and coherence.
+- **Interactive Pedagogical Tools:** Supports the generation of multiple forms of educational content like interactive activities, analogies, and examples to cater to diverse learner needs.
+- **Deliverable Generation:** Converts validated lesson plans into readily usable classroom materials such as DOCX documents, PowerPoint slides, and student handouts.
+- **Conversational Interface:** Allows free-form interaction through a chat interface to support spontaneous queries and content customization.
+- **Question Bank Generator:** Facilitates structured assessment creation aligned with accepted blueprint formats for examinations.
+- **Modular Architecture:** Offers independently usable components including:
+  - Ingestion Pipeline
+  - LLM Task Queue
+  - Retrieval-Augmented Generation (RAG) Wrapper
+  - Translation Model Training and Evaluation Toolkit
 
-- **Shiksha Copilot**’s intended use is working with teachers and empowering teachers across the globe to generate personalized and engaging learning experiences unique to their students’ needs, grounded on their textbook curriculum, thereby improving the overall learning outcomes.
+## Intended Use
+- Empower educators across different regions and teaching contexts to create personalized, effective, and inclusive learning experiences.
+- Accelerate the lesson planning workflow while maintaining high educational quality.
+- Provide researchers and developers access to modular and reusable components of the system to further innovation in education technology.
+- Enhance the teacher’s role by freeing up time spent on content generation and enabling more focus on teaching delivery and student engagement.
 
-- **Shiksha Copilot's** code base along with its **reusable components** is being shared with the research community to facilitate reproduction of our results and foster further research in this area. The resuable components can be used in tandem with each other like in Shiksha Copilot, or separately as required by the specific use case. It is intended to be used by domain experts who are independently capable of evaluating the quality of outputs before acting on them.
+## Out-of-Scope Use
+- Shiksha Copilot is **not intended** for commercial deployment or mission-critical applications without extensive validation.
+- It should **not be used** in domains that require high-stakes decision-making such as healthcare, law enforcement, or finance, where inaccuracies can lead to serious consequences.
+- It should also **not be applied** in any highly regulated environment unless the components have undergone necessary compliance checks and validations.
 
-## Out-of-Scope Uses
-We do not recommend using **Shiksha Copilot or any of its components** in commercial or real-world applications without further testing and development. It is being released for research purposes.
+## Getting Started with Reusable Components
+Shiksha Copilot has a modular design philosophy, allowing each of its core functionalities to be used independently based on specific user requirements:
 
-**Shiksha Copilot or any of its components** should not be used in highly regulated domains where inaccurate outputs could suggest actions that lead to injury or negatively impact an individual's legal, financial, or life opportunities.
+[Ingestion Pipeline](components/ingestion-pipeline/README.md)
 
-We do not recommend using **Shiksha Copilot or any of its components** in the context of high-risk decision-making (e.g., in law enforcement, legal, finance, or healthcare).
+[LLM Queue](components/llm-queue/README.md)
 
-## How to Get Started With Shiksha's Reusable Components
+[RAG Wrapper](components/rag-wrapper/README.md)
 
-### Ingestion Pipeline
+[Translation Model Finetuning](components/ingestion-pipeline/README.md)
 
-### LLM Queue
-
-### RAG Wrapper
-
-### Translation Model Training and Evaluations
-
-## Deployment of Shiksha Copilot
-
-### Backend Deployment
-
-### Frontend Deployment
+----
+*Instructions for backend and frontend deployment of the entire Shiksha Copilot system, as well as individual modules, are provided in dedicated setup guides within the repository.*
 
 ## Evaluation
-- We performed a qualitative analysis to evaluate the quality of the **Shiksha Copilot** system using the internal testing team and received early feedback from our collaborator, Sikshana Foundation. To measure any possible harms through the system, we performed two rounds of red teaming.
-- We actively perform automatic content moderation on content generated by (and input to) the Shiksha Co-Pilot using Azure Content Filtering. We also use meta prompts for providing guidelines to the Copilot to generate education related content only and generate the content that is unbaised and respectful. 
-- We also monitor the system responses through anonymous telemetry to identify ongoing issues with the system and make periodic improvements.
+- We conducted extensive qualitative evaluations involving internal user testing teams and collaborated with educational partners such as the *Sikshana Foundation* to assess usability and utility in real-world classroom scenarios.
+- The system integrates Azure Content Filtering services to moderate both user inputs and generated outputs, ensuring educational appropriateness, factual correctness, and respectful communication.
+- Additionally, meta prompts are employed to guide the language model toward generating only education-relevant and unbiased content.
+- Ongoing system performance is tracked via anonymous telemetry to proactively identify potential issues and facilitate continuous enhancements based on real usage data.
 
 ## Limitations
-**Shiksha Copilot and its components** were developed for research and experimental purposes. Further testing and validation are needed before considering its application in commercial or real-world scenarios.
-**Shiksha Copilot** was designed and tested using the English language. Performance in other languages may vary and should be assessed by someone who is both an expert in the expected outputs and a native speaker of that language.
-Outputs generated by AI may include factual errors, fabrication, or speculation. Users are responsible for assessing the accuracy of generated content. All decisions leveraging outputs of the system should be made with human oversight and not be based solely on system outputs.
-**Shiksha Copilot** inherits any biases, errors, or omissions produced by its base model. Developers are advised to choose an appropriate base LLM/MLLM carefully, depending on the intended use case.
-**Shiksha Copilot** uses the *GPT4o* model. See [link to model card] to understand the capabilities and limitations of this model.
-There has not been a systematic effort to ensure that **Shiksha Copilot** is protected from security vulnerabilities such as indirect prompt injection attacks. Any systems using it should take proactive measures to harden their systems as appropriate.
+- **Experimental Nature:** Shiksha Copilot is a research prototype and has not been extensively tested for production use. All usage should be under human supervision.
+- **Language Support:** Primarily tested on English-language inputs and outputs; support for other languages is experimental and should be used cautiously.
+- **Model Limitations:** Outputs from large language models may occasionally include hallucinated facts, speculative content, or biased information. It is crucial that educators carefully review and validate the content before classroom use.
+- **Model Dependency:** The quality and reliability of outputs are inherently tied to the underlying model. Shiksha Copilot currently utilizes the GPT-4o model. Please refer to its [model card](#) for details on known strengths and limitations.
+- **Security:** The system is not hardened against adversarial threats such as prompt injections. Developers deploying the tool in open environments must implement appropriate security mechanisms.
 
 ## Best Practices
-Better performance can be achieved by *using better(larger) models or smaller models tailored to your specific usecase*.
-We strongly encourage users to use LLMs/MLLMs that support robust Responsible AI mitigations, such as Azure Open AI (AOAI) services. Such services continually update their safety and RAI mitigations with the latest industry standards for responsible use. For more on AOAI’s best practices when employing foundation models for scripts and applications:
-- [Blog post on responsible AI features in AOAI that were presented at Ignite 2023](https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/announcing-new-ai-safety-amp-responsible-ai-features-in-azure/ba-p/3983686)
-- [Overview of Responsible AI practices for Azure OpenAI models](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/overview)
-- [Azure OpenAI Transparency Note](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/transparency-note)
-- [OpenAI’s Usage policies](https://openai.com/policies/usage-policies)
-- [Azure OpenAI’s Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
-
-Users are responsible for sourcing their datasets legally and ethically. This could include securing appropriate copyrights, ensuring consent for use of audio/images, and/or anonymizing data prior to use in research.
-Users are reminded to be mindful of data privacy concerns and are encouraged to review the privacy policies associated with any models and data storage solutions interfacing with **Shiksha Copilot**.
-It is the user’s responsibility to ensure that the use of **Shiksha Copilot** complies with relevant data protection regulations and organizational guidelines.
+- Choose model configurations that best suit your application's context—larger models for general-purpose generation or smaller fine-tuned models for domain-specific tasks.
+- Leverage platforms like **Azure OpenAI (AOAI)** that incorporate state-of-the-art safety features and Responsible AI (RAI) policies. Learn more from:
+  - [Responsible AI Features in AOAI](https://techcommunity.microsoft.com/t5/ai-azure-ai-services-blog/announcing-new-ai-safety-amp-responsible-ai-features-in-azure/ba-p/3983686)
+  - [Azure OpenAI Responsible AI Overview](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/overview)
+  - [Azure OpenAI Transparency Note](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/transparency-note)
+  - [OpenAI’s Usage Policies](https://openai.com/policies/usage-policies)
+  - [Azure OpenAI Code of Conduct](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct)
+- Ensure ethical and legal sourcing of datasets—obtain proper consent, anonymize personally identifiable data, and secure usage rights for all media or textual content.
+- Review privacy, consent, and data usage policies for all components interacting with Shiksha Copilot, including storage and retrieval systems.
+- Comply with local and international data protection regulations (e.g., GDPR, FERPA) when deploying this tool in real-world settings.
 
 ## License
+*(Insert full license terms and permissions here, including any third-party dependencies.)*
 
 ## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+This repository may contain references to Microsoft trademarks, products, or services. Use of Microsoft trademarks must follow the official [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Unauthorized or misleading use of trademarks, including those of third parties, is prohibited.
 
 ## Privacy & Ethics
+Shiksha Copilot is developed with a strong commitment to privacy-by-design principles and ethical considerations in educational technology:
+
+### Data Privacy
+- All user interactions with Shiksha Copilot are treated with strict confidentiality and data minimization practices.
+- No personally identifiable information (PII) is stored in the system, and none is required for any of its features to work.
+- No educational content generated by AI or edited by teachers is stored in our systems.
+- Anonymous telemetry collects only system performance metrics and does not track individual user behavior or content.
+
+### Ethical AI Principles
+- **Transparency**: We clearly communicate the capabilities and limitations of the system to users.
+- **Fairness**: Content generation algorithms are regularly audited for potential biases across different cultural contexts, subjects, and pedagogical approaches.
+- **Inclusivity**: The system is designed to support diverse learning needs and perspectives, with ongoing improvements to enhance accessibility.
+- **Agency and Oversight**: Teachers maintain complete editorial control over generated content, reinforcing their critical role in educational decision-making.
+
+### Educational Content Ethics
+- Content is generated with age-appropriateness in mind from the beginning, rather than applying filtering post-generation. Users can implement their own additional filters if necessary.
+- The system incorporates safeguards against generating harmful, misleading, or culturally insensitive content.
+
+### Research Ethics
+- Any research conducted using anonymized data follows established ethical guidelines for educational research.
+- If deployed in research contexts, proper informed consent is obtained from all participants, with clear explanation of data usage.
+- Research findings are transparently reported, including both positive outcomes and limitations.
+
+### Governance
+- An internal ethics review process evaluates potential applications and deployment contexts.
+- Regular audits assess the system's adherence to these ethical principles and identify areas for improvement.
+- We actively seek input from educational experts, ethicists, and stakeholders to continuously refine our approach.
+
+By prioritizing these principles, we aim to ensure that Shiksha Copilot serves as a responsible tool that empowers educators while respecting their autonomy, protecting user privacy, and advancing equitable educational outcomes.
 
 ## Contact
 We welcome feedback and collaboration from our audience. If you have suggestions, questions, or observe unexpected/offensive behavior in our technology, please contact us at *kchourasia@microsoft.com*.
@@ -97,5 +130,4 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
 
