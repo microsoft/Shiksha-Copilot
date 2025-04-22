@@ -1,6 +1,7 @@
 # Shiksha Copilot
-
 ## Overview
+[![Shiksha Copilot Overview](https://img.youtube.com/vi/SdbE6J4Gzmg/0.jpg)](https://www.youtube.com/watch?v=SdbE6J4Gzmg "Shiksha Copilot - Click to Watch!")
+
 **Shiksha Copilot** is a transformative educational tool developed under the **VELLM (Universal Empowerment with Large Language Models)** initiative by Microsoft Research India. It is specifically designed to assist educators in streamlining and enriching the process of lesson planning and content creation. Shiksha Copilot acts as an intelligent assistant, empowering teachers to craft meaningful, engaging, and curriculum-aligned learning experiences tailored to the specific needs of their classrooms.
 
 By allowing educators to select the exact curriculum, grade level, subject, and chapter they plan to teach, Shiksha Copilot provides a customized experience that aligns directly with their instructional goals. The system leverages advanced LLMs to generate a variety of pedagogically sound educational artifacts including:
@@ -12,7 +13,7 @@ By allowing educators to select the exact curriculum, grade level, subject, and 
 
 Once teachers review and validate the generated content, the system automatically compiles it into user-friendly formats such as Microsoft Word (DOCX), PowerPoint (PPT), and student-friendly handouts. Furthermore, teachers can generate comprehensive question banks covering multiple chapters in alignment with standard educational blueprint formats. The system also features a conversational AI interface, enabling users to interact with Shiksha Copilot via natural language queries, ask textbook-related questions, or generate customized educational materials on the fly.
 
-[Shiksha-Copilot FAQ](Transparency_FAQ_Shiksha_Copilot_v1.0.pdf)
+Please find additional details in [Shiksha-Copilot User FAQ](Transparency_FAQ_Shiksha-Copilot_latest.pdf)
 
 ## Key Features
 - **Curriculum-Aligned Content Creation:** Automatically generates lesson content strictly grounded in the chosen curriculum, enhancing relevance and coherence.
@@ -29,13 +30,14 @@ Once teachers review and validate the generated content, the system automaticall
 ## Intended Use
 - Empower educators across different regions and teaching contexts to create personalized, effective, and inclusive learning experiences.
 - Accelerate the lesson planning workflow while maintaining high educational quality.
-- Provide researchers and developers access to modular and reusable components of the system to further innovation in education technology.
 - Enhance the teacher’s role by freeing up time spent on content generation and enabling more focus on teaching delivery and student engagement.
+- Provide researchers and developers access to modular and reusable components of the system to further innovation in education technology.
 
 ## Out-of-Scope Use
 - Shiksha Copilot is **not intended** for commercial deployment or mission-critical applications without extensive validation.
 - It should **not be used** in domains that require high-stakes decision-making such as healthcare, law enforcement, or finance, where inaccuracies can lead to serious consequences.
 - It should also **not be applied** in any highly regulated environment unless the components have undergone necessary compliance checks and validations.
+- The system is designed exclusively for teacher use with human oversight and is **not intended** for direct student interaction.
 
 ## Getting Started with Reusable Components
 Shiksha Copilot has a modular design philosophy, allowing each of its core functionalities to be used independently based on specific user requirements:
@@ -55,14 +57,15 @@ Shiksha Copilot has a modular design philosophy, allowing each of its core funct
 - We conducted extensive qualitative evaluations involving internal user testing teams and collaborated with educational partners such as the *Sikshana Foundation* to assess usability and utility in real-world classroom scenarios.
 - The system integrates Azure Content Filtering services to moderate both user inputs and generated outputs, ensuring educational appropriateness, factual correctness, and respectful communication.
 - Additionally, meta prompts are employed to guide the language model toward generating only education-relevant and unbiased content.
-- Ongoing system performance is tracked via anonymous telemetry to proactively identify potential issues and facilitate continuous enhancements based on real usage data.
+- Ongoing system performance is tracked via anonymous telemetry available to the developers of the application.
 
 ## Limitations
 - **Experimental Nature:** Shiksha Copilot is a research prototype and has not been extensively tested for production use. All usage should be under human supervision.
 - **Language Support:** Primarily tested on English-language inputs and outputs; support for other languages is experimental and should be used cautiously.
 - **Model Limitations:** Outputs from large language models may occasionally include hallucinated facts, speculative content, or biased information. It is crucial that educators carefully review and validate the content before classroom use.
-- **Model Dependency:** The quality and reliability of outputs are inherently tied to the underlying model. Shiksha Copilot currently utilizes the GPT-4o model. Please refer to its [model card](#) for details on known strengths and limitations.
-- **Security:** The system is not hardened against adversarial threats such as prompt injections. Developers deploying the tool in open environments must implement appropriate security mechanisms.
+- **Content Accuracy:** The AI-generated content may contain occasional errors or inaccuracies. Users of Shiksha Copilot should thoroughly validate all content before incorporating it into their classroom teaching materials.
+- **Model Dependency:** The quality and reliability of outputs are inherently tied to the underlying model. Shiksha Copilot currently utilizes the GPT-4o model.
+- **Security:** Developers deploying the tool in open environments must implement/use appropriate security mechanisms like Azure's content moderation.
 
 ## Best Practices
 - Choose model configurations that best suit your application's context—larger models for general-purpose generation or smaller fine-tuned models for domain-specific tasks.
@@ -75,9 +78,6 @@ Shiksha Copilot has a modular design philosophy, allowing each of its core funct
 - Ensure ethical and legal sourcing of datasets—obtain proper consent, anonymize personally identifiable data, and secure usage rights for all media or textual content.
 - Review privacy, consent, and data usage policies for all components interacting with Shiksha Copilot, including storage and retrieval systems.
 - Comply with local and international data protection regulations (e.g., GDPR, FERPA) when deploying this tool in real-world settings.
-
-## License
-*(Insert full license terms and permissions here, including any third-party dependencies.)*
 
 ## Trademarks
 This repository may contain references to Microsoft trademarks, products, or services. Use of Microsoft trademarks must follow the official [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Unauthorized or misleading use of trademarks, including those of third parties, is prohibited.
@@ -130,4 +130,13 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Legal Notices
+Microsoft and any contributors grant you a license to the code in this repository under the MIT License. For more details, see the [LICENSE](LICENSE) file.
+
+Microsoft, Windows, Microsoft Azure, and/or other Microsoft products and services referenced in the documentation may be either trademarks or registered trademarks of Microsoft in the United States and/or other countries. The licenses for this project do not grant you rights to use any Microsoft names, logos, or trademarks. Microsoft's general trademark guidelines can be found at http://go.microsoft.com/fwlink/?LinkID=254653.
+
+Privacy information can be found at https://go.microsoft.com/fwlink/?LinkId=521839
+
+Microsoft and any contributors reserve all other rights, whether under their respective copyrights, patents, or trademarks, whether by implication, estoppel, or otherwise.
 
