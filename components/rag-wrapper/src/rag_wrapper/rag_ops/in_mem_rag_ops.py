@@ -41,9 +41,9 @@ class InMemRagOps(BaseRagOps):
         self.index_path = index_path
         self.emb_llm = emb_llm
         self.completion_llm = completion_llm
-        self.storage_context = StorageContext.from_defaults(persist_dir=index_path)
 
         if self.__has_index_files(index_path):
+            self.storage_context = StorageContext.from_defaults(persist_dir=index_path)
             self.rag_index = load_index_from_storage(
                 storage_context=self.storage_context,
                 embed_model=self.emb_llm,
@@ -136,7 +136,7 @@ class InMemRagOps(BaseRagOps):
         answer = (await query_engine.achat(curr_message, chat_history)).response
         return answer
 
-    def insert_text(self, text_chunks: List[str]):
+    def insert_text(self, text_chunks: List[str], metadata: dict = None):
         """
         Inserts text chunks into the RAG index.
 
@@ -149,6 +149,8 @@ class InMemRagOps(BaseRagOps):
         documents = []
         for text in text_chunks:
             doc_chunk = Document(text=text, id_=f"doc_id_{uuid.uuid4()}")
+            if metadata:
+                doc_chunk.metadata = metadata
             documents.append(doc_chunk)
 
         if not self.rag_index:
@@ -156,7 +158,9 @@ class InMemRagOps(BaseRagOps):
                 documents,
                 llm=self.completion_llm,
                 embed_model=self.emb_llm,
-                storage_context=self.storage_context,
+                # storage_context=StorageContext.from_defaults(
+                #     persist_dir=self.index_path
+                # ),
             )
         else:
             for doc in documents:
@@ -182,6 +186,7 @@ class InMemRagOps(BaseRagOps):
         """
         return result == "" or result == "504.0 GatewayTimeout"
 
+    @staticmethod
     def __has_index_files(folder_path: str) -> bool:
         """
         Checks if the folder contains index files.

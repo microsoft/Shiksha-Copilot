@@ -79,7 +79,7 @@ class BaseRagOps(ABC):
         """
         pass
 
-    async def insert_text(self, text_chunks: List[str]) -> None:
+    async def insert_text(self, text_chunks: List[str], metadata: dict = None) -> None:
         """
         Inserts a list of text chunks into the RAG index for future retrieval.
 
