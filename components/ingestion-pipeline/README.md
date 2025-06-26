@@ -8,14 +8,12 @@ A comprehensive Python library for textbook digitization and metadata extraction
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Architecture Overview](#architecture-overview)
-- [Base Classes](#base-classes)
 - [Text Extractors](#text-extractors)
 - [Text Post-processors](#text-post-processors)
 - [Metadata Extractors](#metadata-extractors)
 - [Utilities](#utilities)
 - [Pipeline Framework](#pipeline-framework)
-- [Examples](#examples)
-- [API Reference](#api-reference)
+- [Real-World Examples](#real-world-examples)
 - [Contributing](#contributing)
 
 ## Features
