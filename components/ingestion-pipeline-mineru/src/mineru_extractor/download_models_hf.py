@@ -6,9 +6,8 @@ from huggingface_hub import snapshot_download
 
 
 def download_json(url):
-    # 下载JSON文件
     response = requests.get(url)
-    response.raise_for_status()  # 检查请求是否成功
+    response.raise_for_status()
     return response.json()
 
 
