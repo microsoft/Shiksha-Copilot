@@ -1,5 +1,6 @@
 import logging
 import re
+from typing import List, Dict, Any
 from litellm import completion
 
 from ingestion_pipeline.base.text_postprocessor import TextPostProcessor
@@ -14,52 +15,56 @@ class CleanMarkdownPostProcessor(TextPostProcessor):
     """
 
     _logger = logging.getLogger(__name__)
+    _SYSTEM_MESSAGE = """
+    You are a precise Markdown cleaner processing a document in segments. Your primary jobs are:
+    1. Fix minor OCR issues when context makes it clear what the correction should be
+    2. Correctly identify true headings vs lines with spurious # characters
+    3. FORMAT math properly ($...$ for inline, $$...$$for display)
+    4. AGGRESSIVELY ELIMINATE all repeated text, paragraphs and spurious characters
+    
+    Track the document structure across segments to maintain coherence and avoid treating
+    non-heading text as headings. The document is being processed in sequential segments,
+    so maintain awareness of what you've already seen.
+    """
+    
     _CLEAN_PROMPT = """
-    You are a meticulous and fact-respecting assistant that helps clean and restructure student textbook content written in **Markdown**.
-
-    Below is a section of OCR-extracted text from a textbook. It may contain:
-    - Minor OCR errors (e.g., broken or missing words),
-    - Incorrect use of Markdown headings (lines starting with '#' that are not actual section titles),
-    - Math equations that do not follow proper Markdown format,
-    - Not easily readable and/or student-friendly
-
-    ---
-
-    Your job is to return a **cleaned and logically structured Pandoc-compliant Markdown version** of the content with the following rules:
-
-    1. **Fix minor OCR errors**: Correct broken or missing words *only if clearly and unambiguously deducible* from context. Do **not hallucinate** or invent anything.
-    2. **Fix incorrect headings**: If a line starts with one or more `#` characters but is not a proper heading (e.g., part of a paragraph, annotation, or side note), remove the `#` and convert it into plain text.
-    3. **Preserve all valid original content**, but improve readability by:
-        - Marking any reading flow breaking text inside a markdown code block  
-        - Wrap each of these blocks in a **code block** like this:
-            ```
-            Your moved block content here. It may span multiple lines.
-            ```
-    4. Use **Pandoc-compatible Markdown** syntax throughout, including:
-    - `#` for valid headings
-    - Lists, tables, images, and block quotes
-    - **Math equations**:
-        - Inline math: use `$...$`
-        - Display math: use `$$...$$`
-
-    ---
-
-    ### 📝 Raw Extracted Markdown:
-    ```
+    You'll receive a fragment of OCR-extracted textbook text that may include:
+    
+    - Minor OCR glitches (broken or missing words)
+    - Spurious heading marks (`#`) inside prose
+    - Un-formatted math
+    - Disruptive inserts that break reading flow
+    - Repeated sentences, paragraphs, or phrases
+    - Randomly repeated text or special characters
+    
+    ### RAW INPUT
+    ```markdown
     {{MARKDOWN_CONTENT}}
     ```
-    ---
     
-    ### ✅ Output:
-    Return the cleaned and corrected content as **Pandoc Markdown**.
-
-    - The main text should be clearly readable, well-structured, and student-friendly.
-    - All boxed or disruptive inserts should appear inside **code** blocks.
-    - Math should use `$...$` for inline and `$$...$$` for block equations.
-    - No hallucination, summarization, or interpretation.
-
-    Respond only with the cleaned Markdown output.
+    ### YOUR TASK
+    Return **only** a Pandoc-compliant Markdown version with these rules:
+    
+    1. **Correct OCR errors** only when context makes it unambiguous—do not invent new content.  
+    2. **Headings**:  
+        - Keep valid `#` headings.  
+        - Lines beginning with `#` that aren't true titles → strip the leading `#` and treat as normal text. 
+        - Decide if the line is a heading or not based on current and previous messages. 
+    3. **Math**:  
+        - Inline → `$…$`  
+        - Display → `$$…$$`  
+    4. **Disruptive blocks** (annotations, fragmented code, illegible snippets): wrap them in a fenced code block:  
+        ```  
+        …moved block…  
+        ```  
+    5. **Preserve** all genuine lists, tables, images, blockquotes and valid structure. 
+    6. **No hallucination**: Do not summarize or interpret the text.
+    7. **AGGRESSIVELY remove all repetitions**: Delete redundant sentences, paragraphs, or phrases that are duplicated in the current markdown content OR from previous segments.
+    8. **Clean up artifacts**: Remove randomly repeated text and special characters that do not belong to the text. 
+    
+    Respond **only** with the cleaned Markdown — nothing else.
     """
+   
     def post_process(self, text: str, **kwargs) -> str:
         """
         Clean and restructure extracted Markdown content to improve readability and comprehension.
@@ -73,6 +78,9 @@ class CleanMarkdownPostProcessor(TextPostProcessor):
             str: The cleaned and restructured Markdown text, or an empty string in case of an error.
         """
         try:
+            # Preprocess text to reduce obvious repetitions before chunking
+            text = self._preprocess_repetitions(text)
+            
             # Split the text into logical segments
             segments = self._segment_markdown(text)
             
@@ -80,109 +88,145 @@ class CleanMarkdownPostProcessor(TextPostProcessor):
             
             # Process each segment and collect the results
             processed_segments = []
-            messages = []
             
-            for i, segment in enumerate(segments):
-                self._logger.info(f"************** Processing content: \n\n{segment}\n\n**************")
+            # Initialize messages list with system message to maintain context across batches
+            all_messages = [{"role": "system", "content": self._SYSTEM_MESSAGE}]
+            
+            # Process segments in batches of at most 3 (to prevent context window overflows)
+            for i in range(0, len(segments), 3):
+                # Take up to 3 segments at a time
+                batch_segments = segments[i:i+3]
+                messages_for_batch = all_messages.copy()  # Start with accumulated context
                 
-                # Construct the prompt by replacing the placeholder with the segment
-                prompt = self._CLEAN_PROMPT.replace("{{MARKDOWN_CONTENT}}", segment)
-                messages.append({"role": "user", "content": prompt})
+                for segment in batch_segments:
+                    # Construct the prompt by replacing the placeholder with the segment
+                    prompt = self._CLEAN_PROMPT.replace("{{MARKDOWN_CONTENT}}", segment)
+                    messages_for_batch.append({"role": "user", "content": prompt})
 
-                # Build the parameters for the completion API
-                completion_args = {
-                    "model": f"azure/{kwargs.get('deployment_name', '')}",
-                    "api_base": kwargs.get("api_base", ""),
-                    "api_version": kwargs.get("api_version", ""),
-                    "messages": messages,
-                    "num_retries": 3,
-                }
-                if "azure_ad_token" in kwargs:
-                    completion_args["azure_ad_token"] = kwargs["azure_ad_token"]
-                else:
-                    completion_args["api_key"] = kwargs.get("api_key", "")
+                    # Build the parameters for the completion API
+                    completion_args = {
+                        "model": f"azure/{kwargs.get('deployment_name', '')}",
+                        "api_base": kwargs.get("api_base", ""),
+                        "api_version": kwargs.get("api_version", ""),
+                        "messages": messages_for_batch,
+                        "num_retries": 3,
+                    }
+                    if "azure_ad_token" in kwargs:
+                        completion_args["azure_ad_token"] = kwargs["azure_ad_token"]
+                    else:
+                        completion_args["api_key"] = kwargs.get("api_key", "")
 
-                response = completion(**completion_args)
-                content = response["choices"][0]["message"]["content"]
+                    response = completion(**completion_args)
+                    content = response["choices"][0]["message"]["content"]
 
-                # Remove any markdown code fences if present
-                content = content.strip('```markdown').strip("```")
+                    # Remove any markdown code fences if present
+                    content = content.strip('```markdown').strip("```")
 
-                messages.append({"role": "assistant", "content": content})
-                processed_segments.append(content)
+                    # Add to running context for future segments
+                    messages_for_batch.append({"role": "assistant", "content": content})
+                    
+                    # For efficiency, only keep the most recent cleaned segments in the context
+                    # This helps prevent token limit issues while maintaining enough context
+                    if len(messages_for_batch) > 7:  # system + 3 pairs of user/assistant messages
+                        all_messages = [messages_for_batch[0]] + messages_for_batch[-6:]
+                    else:
+                        all_messages = messages_for_batch.copy()
+                    
+                    processed_segments.append(content)
             
             # Combine all processed segments
-            final_content = self._combine_segments(processed_segments)
+            final_content = self._combine_segments(processed_segments)    
             return final_content
 
         except Exception as e:
             self._logger.error(f"Error during markdown post-processing: {e}")
             return ""
-            
-    def _segment_markdown(self, text: str, max_segment_size: int = 4000) -> list[str]:
+    
+    def _preprocess_repetitions(self, text: str) -> str:
         """
-        Segments markdown text into logical chunks, preserving paragraph and sentence integrity.
+        Performs basic preprocessing to remove obvious repetitions before chunking.
+        This helps reduce the size of the input and make the LLM's job easier.
         
         Args:
-            text (str): The markdown text to segment
-            max_segment_size (int): Maximum size of each segment in characters
+            text (str): Raw markdown text
             
         Returns:
-            list[str]: List of text segments
+            str: Preprocessed text with obvious repetitions removed
         """
-        # Return as is if text is smaller than max size
-        if len(text) <= max_segment_size:
-            return [text]
+        # Remove consecutive duplicate lines (exact matches)
+        lines = text.split('\n')
+        unique_lines = []
+        prev_line = None
         
-        segments = []
-        remaining_text = text
+        for line in lines:
+            if line != prev_line:
+                unique_lines.append(line)
+            prev_line = line
         
-        while remaining_text:
-            # If remaining text fits in one segment
-            if len(remaining_text) <= max_segment_size:
-                segments.append(remaining_text)
+        # Remove sequences of repeated characters (more than 3 in a row)
+        text = '\n'.join(unique_lines)
+        text = re.sub(r'([^\w\s])\1{3,}', r'\1\1', text)
+        
+        return text
+        
+    def _segment_markdown(self, text: str, max_segment_size: int = 4000) -> List[str]:
+        """
+        Segments markdown text into logical chunks under max_segment_size characters,
+        preferring headers, blank lines, sentence ends, then newlines.
+        """
+        import re, bisect
+
+        # Compile regexes
+        header_re       = re.compile(r'\n#{1,6}\s')
+        blank_line_re   = re.compile(r'\n\s*\n')
+        sentence_end_re = re.compile(r'[\.!?]\s')
+        newline_re      = re.compile(r'\n')
+
+        n = len(text)
+        if n <= max_segment_size:
+            return [text.strip()]
+
+        # 1. Gather all candidate breakpoints with priority
+        #    1=header, 2=blank line, 3=sentence end, 4=newline
+        breaks: List[tuple[int, int]] = []
+        for m in header_re.finditer(text):
+            breaks.append((m.start(), 1))
+        for m in blank_line_re.finditer(text):
+            breaks.append((m.start() + 1, 2))
+        for m in sentence_end_re.finditer(text):
+            breaks.append((m.end(), 3))
+        for m in newline_re.finditer(text):
+            breaks.append((m.start() + 1, 4))
+
+        # 2. Sort once by position then priority, and extract positions
+        breaks.sort(key=lambda x: (x[0], x[1]))
+        positions = [pos for pos, _ in breaks]
+
+        # 3. Slide a window and pick the best split via bisect
+        segments: List[str] = []
+        start = 0
+
+        while start < n:
+            # If remainder is small enough, take it all
+            if n - start <= max_segment_size:
+                segments.append(text[start:].strip())
                 break
-            
-            # Find the best breakpoint within max_segment_size
-            text_to_split = remaining_text[:max_segment_size]
-            
-            # Try to find breakpoints in order of preference
-            breakpoint = -1
-            
-            # 1. Try to break at headers (# Header)
-            header_positions = [match.start() for match in re.finditer(r'\n#{1,6} ', text_to_split)]
-            if header_positions:
-                # Get the position of the last header in this segment
-                # We want to break right BEFORE the header, so the header starts the next segment
-                breakpoint = max(header_positions)
-            
-            # 2. If no header found, try to break at blank lines
-            if breakpoint == -1:
-                blank_line_positions = [match.start() for match in re.finditer(r'\n\s*\n', text_to_split)]
-                if blank_line_positions:
-                    breakpoint = max(blank_line_positions) + 1  # +1 to include the first newline
-            
-            # 3. If no blank line, try to break at the end of a sentence
-            if breakpoint == -1:
-                sentence_end_positions = [match.end() for match in re.finditer(r'[.!?]\s', text_to_split)]
-                if sentence_end_positions:
-                    breakpoint = max(sentence_end_positions)
-            
-            # 4. If all else fails, break at the last newline
-            if breakpoint == -1:
-                last_newline = text_to_split.rfind('\n')
-                if last_newline > 0:  # Ensure we found a newline
-                    breakpoint = last_newline + 1  # +1 to include the newline
-            
-            # 5. If there are no good break points, just use max_segment_size
-            if breakpoint <= 0:
-                breakpoint = max_segment_size
-            
-            # Create segment and update remaining text
-            segment = remaining_text[:breakpoint].rstrip()
-            segments.append(segment)
-            remaining_text = remaining_text[breakpoint:].lstrip()
-        
+
+            window_end = start + max_segment_size
+            idx = bisect.bisect_right(positions, window_end)
+
+            # Choose the breakpoint with lowest priority and closest to window_end
+            best: tuple[int, int] | None = None
+            for pos, prio in breaks[:idx]:
+                if pos <= start:
+                    continue
+                if best is None or (prio, window_end - pos) < (best[1], window_end - best[0]):
+                    best = (pos, prio)
+
+            split = best[0] if best else window_end
+            segments.append(text[start:split].strip())
+            start = split
+
         return segments
     
     def _combine_segments(self, segments: list[str]) -> str:
