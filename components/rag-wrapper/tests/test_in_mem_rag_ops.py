@@ -171,9 +171,6 @@ async def test_retrieve_from_metadata_index(rag_ops_instance):
     # Assertions
     assert isinstance(retrieved_docs, list), "retrieve should return a list"
     assert len(retrieved_docs) > 0, "Should retrieve at least one document"
-    assert all(
-        isinstance(doc, str) for doc in retrieved_docs
-    ), "All retrieved items should be strings"
 
 
 @pytest.mark.asyncio
@@ -330,3 +327,60 @@ async def test_query_no_results(rag_ops_instance):
     assert isinstance(
         retrieved_docs, list
     ), "Should return a list even for unrelated queries"
+
+
+@pytest.mark.asyncio
+async def test_retrieve_with_metadata_filter(rag_ops_instance):
+    """Test retrieving documents with metadata filtering"""
+    # Insert text chunks with different metadata
+    text_chunks_file1 = [
+        "Content from file1 about machine learning algorithms.",
+        "More content from file1 discussing neural networks.",
+    ]
+
+    text_chunks_file2 = [
+        "Content from file2 about data science methods.",
+        "Additional content from file2 covering statistics.",
+    ]
+
+    metadata_file1 = {"filename": "file1.pdf", "category": "AI"}
+    metadata_file2 = {"filename": "file2.pdf", "category": "DataScience"}
+
+    # Insert text chunks with different metadata
+    rag_ops_instance.insert_text(text_chunks_file1, metadata=metadata_file1)
+    rag_ops_instance.insert_text(text_chunks_file2, metadata=metadata_file2)
+
+    # Test retrieval without filter (should return results from both files)
+    query = "machine learning"
+    all_docs = await rag_ops_instance.retrieve(query)
+    logger.info(f"Retrieved {len(all_docs)} documents without filter")
+
+    # Test retrieval with metadata filter for file1.pdf
+    metadata_filter = {"filename": "file1.pdf"}
+    filtered_docs = await rag_ops_instance.retrieve(
+        query, metadata_filter=metadata_filter
+    )
+
+    logger.info(
+        f"Retrieved {len(filtered_docs)} documents with filter {metadata_filter}"
+    )
+    for i, doc in enumerate(filtered_docs):
+        logger.info(f"Filtered Document {i+1}: {doc}")
+
+    # Assertions
+    assert isinstance(filtered_docs, list), "retrieve with filter should return a list"
+    assert len(filtered_docs) > 0, "Should retrieve at least one document with filter"
+
+    # Test with multiple metadata filters
+    multi_filter = {"filename": "file1.pdf", "category": "AI"}
+    multi_filtered_docs = await rag_ops_instance.retrieve(
+        query, metadata_filter=multi_filter
+    )
+
+    logger.info(
+        f"Retrieved {len(multi_filtered_docs)} documents with multi-filter {multi_filter}"
+    )
+
+    assert isinstance(
+        multi_filtered_docs, list
+    ), "retrieve with multi-filter should return a list"

@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Any
 from tenacity import (
     retry,
@@ -12,8 +13,15 @@ from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core import Document
 from llama_index.core.llms import ChatMessage
 from llama_index.core.indices import load_index_from_storage
-from typing import List
+from typing import List, Dict, Optional
 from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
+from llama_index.core.callbacks import CallbackManager, TokenCountingHandler
+from llama_index.core.schema import NodeWithScore
+from llama_index.core.response_synthesizers import (
+    ResponseMode,
+    get_response_synthesizer,
+)
 import uuid
 from rag_wrapper.base.base_classes import BaseRagOps
 
@@ -41,6 +49,7 @@ class InMemRagOps(BaseRagOps):
         self.index_path = index_path
         self.emb_llm = emb_llm
         self.completion_llm = completion_llm
+        self.logger = logging.getLogger(__name__)
 
         if self.__has_index_files(index_path):
             self.storage_context = StorageContext.from_defaults(persist_dir=index_path)
@@ -53,28 +62,50 @@ class InMemRagOps(BaseRagOps):
                 similarity_top_k=3,  # Number of top results to retrieve
             )
 
-    async def retrieve(self, query: str):
+    async def retrieve(
+        self, query: str, metadata_filter: Optional[Dict[str, str]] = None
+    ) -> List[NodeWithScore]:
         """
         Retrieves relevant documents from the RAG index.
 
         Args:
             query (str): Query string for retrieval.
+            metadata_filter (Optional[Dict[str, str]]): Optional metadata filter as a dictionary
+                of key-value pairs for exact matching. Example: {"filename": "file1.pdf"}
 
         Returns:
-            List[str]: A list of retrieved document texts.
+            List[NodeWithScore]: A list of retrieved nodes.
         """
         if not self.rag_index:
             raise self._ERROR
-        if not self.retriever:
-            self.retriever = VectorIndexRetriever(
-                index=self.rag_index,
-                similarity_top_k=3,
-            )
 
-        retrieved_nodes = self.retriever.retrieve(query)
-        return [node.node.get_text() for node in retrieved_nodes]
+        # Create metadata filters if provided
+        filters = None
+        if metadata_filter:
+            filter_list = []
+            for key, value in metadata_filter.items():
+                filter_list.append(ExactMatchFilter(key=key, value=value))
+            filters = MetadataFilters(filters=filter_list)
 
-    async def query_index(self, text_str: str):
+        # Create retriever with or without filters
+        if filters:
+            retriever = self.rag_index.as_retriever(filters=filters, similarity_top_k=3)
+        else:
+            if not self.retriever:
+                self.retriever = VectorIndexRetriever(
+                    index=self.rag_index,
+                    similarity_top_k=3,
+                )
+            retriever = self.retriever
+
+        return await retriever.aretrieve(query)
+
+    async def query_index(
+        self,
+        text_str: str,
+        retrieval_query: Optional[str] = None,
+        metadata_filter: Optional[Dict[str, str]] = None,
+    ):
         """
         Queries the RAG index using the completion language model.
 
@@ -98,14 +129,28 @@ class InMemRagOps(BaseRagOps):
             ),
             before_sleep=self.__log_retry_attempt,
         )
-        async def _aquery_with_retries(query_engine, query):
-            return await query_engine.aquery(query)
+        async def _aquery_with_retries():
+            _token_counter = TokenCountingHandler(logger=self.logger, verbose=True)
+            response_synthesizer = get_response_synthesizer(
+                llm=self.completion_llm,
+                response_mode=ResponseMode.TREE_SUMMARIZE,
+                callback_manager=CallbackManager([_token_counter]),
+            )
+            retrieved_nodes = await self.retrieve(
+                retrieval_query or text_str, metadata_filter
+            )
+            response = await response_synthesizer.asynthesize(text_str, retrieved_nodes)
+            return response, _token_counter
 
         if not self.rag_index:
             raise self._ERROR
 
-        query_engine = self.rag_index.as_query_engine(llm=self.completion_llm)
-        answer = await _aquery_with_retries(query_engine, text_str)
+        answer, token_counter = await _aquery_with_retries()
+        self.logger.debug(
+            f"TOKEN COUNTS: completion {token_counter.completion_llm_token_count}, "
+            f"prompt {token_counter.prompt_llm_token_count}, "
+            f"total: {token_counter.total_llm_token_count}",
+        )
         if self.__retry_on_empty_string_or_timeout_response(answer):
             raise ValueError(f"LLM RESPONSE IS NOT VALID: {answer}")
         return answer
