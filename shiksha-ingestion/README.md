@@ -20,8 +20,6 @@ The ingestion pipeline consists of 7 distinct steps that transform raw PDF textb
 shiksha-ingestion/
 ├── pipeline_runner.py              # Main pipeline execution script
 ├── pyproject.toml                  # Project dependencies and configuration
-├── scert_action_verbs.json         # Grade and subject-specific Bloom's taxonomy action verbs
-├── scert_action_verbs_prohibited.json  # Prohibited action verbs for filtering
 ├── pipeline_steps/                 # Individual pipeline step implementations
 │   ├── __init__.py
 │   ├── step_1_toc_extraction.py
