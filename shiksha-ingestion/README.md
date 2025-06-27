@@ -4,7 +4,7 @@ The Shiksha Ingestion Pipeline is a comprehensive data processing system designe
 
 ## Overview
 
-The ingestion pipeline consists of 7 distinct steps that transform raw PDF textbooks into structured educational data:
+The ingestion pipeline consists of 8 distinct steps that transform raw PDF textbooks into structured educational data:
 
 1. **Table of Contents (TOC) Extraction** - Extracts the table of contents from PDF files
 2. **PDF Splitting** - Splits PDFs into individual chapters based on TOC
@@ -13,6 +13,7 @@ The ingestion pipeline consists of 7 distinct steps that transform raw PDF textb
 5. **Chapter-Level Learning Outcomes Extraction** - Extracts topics and learning outcomes at chapter level
 6. **Subtopic Rule-Based Cleaning** - Filters and cleans extracted subtopics using rules
 7. **Subtopic-Wise Learning Outcomes Extraction** - Generates learning outcomes for individual subtopics
+8. **Create Index** - Creates searchable indexes for chapter content to enable efficient retrieval
 
 ## Project Structure
 
@@ -30,7 +31,8 @@ shiksha-ingestion/
 │   ├── step_4_clean_extracted_text.py
 │   ├── step_5_subtopic_chapter_level_los_extraction.py
 │   ├── step_6_subtopic_extraction_rule_based_cleaning.py
-│   └── step_7_subtopic_wise_lo_extraction.py
+│   ├── step_7_subtopic_wise_lo_extraction.py
+│   └── step_8_create_indexes.py
 └── README.md                       # This file
 ```
 
@@ -186,6 +188,20 @@ shiksha-ingestion/
   - Ensures outcomes span multiple cognitive levels
   - Validates against Bloom's taxonomy requirements
 
+### Step 8: Create Index
+**File:** `step_8_create_indexes.py`
+**Class:** `CreateIndexStep`
+
+- **Purpose:** Creates searchable indexes from chapter content for efficient retrieval
+- **Input:** Cleaned markdown file
+- **Output:** Vector index directory structure
+- **Features:**
+  - Splits content into page-wise chunks for granular retrieval
+  - Uses Azure OpenAI embeddings to vectorize content
+  - Creates persistent vector index with metadata
+  - Supports efficient semantic search and retrieval
+  - Integrates with RAG wrapper for question answering
+
 ## Pipeline Runner
 
 ### Description
@@ -305,8 +321,13 @@ pipeline_output/20231201_143022/
 │   └── chapter_1_metadata.json
 ├── subtopic_cleaning/
 │   └── chapter_1_cleaned_metadata.json
-└── subtopic_wise_lo_extraction/
-    └── chapter_1_subtopic_los.json
+├── subtopic_wise_lo_extraction/
+│   └── chapter_1_subtopic_los.json
+└── create_index/
+    └── grade/
+        └── subject/
+            └── chapter_number/
+                └── [index files]
 ```
 
 ## Dependencies
