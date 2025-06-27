@@ -12,21 +12,12 @@ packages = [
 ]
 
 # Where you declare runtime dependencies
-# TODO: Cleanup
 [tool.poetry.dependencies]
 python = "~3.11"
-cachetools = "*"
-pyyaml = "~6.0.1"
-pandas = "2.2.0"
-numpy = "1.26.3"
-openai = "1.55.3"
+openai = "*"
 tenacity = "*"
-tqdm = "*"
 python-dotenv = "*"
-azure-storage-blob = "*"
 azure-identity = "^1.15.0"
-pdf2image = "1.17.0"
-azure-ai-formrecognizer = "3.3.2"
 llama-index-core = "0.10.68.post1"
 nest-asyncio = "^1.6.0"
 llama-index-embeddings-azure-openai = "0.1.6"
