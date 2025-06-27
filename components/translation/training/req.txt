@@ -1,0 +1,8 @@
+transformers
+accelerate==0.34.2
+evaluate
+peft
+datasets
+sentencepiece
+python-dotenv
+wandb
