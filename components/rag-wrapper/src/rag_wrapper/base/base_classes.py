@@ -1,45 +1,44 @@
-from abc import ABC
-from llama_index.core import StorageContext, VectorStoreIndex
+import logging
+import uuid
+from abc import ABC, abstractmethod
+from typing import Any, List, Dict, Optional
+
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    retry_if_result,
+)
+
+from llama_index.core import StorageContext, VectorStoreIndex, Document
 from llama_index.core.indices.base import BaseIndex
-from llama_index.core import Document
 from llama_index.core.llms import ChatMessage
 from llama_index.core.schema import NodeWithScore
-from typing import List, Optional, Any, Dict
-from llama_index.core.retrievers import BaseRetriever
+from llama_index.core.retrievers import BaseRetriever, VectorIndexRetriever
+from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
+from llama_index.core.callbacks import CallbackManager, TokenCountingHandler
+from llama_index.core.response_synthesizers import (
+    ResponseMode,
+    get_response_synthesizer,
+)
 
 
 class BaseRagOps(ABC):
     """
-    Abstract base class for Retrieval-Augmented Generation (RAG) operations using LlamaIndex.
+    Abstract base class for RAG operations using LlamaIndex.
 
-    This class defines the core interface for RAG systems, providing methods for indexing,
-    retrieval, querying, and chat-based interactions with document collections. Concrete
-    implementations should inherit from this class and implement all abstract methods.
-
-    The class supports various RAG workflows including:
-    - Document indexing and storage
-    - Semantic retrieval with metadata filtering
-    - Query-based document search
-    - Conversational chat interfaces
-    - Dynamic content insertion
+    Provides methods for indexing, retrieval, querying, and chat interactions
+    with document collections.
 
     Attributes:
-        rag_index (Optional[BaseIndex]): The main RAG index containing embedding vectors
-            and document metadata for semantic search operations.
-        retriever (Optional[BaseRetriever]): Retriever instance for querying the index
-            and finding relevant documents based on similarity scores.
-        vector_store (Optional[VectorStoreIndex]): Vector store implementation for
-            efficient similarity search and document retrieval.
-        storage_context (Optional[StorageContext]): Storage context managing data
-            persistence, caching, and retrieval strategies.
-
-    Example:
-        >>> class MyRagOps(BaseRagOps):
-        ...     async def initiate_index(self):
-        ...         # Implementation specific setup
-        ...         pass
-        >>> rag_ops = MyRagOps()
-        >>> await rag_ops.initiate_index()
+        rag_index: Main RAG index for semantic search
+        retriever: Retriever instance for document queries
+        vector_store: Vector store for similarity search
+        storage_context: Storage context for data persistence
+        emb_llm: Embedding language model
+        completion_llm: Completion language model
+        logger: Logger for debugging and monitoring
     """
 
     rag_index: Optional[BaseIndex] = None
@@ -47,63 +46,216 @@ class BaseRagOps(ABC):
     vector_store: Optional[VectorStoreIndex] = None
     storage_context: Optional[StorageContext] = None
 
-    async def initiate_index(self):
+    def __init__(
+        self,
+        emb_llm: Any,
+        completion_llm: Any,
+        similarity_top_k: int = 3,
+        response_mode: str = "tree_summarize",
+    ):
+        """Initialize with embedding and completion language models and configuration parameters.
+
+        Args:
+            emb_llm: Embedding language model
+            completion_llm: Completion language model
+            similarity_top_k: Number of top similar documents to retrieve (default: 3)
+            response_mode: Response synthesis mode (default: "tree_summarize")
         """
-        Initialize the RAG index and set up necessary resources.
+        self.emb_llm = emb_llm
+        self.completion_llm = completion_llm
+        self.similarity_top_k = similarity_top_k
+        self.response_mode = response_mode
+        self.logger = logging.getLogger(__name__)
 
-        This method should set up the vector store, storage context, retriever,
-        and any other components required for RAG operations. Implementation
-        should handle configuration loading, connection establishment, and
-        resource initialization.
+    def _get_response_mode(self) -> ResponseMode:
+        """Convert string response mode to ResponseMode enum."""
+        mode_mapping = {
+            "tree_summarize": ResponseMode.TREE_SUMMARIZE,
+            "simple_summarize": ResponseMode.SIMPLE_SUMMARIZE,
+            "generation": ResponseMode.GENERATION,
+            "refine": ResponseMode.REFINE,
+            "compact": ResponseMode.COMPACT,
+            "compact_accumulate": ResponseMode.COMPACT_ACCUMULATE,
+            "accumulate": ResponseMode.ACCUMULATE,
+        }
 
-        Raises:
-            NotImplementedError: This is an abstract method that must be implemented
-                by concrete subclasses.
-            ConnectionError: If unable to establish connections to required services.
-            ConfigurationError: If required configuration parameters are missing or invalid.
+        if isinstance(self.response_mode, str):
+            return mode_mapping.get(
+                self.response_mode.lower(), ResponseMode.TREE_SUMMARIZE
+            )
+        return self.response_mode
 
-        Example:
-            >>> await rag_ops.initiate_index()
+    def _create_metadata_filters(
+        self, metadata_filter: Optional[Dict[str, str]] = None
+    ) -> Optional[MetadataFilters]:
+        """Create metadata filters from key-value pairs."""
+        if not metadata_filter:
+            return None
+
+        filter_list = []
+        for key, value in metadata_filter.items():
+            filter_list.append(ExactMatchFilter(key=key, value=value))
+        return MetadataFilters(filters=filter_list)
+
+    async def _create_retriever(
+        self,
+        metadata_filter: Optional[Dict[str, str]] = None,
+    ) -> BaseRetriever:
+        """Create a retriever with optional metadata filtering.
+
+        Args:
+            metadata_filter: Optional metadata filters for results
         """
-        pass
+        if not self.rag_index:
+            exists = await self.index_exists()
+            if exists:
+                await self.initiate_index()
+            else:
+                raise ValueError(
+                    "No index exists. Create an index first using create_index()."
+                )
+
+        assert self.rag_index, "RAG index must be initialized before creating retriever"
+
+        filters = self._create_metadata_filters(metadata_filter)
+
+        if filters:
+            return VectorIndexRetriever(
+                index=self.rag_index,
+                similarity_top_k=self.similarity_top_k,  # Number of top results to retrieve
+                filters=filters,
+            )
+        else:
+            return VectorIndexRetriever(
+                index=self.rag_index,
+                similarity_top_k=self.similarity_top_k,
+            )
+
+    def _create_documents_from_text_chunks(
+        self, text_chunks: List[str], metadata: dict = None
+    ) -> tuple[List[Document], List[str]]:
+        """Create Document objects from text chunks with optional metadata."""
+        if not text_chunks:
+            raise ValueError("text_chunks cannot be empty")
+
+        documents = []
+        doc_ids = []
+
+        for text in text_chunks:
+            if not text.strip():  # Skip empty or whitespace-only chunks
+                continue
+
+            doc_id = f"doc_id_{uuid.uuid4()}"
+            doc_chunk = Document(text=text, id_=doc_id)
+
+            if metadata:
+                doc_chunk.metadata = metadata.copy()
+
+            documents.append(doc_chunk)
+            doc_ids.append(doc_id)
+
+        if not documents:
+            raise ValueError("No valid text chunks provided after filtering")
+
+        return documents, doc_ids
+
+    def _log_retry_attempt(self, retry_state):
+        """Log retry attempts with detailed information."""
+        self.logger.warning(
+            f"Retrying {retry_state.fn.__name__} after {retry_state.attempt_number} attempts. "
+            f"Next attempt in {retry_state.next_action.sleep} seconds."
+        )
+
+    def _retry_on_empty_string_or_timeout_response(self, result) -> bool:
+        """Check if response indicates failure requiring retry."""
+        if hasattr(result, "response"):
+            response_text = str(result.response)
+        else:
+            response_text = str(result)
+
+        # Check for empty responses or known error patterns
+        return (
+            response_text == ""
+            or response_text == "504.0 GatewayTimeout"
+            or "timeout" in response_text.lower()
+            or len(response_text.strip()) == 0
+        )
+
+    async def _query_with_retries(
+        self,
+        text_str: str,
+        retrieval_query: Optional[str] = None,
+        metadata_filter: Optional[Dict[str, str]] = None,
+    ) -> tuple[Any, TokenCountingHandler]:
+        """Internal method with retry logic for robust querying."""
+
+        @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=1, max=10),
+            retry=(
+                retry_if_exception_type(Exception)
+                | retry_if_result(
+                    lambda result: self._retry_on_empty_string_or_timeout_response(
+                        result
+                    )
+                )
+            ),
+            before_sleep=self._log_retry_attempt,
+        )
+        async def _aquery_with_retries():
+            """Internal retry wrapper."""
+            _token_counter = TokenCountingHandler(logger=self.logger, verbose=True)
+
+            # Create response synthesizer with token tracking
+            response_synthesizer = get_response_synthesizer(
+                llm=self.completion_llm,
+                response_mode=self._get_response_mode(),
+                callback_manager=CallbackManager([_token_counter]),
+            )
+
+            # Retrieve relevant documents
+            retrieved_nodes = await self.retrieve(
+                retrieval_query or text_str, metadata_filter
+            )
+
+            # Generate response using retrieved context
+            response = await response_synthesizer.asynthesize(text_str, retrieved_nodes)
+            return response, _token_counter
+
+        return await _aquery_with_retries()
 
     async def retrieve(
         self, query: str, metadata_filter: Optional[Dict[str, str]] = None
     ) -> List[NodeWithScore]:
         """
-        Retrieve relevant documents from the RAG index based on semantic similarity.
-
-        Performs semantic search using the provided query string and returns a ranked
-        list of document nodes with their similarity scores. Optional metadata filtering
-        allows for refined search within specific document subsets.
+        Retrieve relevant documents based on semantic similarity.
 
         Args:
-            query (str): The search query string used for semantic similarity matching.
-                Should be a natural language question or statement.
-            metadata_filter (Optional[Dict[str, str]], optional): Dictionary of metadata
-                key-value pairs for exact matching. Used to filter results to specific
-                document categories, sources, or attributes. Defaults to None.
+            query: Search query string for similarity matching
+            metadata_filter: Optional metadata filters for results
 
         Returns:
-            List[NodeWithScore]: Ordered list of document nodes with similarity scores,
-                ranked from most to least relevant. Each node contains the document
-                content and associated metadata.
-
-        Raises:
-            NotImplementedError: This is an abstract method that must be implemented
-                by concrete subclasses.
-            ValueError: If query is empty or invalid.
-            IndexError: If the RAG index is not properly initialized.
-
-        Example:
-            >>> results = await rag_ops.retrieve(
-            ...     "What is machine learning?",
-            ...     metadata_filter={"document_type": "tutorial"}
-            ... )
-            >>> for node in results:
-            ...     print(f"Score: {node.score}, Content: {node.text[:100]}...")
+            List of document nodes with similarity scores
         """
-        pass
+        if not self.rag_index:
+            exists = await self.index_exists()
+            if exists:
+                await self.initiate_index()
+            else:
+                raise ValueError(
+                    "No index exists. Create an index first using create_index()."
+                )
+
+        try:
+            retriever = await self._create_retriever(metadata_filter)
+            results = await retriever.aretrieve(query)
+            self.logger.debug(
+                f"Retrieved {len(results)} documents for query: {query[:50]}..."
+            )
+            return results
+        except Exception as e:
+            self.logger.error(f"Retrieval failed for query '{query}': {e}")
+            raise
 
     async def query_index(
         self,
@@ -112,117 +264,150 @@ class BaseRagOps(ABC):
         metadata_filter: Optional[Dict[str, str]] = None,
     ) -> Any:
         """
-        Query the RAG index and generate a comprehensive response.
-
-        Combines retrieval and generation phases to provide contextually relevant
-        answers. Retrieves relevant documents using the query, then generates a
-        response based on the retrieved context and the original question.
+        Query the RAG index and generate a response.
 
         Args:
-            text_str (str): The main query or question for which to generate a response.
-                This is used for both retrieval (if retrieval_query not provided) and
-                response generation.
-            retrieval_query (Optional[str], optional): Separate query string optimized
-                for document retrieval. If provided, this is used instead of text_str
-                for finding relevant documents. Defaults to None.
-            metadata_filter (Optional[Dict[str, str]], optional): Dictionary of metadata
-                filters to constrain the search space. Defaults to None.
+            text_str: Main query for response generation
+            retrieval_query: Optional separate query for document retrieval
+            metadata_filter: Optional metadata filters
 
         Returns:
-            Any: Generated response object containing the answer, source documents,
-                metadata, and any additional context information. The exact type
-                depends on the specific implementation.
-
-        Raises:
-            NotImplementedError: This is an abstract method that must be implemented
-                by concrete subclasses.
-            ValueError: If text_str is empty or contains invalid characters.
-            RuntimeError: If the query processing fails due to system errors.
-
-        Example:
-            >>> response = await rag_ops.query_index(
-            ...     "Explain the benefits of renewable energy",
-            ...     retrieval_query="renewable energy advantages benefits",
-            ...     metadata_filter={"topic": "environment"}
-            ... )
-            >>> print(response.response)
+            Generated response with context from retrieved documents
         """
-        pass
+        if not self.rag_index:
+            exists = await self.index_exists()
+            if exists:
+                await self.initiate_index()
+            else:
+                raise ValueError(
+                    "No index exists. Create an index first using create_index()."
+                )
+
+        try:
+            answer, token_counter = await self._query_with_retries(
+                text_str, retrieval_query, metadata_filter
+            )
+
+            # Log token usage for monitoring
+            self.logger.debug(
+                f"TOKEN COUNTS: completion {token_counter.completion_llm_token_count}, "
+                f"prompt {token_counter.prompt_llm_token_count}, "
+                f"total: {token_counter.total_llm_token_count}",
+            )
+
+            # Validate response quality
+            if self._retry_on_empty_string_or_timeout_response(answer):
+                raise ValueError(f"LLM RESPONSE IS NOT VALID: {answer}")
+
+            return answer
+
+        except Exception as e:
+            self.logger.error(f"Query failed for text '{text_str[:50]}...': {e}")
+            raise
 
     async def chat_with_index(
-        self, curr_message: str, chat_history: List[ChatMessage]
+        self,
+        curr_message: str,
+        chat_history: List[ChatMessage],
+        chat_mode: str = "context",
     ) -> Any:
         """
         Engage in conversational interaction with the RAG index.
 
-        Maintains context from previous conversation turns while generating responses
-        based on the document index. Supports follow-up questions, clarifications,
-        and multi-turn conversations with memory of previous exchanges.
-
         Args:
-            curr_message (str): The current user message or question in the conversation.
-                Should be a natural language input that may reference previous context.
-            chat_history (List[ChatMessage]): Chronologically ordered list of previous
-                messages in the conversation, including both user inputs and system
-                responses. Used to maintain conversational context.
+            curr_message: Current user message
+            chat_history: Previous messages for context
+            chat_mode: Chat mode configuration
 
         Returns:
-            Any: Generated conversational response that considers both the current
-                message and conversation history. May include follow-up questions,
-                clarifications, or additional relevant information.
+            Generated response considering conversation history
+        """
+        if not self.rag_index:
+            exists = await self.index_exists()
+            if exists:
+                await self.initiate_index()
+            else:
+                raise ValueError(
+                    "No index exists. Create an index first using create_index()."
+                )
 
-        Raises:
-            NotImplementedError: This is an abstract method that must be implemented
-                by concrete subclasses.
-            ValueError: If curr_message is empty or chat_history contains invalid entries.
-            ContextError: If the conversation context becomes too large to process.
+        try:
+            # Create chat engine with context awareness
+            chat_engine = self.rag_index.as_chat_engine(
+                chat_mode=chat_mode, llm=self.completion_llm
+            )
 
-        Example:
-            >>> history = [
-            ...     ChatMessage(role="user", content="What is photosynthesis?"),
-            ...     ChatMessage(role="assistant", content="Photosynthesis is...")
-            ... ]
-            >>> response = await rag_ops.chat_with_index(
-            ...     "How does it relate to climate change?",
-            ...     history
-            ... )
-            >>> print(response.response)
+            # Generate response with chat history context
+            response = await chat_engine.achat(curr_message, chat_history)
+
+            self.logger.debug(
+                f"Chat response generated for message: {curr_message[:50]}..."
+            )
+            return response.response
+
+        except Exception as e:
+            self.logger.error(f"Chat failed for message '{curr_message[:50]}...': {e}")
+            raise
+
+    async def create_index(
+        self, text_chunks: List[str], metadata: dict = None
+    ) -> List[str]:
+        """
+        Create a new index from text chunks.
+
+        Creates a new index object every time it is called, replacing any existing index.
+
+        Args:
+            text_chunks: List of text segments to index
+            metadata: Optional metadata for all chunks
+
+        Returns:
+            List of document IDs for the indexed chunks
+        """
+        try:
+            if not self.rag_index:
+                await self.initiate_index()
+
+            documents, doc_ids = self._create_documents_from_text_chunks(
+                text_chunks, metadata
+            )
+
+            # Create a new index from documents
+            self.rag_index = VectorStoreIndex.from_documents(
+                documents,
+                storage_context=self.storage_context,
+                embed_model=self.emb_llm,
+                use_async=True,
+            )
+
+            self.logger.info(f"Created new index with {len(documents)} documents")
+
+            # Persist the index using subclass-specific logic
+            await self.persist_index()
+
+            self.logger.info(f"Successfully indexed {len(documents)} documents")
+            return doc_ids
+
+        except Exception as e:
+            self.logger.error(f"Failed to create index: {e}")
+            raise
+
+    @abstractmethod
+    async def persist_index(self):
+        """Persist the index to storage backend."""
+        pass
+
+    @abstractmethod
+    async def initiate_index(self):
+        """Initialize the RAG index only if it already exists in the storage backend.
+
+        This method should check if the index exists using index_exists(),
+        and only instantiate an index object if it does exist.
+        Otherwise, it should not create a new index.
         """
         pass
 
-    async def insert_text(self, text_chunks: List[str], metadata: dict = None) -> None:
-        """
-        Insert new text chunks into the RAG index for future retrieval.
-
-        Processes and indexes new textual content, making it available for subsequent
-        queries and retrieval operations. Text chunks are embedded and stored with
-        optional metadata for enhanced filtering and organization.
-
-        Args:
-            text_chunks (List[str]): List of text segments to be indexed. Each chunk
-                should be a coherent piece of content (paragraph, section, document).
-                Empty strings or very short chunks may be filtered out.
-            metadata (dict, optional): Dictionary of metadata to associate with all
-                text chunks. Common keys include 'source', 'author', 'date', 'category'.
-                This metadata can be used later for filtering during retrieval.
-                Defaults to None.
-
-        Returns:
-            None: This method modifies the index in-place and does not return a value.
-
-        Raises:
-            NotImplementedError: This is an abstract method that must be implemented
-                by concrete subclasses.
-            ValueError: If text_chunks is empty or contains only invalid entries.
-            StorageError: If there are issues persisting the new content to storage.
-            IndexError: If the index is not properly initialized or becomes corrupted.
-
-        Example:
-            >>> chunks = [
-            ...     "Solar panels convert sunlight into electricity.",
-            ...     "Wind turbines harness wind energy for power generation."
-            ... ]
-            >>> metadata = {"source": "renewable_energy_guide.pdf", "chapter": "2"}
-            >>> await rag_ops.insert_text(chunks, metadata)
-        """
+    @abstractmethod
+    async def index_exists(self) -> bool:
+        """Check if the index already exists in the storage backend."""
         pass
