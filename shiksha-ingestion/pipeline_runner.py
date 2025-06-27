@@ -13,6 +13,7 @@ from pipeline_steps import (
     SubtopicChapterLOsExtractionStep,
     SubtopicCleaningStep,
     SubtopicWiseLOExtractionStep,
+    CreateIndexStep
 )
 
 # Setup logging
@@ -42,6 +43,7 @@ PIPELINE_CONFIG = {
         {"name": "subtopic_chapter_los_extraction", "enabled": True},
         {"name": "subtopic_cleaning", "enabled": True},
         {"name": "subtopic_wise_lo_extraction", "enabled": True},
+        {"name": "create_index", "enabled": True},
     ],
 }
 

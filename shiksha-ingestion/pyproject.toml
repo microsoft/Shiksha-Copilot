@@ -20,7 +20,10 @@ flake8 = "^6.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-
 [tool.poetry.dependencies.vellm-textbook-ingestion-mineru]
-path = "/home/kchourasia/ShikshaOSS/Shiksha-Copilot/components/ingestion-pipeline-mineru"
+path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/ingestion-pipeline-mineru"
+develop = true
+
+[tool.poetry.dependencies.vellm-rag-wrapper]
+path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/rag-wrapper"
 develop = true

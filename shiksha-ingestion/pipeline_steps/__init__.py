@@ -10,6 +10,7 @@ from .step_5_subtopic_chapter_level_los_extraction import (
 )
 from .step_6_subtopic_extraction_rule_based_cleaning import SubtopicCleaningStep
 from .step_7_subtopic_wise_lo_extraction import SubtopicWiseLOExtractionStep
+from .step_8_create_indexes import CreateIndexStep
 
 __all__ = [
     "TOCExtractionStep",
@@ -21,4 +22,5 @@ __all__ = [
     "SubtopicChapterLOsExtractionStep",
     "SubtopicCleaningStep",
     "SubtopicWiseLOExtractionStep",
+    "CreateIndexStep",
 ]
