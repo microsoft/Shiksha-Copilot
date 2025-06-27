@@ -44,11 +44,15 @@ Shiksha Copilot has a modular design philosophy, allowing each of its core funct
 
 [Ingestion Pipeline](components/ingestion-pipeline/README.md)
 
-[LLM Queue](components/llm-queue/README.md)
+[LLM Queue](components/llm-queue/README.md) -- Deprecated
 
 [RAG Wrapper](components/rag-wrapper/README.md)
 
-[Translation Model Finetuning](components/ingestion-pipeline/README.md)
+[Translation Model Data Collection](components/translation/data_collection/README.md)
+
+[Translation Model Training](components/translation/training/README.md)
+
+[Translation Model Inference](components/translation/inference/README.md)
 
 ----
 *Instructions for backend and frontend deployment of the entire Shiksha Copilot system, as well as individual modules, are provided in dedicated setup guides within the repository.*
