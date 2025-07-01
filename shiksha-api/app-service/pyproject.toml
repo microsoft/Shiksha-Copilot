@@ -1,0 +1,68 @@
+[tool.poetry]
+name = "shiksha-api"
+version = "1.0.0"
+description = "Shiksha API service with RAG, completions, and agent capabilities"
+authors = ["Shiksha Team"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "~3.11"
+# FastAPI and server dependencies
+fastapi = "0.104.1"
+uvicorn = { extras = ["standard"], version = "0.24.0" }
+pydantic = "2.5.0"
+pydantic-settings = "2.1.0"
+
+# Azure dependencies
+azure-identity = "1.15.0"
+azure-keyvault-secrets = "4.7.0"
+azure-monitor-opentelemetry = "1.2.0"
+opentelemetry-api = "1.21.0"
+opentelemetry-sdk = "1.21.0"
+
+# OpenAI and LLM dependencies
+litellm = "*"
+autogen-agentchat = "*"
+
+# Database and storage
+asyncpg = "0.29.0"
+httpx = "0.25.2"
+
+# Logging and monitoring
+structlog = "23.2.0"
+python-json-logger = "2.0.7"
+
+# Environment and configuration
+python-dotenv = "1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+# Development and testing
+pytest = "7.4.3"
+pytest-asyncio = "0.21.1"
+black = "23.11.0"
+isort = "5.12.0"
+mypy = "1.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.poetry.dependencies.vellm-rag-wrapper]
+path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/rag-wrapper"
+develop = true
