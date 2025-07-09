@@ -164,20 +164,13 @@ How It Works:
 
 ### Setup
 
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd durable-functions
-   ```
-
-2. **Install dependencies**
+1. **Install dependencies**
 
    ```bash
    poetry install
    ```
 
-3. **Configure environment variables**
+2. **Configure environment variables**
    Copy `local.settings.json.example` to `local.settings.json` and update with your values:
 
    ```json
@@ -197,7 +190,7 @@ How It Works:
    }
    ```
 
-4. **Run locally**
+3. **Run locally**
    ```bash
    func start
    ```
