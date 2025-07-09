@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any
 
 from core.agents import AgentPool
-from core import QueryGenerator
+from core import QueryGenerator, RegenQueryGenerator
 
 from core.models.workflow_models import (
     Mode,
@@ -46,7 +46,11 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError(f"Section with ID {section_id} not found in workflow")
 
         # Initialize the query generator with section
-        query_generator = QueryGenerator(lp_gen_input, section)
+        query_generator = (
+            RegenQueryGenerator(lp_gen_input, section)
+            if lp_gen_input.lesson_plan and not lp_gen_input.start_from_section_id
+            else QueryGenerator(lp_gen_input, section)
+        )
 
         # Generate retrieval and synthesis queries
         # retrieval_query = query_generator.generate_retrieval_query()
@@ -58,10 +62,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         )
 
         logging.info(
-            "----------------\n Retrival Query: %s \n---------------", retrieval_query
-        )
-        logging.info(
-            "----------------\n Response Synthesis Query: %s \n---------------",
+            "---------------- Query:\n%s\n---------------",
             synthesis_query,
         )
 

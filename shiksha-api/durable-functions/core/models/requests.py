@@ -1,8 +1,12 @@
 from enum import Enum
+import json
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
+from core.models.dag import DAGNode, NodeStatus
 from core.models.workflow_models import WorkflowDefinition
+
+PREVIOUSLY_GENERATED_DAG_NODE_TITLE_PREFIX = "Previously Generated Section: "
 
 
 class LPLevel(str, Enum):
@@ -36,6 +40,21 @@ class Section(BaseModel):
         ..., description="Content of the section"
     )
     regen_feedback: Optional[str] = Field(None, description="Feedback for regeneration")
+
+    def get_dag_node(self):
+        return DAGNode(
+            id=self.section_id,
+            title=PREVIOUSLY_GENERATED_DAG_NODE_TITLE_PREFIX + self.section_title,
+            mode="gpt",  # This node will NOT get executed, hence mode is irrelevant
+            dependencies=[],  # No dependencies for this node
+            status=NodeStatus.COMPLETED,
+            output=(
+                json.dumps(self.content, ensure_ascii=False)
+                + f"\n\n**Feedback for regeneration: {self.regen_feedback}**"
+                if self.regen_feedback
+                else ""
+            ),
+        )
 
 
 class LessonPlanContent(BaseModel):

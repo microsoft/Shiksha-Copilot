@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Dict, List, Optional, Set, Any, Union
 from enum import Enum
 from pydantic import BaseModel, Field
@@ -214,6 +215,20 @@ class DAG(BaseModel):
 
         return cls(nodes=nodes)
 
+    @classmethod
+    def from_nodes(cls, nodes: List[DAGNode]) -> "DAG":
+        """
+        Create a DAG from a list of nodes
+
+        Args:
+            nodes: List of DAGNode objects
+
+        Returns:
+            A DAG representation containing the provided nodes
+        """
+        node_map = {node.id: node for node in nodes}
+        return cls(nodes=node_map)
+
     def __str__(self) -> str:
         """
         Create a visual representation of the DAG
@@ -292,6 +307,30 @@ class DAG(BaseModel):
                     result.append(f"   ↳ {child_id}")
 
         return "\n".join(result)
+
+    def add_nodes_from_other_dag(self, other_dag: "DAG") -> None:
+        """
+        Adds nodes from another DAG to the current DAG for regeneration scenarios where previously generated section content should also be sent as
+        context while regenerating the same section.
+
+        For each node in the provided `other_dag`, if a node with the same ID exists in the current DAG,
+        a deep copy of the node from `other_dag` is created, its ID is prefixed with 'other_', its status
+        is set to COMPLETED, and it is added to the current DAG's nodes. The original node's dependencies
+        are then extended to include the new node.
+
+        Args:
+            other_dag (DAG): The DAG from which nodes will be added.
+
+        Returns:
+            None
+        """
+        for other_node_id, other_node in other_dag.nodes.items():
+            if other_node_id in self.nodes:
+                new_node = deepcopy(other_node)
+                new_node.id = f"other_{new_node.id}"
+                new_node.status = NodeStatus.COMPLETED
+                self.nodes[new_node.id] = new_node
+                self.nodes[other_node_id].dependencies.extend([new_node.id])
 
     def fill_nodes_partially(
         self,

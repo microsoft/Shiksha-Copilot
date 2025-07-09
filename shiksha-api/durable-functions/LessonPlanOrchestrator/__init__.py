@@ -61,12 +61,11 @@ def main(
         # Create a DAG from the workflow definition
         dag = DAG.from_workflow_definition(lp_gen_input.workflow)
 
-        # Check if we need to start from a specific section
-        if lp_gen_input.start_from_section_id:
+        # Start from a specific section
+        if lp_gen_input.start_from_section_id and lp_gen_input.lesson_plan:
             logging.info(
                 f"Creating DAG with filled nodes starting from section: {lp_gen_input.start_from_section_id}"
             )
-
             # Mark dependency content nodes as completed in the current DAG.
             dag.fill_nodes_partially(
                 lp_gen_input.start_from_section_id,
@@ -75,6 +74,16 @@ def main(
                     for section in lp_gen_input.lesson_plan.sections
                 },
             )
+        # LP Regeneration with given feedback
+        elif lp_gen_input.lesson_plan:
+            logging.info("Creating DAG with filled nodes from the provided lesson plan")
+            dag_from_previous_lp = DAG.from_nodes(
+                [
+                    section.get_dag_node()
+                    for section in lp_gen_input.lesson_plan.sections
+                ]
+            )
+            dag.add_nodes_from_other_dag(dag_from_previous_lp)
 
         # Split the DAG into independent subgraphs
         subgraphs = dag.get_independent_subgraphs()
