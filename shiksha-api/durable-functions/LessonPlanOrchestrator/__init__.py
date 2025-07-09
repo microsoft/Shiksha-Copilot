@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import uuid
@@ -8,11 +9,23 @@ from typing import Dict, Generator, List, Any
 from core.agents.agent_pool import AgentPool
 from core.blob_store import BlobStore
 from core.models.responses import LessonPlan
+from core.models.status_webhook import GenStatus, StatusEnum
 from core.models.workflow_models import (
     SectionOutput,
 )
 from core.models.requests import LessonPlanGenerationInput
 from core.models.dag import DAG, NodeStatus
+
+
+def prepare_status_payload(context, status: StatusEnum, output: dict = None):
+    gen_status = GenStatus(
+        instance_id=context.instance_id,
+        status=status.value,
+        timestamp=datetime.datetime.now().isoformat(),
+        input=context.get_input(),
+        output=output,
+    )
+    return context.call_activity("WebhookStatusActivity", gen_status.dict())
 
 
 def main(
@@ -27,8 +40,21 @@ def main(
     Returns:
         The generated lesson plan
     """
+
+    def prepare_status_payload(context, status: StatusEnum, output: dict = None):
+        return GenStatus.from_status_and_output(
+            context.instance_id,
+            context.get_input(),
+            status,
+            output=output,
+        ).model_dump(by_alias=True)
+
+    lp_gen_input = None
     try:
         # Get the input data
+        yield context.call_activity(
+            "WebhookStatusActivity", prepare_status_payload(context, StatusEnum.RUNNING)
+        )
         input_payload: dict = context.get_input()
         lp_gen_input = LessonPlanGenerationInput.model_validate(input_payload)
 
@@ -107,14 +133,22 @@ def main(
             json.dumps(lesson_plan_json, indent=2),
         )
 
+        yield context.call_activity(
+            "WebhookStatusActivity",
+            prepare_status_payload(context, StatusEnum.COMPLETED, lesson_plan_json),
+        )
         # Return the final result
         return lesson_plan_json
     except Exception as e:
         logging.exception("Error in main orchestrator", exc_info=True)
-        raise df.OrchestrationError(f"Error in main orchestrator: {str(e)}")
+        yield context.call_activity(
+            "WebhookStatusActivity",
+            prepare_status_payload(context, StatusEnum.FAILED, str(e)),
+        )
     finally:
         # CLEAR RAG RESOURCES
-        AgentPool.clear_rag_agent_resources(lp_gen_input.chapter_info.index_path)
+        if lp_gen_input is not None:
+            AgentPool.clear_rag_agent_resources(lp_gen_input.chapter_info.index_path)
 
 
 main = df.Orchestrator.create(main)

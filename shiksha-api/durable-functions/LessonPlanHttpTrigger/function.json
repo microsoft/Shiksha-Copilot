@@ -9,7 +9,7 @@
             "methods": [
                 "post"
             ],
-            "route": "v2/lesson-plans"
+            "route": "v2/lesson-plans/{*subpath}"
         },
         {
             "type": "http",
