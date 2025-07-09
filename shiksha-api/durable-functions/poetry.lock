@@ -2541,7 +2541,7 @@ files = [
 
 [package.dependencies]
 greenlet = [
-    {version = ">=1", optional = true, markers = "python_version < \"3.14\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\") or extra == \"asyncio\""},
+    {version = ">=1", markers = "python_version < \"3.14\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"},
     {version = ">=1", optional = true, markers = "python_version < \"3.14\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\") or extra == \"asyncio\""},
 ]
 typing-extensions = ">=4.6.0"
@@ -2756,7 +2756,7 @@ tenacity = "*"
 
 [package.source]
 type = "directory"
-url = "../../components/rag-wrapper"
+url = "core/rag-wrapper"
 
 [[package]]
 name = "wrapt"
@@ -2969,4 +2969,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "99cd9f12baeeb15bb2777dffc9b68599ecd32ebd744c9b5cd1c5cb2ccc2fca97"
+content-hash = "28e5c814022f8bfe84708ece2692bcc73d7c131cc34e95e7e775395e023cf044"

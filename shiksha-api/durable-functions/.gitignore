@@ -1,2 +1,6 @@
 **/__pycache__/
 local.settings.json
+.venv/
+.poetry/
+.vscode/
+docker_commands.txt

@@ -17,6 +17,7 @@ openai = "1.55.3"
 azure-storage-blob = "^12.25.1"
 aiofiles = "^24.1.0"
 azure-identity = "^1.23.0"
+vellm-rag-wrapper = { path = "core/rag-wrapper", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
@@ -27,6 +28,5 @@ flake8 = "^6.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.dependencies.vellm-rag-wrapper]
-path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/rag-wrapper"
-develop = true
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
