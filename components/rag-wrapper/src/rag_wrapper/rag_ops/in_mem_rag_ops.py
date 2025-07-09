@@ -64,7 +64,7 @@ class InMemRagOps(BaseRagOps):
     async def index_exists(self) -> bool:
         """Check if folder contains index files (.json)."""
         if not os.path.exists(self.index_path):
-            raise FileNotFoundError(f"The folder '{self.index_path}' does not exist.")
+            return False
 
         if not os.path.isdir(self.index_path):
             raise NotADirectoryError(
