@@ -33,7 +33,7 @@ def main(
         lp_gen_input = LessonPlanGenerationInput.model_validate(input_payload)
 
         # Create a DAG from the workflow definition
-        full_dag = DAG.from_workflow_definition(lp_gen_input.workflow)
+        dag = DAG.from_workflow_definition(lp_gen_input.workflow)
 
         # Check if we need to start from a specific section
         if lp_gen_input.start_from_section_id:
@@ -41,16 +41,14 @@ def main(
                 f"Creating DAG with filled nodes starting from section: {lp_gen_input.start_from_section_id}"
             )
 
-            # Create a copy of the full DAG with dependency content nodes filled
-            dag = full_dag.fill_nodes_partially(
-                lp_gen_input.start_from_section_id, lp_gen_input.dependency_content
+            # Mark dependency content nodes as completed in the current DAG.
+            dag.fill_nodes_partially(
+                lp_gen_input.start_from_section_id,
+                {
+                    section.section_id: section.content
+                    for section in lp_gen_input.lesson_plan.sections
+                },
             )
-
-            logging.info(f"DAG with filled nodes created with {len(dag.nodes)} nodes")
-        else:
-            # Use the full DAG
-            dag = full_dag
-            logging.info(f"Using full DAG with {len(dag.nodes)} nodes")
 
         # Split the DAG into independent subgraphs
         subgraphs = dag.get_independent_subgraphs()
@@ -90,8 +88,6 @@ def main(
         for section in lp_gen_input.workflow.sections:
             if section.id in sections_map:
                 all_sections.append(sections_map[section.id])
-
-            logging.info(f"Full execution completed {len(all_sections)} sections")
 
         # Store the lesson plan in the database
         lesson_plan_json = LessonPlan(

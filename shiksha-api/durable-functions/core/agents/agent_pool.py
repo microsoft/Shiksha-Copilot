@@ -67,6 +67,7 @@ class AgentPool:
         """
         if identifier in cls._rag_instances:
             cls._rag_instances[identifier].clear_resources()
+            del cls._rag_instances[identifier]
 
     @classmethod
     def get_validator_agent(cls) -> ValidatorAgent:

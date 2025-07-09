@@ -297,16 +297,13 @@ class DAG(BaseModel):
         self,
         start_section_id: str,
         dependency_content: Optional[Dict[str, Union[Dict[str, Any], str]]] = None,
-    ) -> "DAG":
+    ) -> None:
         """
-        Create a copy of the original DAG with dependency content nodes filled.
+        Mark dependency content nodes as completed in the current DAG.
 
         Args:
             start_section_id: The section ID to start from
             dependency_content: Pre-computed content for dependency sections
-
-        Returns:
-            A copy of the original DAG with dependency content nodes marked as completed
 
         Raises:
             ValueError: If the start_section_id is not found in the DAG or if required dependencies are missing
@@ -319,44 +316,20 @@ class DAG(BaseModel):
         # Check if ALL dependencies of the start section have been provided in dependency_content
         if start_node.dependencies:
             dependency_content = dependency_content or {}
-            missing_dependencies = []
-
-            for dep_id in start_node.dependencies:
-                if dep_id not in dependency_content:
-                    missing_dependencies.append(dep_id)
-
+            missing_dependencies = [
+                dep_id
+                for dep_id in start_node.dependencies
+                if dep_id not in dependency_content
+            ]
             if missing_dependencies:
                 raise ValueError(
                     f"Missing dependency content for section '{start_section_id}'. "
                     f"Required dependencies not provided: {missing_dependencies}"
                 )
 
-        # Create a copy of all nodes from the original DAG
-        copied_nodes = {}
-        for node_id, original_node in self.nodes.items():
-            # Create a copy of each node
-            copied_nodes[node_id] = DAGNode(
-                id=original_node.id,
-                title=original_node.title,
-                mode=original_node.mode,
-                dependencies=original_node.dependencies.copy(),
-                status=original_node.status,
-                output=original_node.output,
-            )
-
-        # Create new DAG with copied nodes
-        copied_dag = DAG(nodes=copied_nodes)
-
         # For ALL nodes whose dependency_content is sent, mark as completed with the content
         if dependency_content:
             for section_id, content in dependency_content.items():
-                if section_id in copied_dag.nodes:
-                    # Update existing node in the copied DAG
-                    copied_dag.update_node_status(
-                        section_id, NodeStatus.COMPLETED, content
-                    )
-                else:
-                    # Ignore
-                    pass
-
-        return copied_dag
+                if section_id in self.nodes:
+                    self.update_node_status(section_id, NodeStatus.COMPLETED, content)
+                # else: ignore silently

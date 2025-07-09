@@ -47,8 +47,6 @@ class InMemRAGAgent(BaseRagAgent):
             azure_endpoint=Config.AZURE_OPENAI_API_BASE,
             api_version=Config.AZURE_OPENAI_API_VERSION,
         )
-
-        logging.info(f"Creating InMemRAGAgent with index path {index_path} ...")
         index_path = index_path.replace("/", "_")
         self._blob_store = BlobStore()
         self._local_index_path = os.path.join(tempfile.gettempdir(), index_path)
