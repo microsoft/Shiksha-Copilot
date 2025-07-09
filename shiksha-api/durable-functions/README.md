@@ -134,6 +134,8 @@ How It Works:
 
 ## API Endpoints
 
+📋 **For complete API documentation with detailed request/response examples, see [APIContract.md](./APIContract.md)**
+
 ### Generate Lesson Plan
 
 - **Endpoint**: `POST /api/v2/lesson-plans/`
