@@ -18,7 +18,7 @@ class LLMTextExtractor(TextExtractor):
     """
 
     # System prompt template for image analysis
-    _SYSTEM_PROMPT = """You are an expert document transcriber. 
+    _SYSTEM_PROMPT = """You are an expert document transcriber.
 Your task is to accurately convert the uploaded document image into markdown text.
 The document may contain multiple columns, diagrams, tables, maps, math equations, and images.
 For each component:
@@ -30,15 +30,15 @@ For each component:
 - Preserve lists (numbered and bulleted) in appropriate markdown format
 - Maintain the document's original structure, including columns if present
 
-Output only the transcribed markdown content without additional commentary."""
+Output ONLY the transcribed markdown content. Do NOT wrap the output in any code block or add any extra commentary. The output must be PURE markdown content."""
 
     # System prompt template for batch image analysis
-    _BATCH_SYSTEM_PROMPT = """You are an expert document transcriber. 
+    _BATCH_SYSTEM_PROMPT = """You are an expert document transcriber.
 Your task is to accurately convert the current document image into markdown text.
 The document may contain multiple columns, diagrams, tables, maps, math equations, and images.
 
-The current image is part of a larger document. I'll provide you with the transcription of previous pages 
-to give you context. Focus on transcribing ONLY THE CURRENT IMAGE into markdown while maintaining 
+The current image is part of a larger document. I'll provide you with the transcription of previous pages
+to give you context. Focus on transcribing ONLY THE CURRENT IMAGE into markdown while maintaining
 consistency with the previous transcriptions.
 
 For each component:
@@ -50,7 +50,7 @@ For each component:
 - Preserve lists (numbered and bulleted) in appropriate markdown format
 - Maintain the document's original structure, including columns if present
 
-Output only the transcribed markdown content for the current image without additional commentary."""
+Output ONLY the transcribed markdown content for the current image. Do NOT wrap the output in any code block or add any extra commentary. The output must be PURE markdown content."""
 
     def __init__(
         self,
