@@ -229,14 +229,14 @@ Output ONLY the transcribed markdown content for the current image. Do NOT wrap 
             )
 
             # Add page delimiter for each page
-            page_delimiter = f"--- Page {page_number} ---"
+            page_delimiter = f"---\n\n## Page {page_number}\n"
 
             # Add page content with delimiter
             if i > 0:
-                full_markdown += f"\n\n{page_delimiter}\n\n"
+                full_markdown += f"\n\n{page_delimiter}\n"
             else:
                 # For the first page, add the delimiter at the beginning
-                full_markdown += f"{page_delimiter}\n\n"
+                full_markdown += f"## Page {page_number}\n"
 
             full_markdown += page_markdown
 
@@ -245,11 +245,12 @@ Output ONLY the transcribed markdown content for the current image. Do NOT wrap 
             # This is a simple sliding window approach
             if i >= batch_size:
                 # Extract the latest batch_size pages from full_markdown
-                parts = full_markdown.split("\n\n--- Page ")
+                parts = full_markdown.split("\n\n---\n\n## Page ")
                 if len(parts) > batch_size:
                     # Keep only the latest batch_size pages
-                    accumulated_context = "--- Page " + "\n\n--- Page ".join(
-                        parts[-batch_size:]
+                    accumulated_context = (
+                        "---\n\n## Page "
+                        + "\n\n---\n\n## Page ".join(parts[-batch_size:])
                     )
                 else:
                     accumulated_context = full_markdown
