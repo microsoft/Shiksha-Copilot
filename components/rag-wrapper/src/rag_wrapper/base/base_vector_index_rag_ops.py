@@ -14,7 +14,7 @@ from tenacity import (
 from llama_index.core import StorageContext, VectorStoreIndex, Document
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.llms import ChatMessage
-from llama_index.core.schema import NodeWithScore
+from llama_index.core.schema import NodeWithScore, TransformComponent
 from llama_index.core.retrievers import BaseRetriever, VectorIndexRetriever
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
 from llama_index.core.callbacks import CallbackManager, TokenCountingHandler
@@ -24,7 +24,7 @@ from llama_index.core.response_synthesizers import (
 )
 
 
-class BaseRagOps(ABC):
+class BaseVectorIndexRagOps(ABC):
     """
     Abstract base class for RAG operations using LlamaIndex.
 
@@ -350,7 +350,10 @@ class BaseRagOps(ABC):
             raise
 
     async def create_index(
-        self, text_chunks: List[str], metadata: dict = None
+        self,
+        text_chunks: List[str],
+        metadata: dict = None,
+        transformations: List[TransformComponent] = None,
     ) -> List[str]:
         """
         Create a new index from text chunks.
@@ -378,6 +381,7 @@ class BaseRagOps(ABC):
                 storage_context=self.storage_context,
                 embed_model=self.emb_llm,
                 use_async=True,
+                transformations=transformations,
             )
 
             self.logger.info(f"Created new index with {len(documents)} documents")

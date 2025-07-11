@@ -12,13 +12,13 @@ from azure.search.documents.aio import SearchClient
 from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
-from rag_wrapper.base.base_classes import BaseRagOps
+from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 
 # Apply nest_asyncio to allow nested event loops
 nest_asyncio.apply()
 
 
-class AzureAISearchRagOps(BaseRagOps):
+class AzureAISearchRagOps(BaseVectorIndexRagOps):
     """Azure AI Search RAG operations with managed identity support and automatic index management."""
 
     _ERROR = ValueError(

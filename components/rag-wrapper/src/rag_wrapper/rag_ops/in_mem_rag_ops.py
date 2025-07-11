@@ -9,10 +9,10 @@ from typing import List, Dict, Optional
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.schema import NodeWithScore
 import uuid
-from rag_wrapper.base.base_classes import BaseRagOps
+from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 
 
-class InMemRagOps(BaseRagOps):
+class InMemRagOps(BaseVectorIndexRagOps):
     """In-memory RAG operations using LlamaIndex."""
 
     _ERROR = ValueError(

@@ -18,16 +18,18 @@ openai = "*"
 tenacity = "*"
 python-dotenv = "*"
 azure-identity = "^1.15.0"
-llama-index-core = "0.10.68.post1"
 nest-asyncio = "^1.6.0"
-llama-index-embeddings-azure-openai = "0.1.6"
-llama-index-embeddings-openai = "0.1.11"
-llama-index-llms-azure-openai = "0.1.5"
-llama-index-llms-openai = "0.1.31"
-llama-index-vector-stores-azureaisearch = "*"
+llama-index-core = "0.12.48"
+llama-index-embeddings-azure-openai = "0.3.9"
+llama-index-embeddings-openai = "0.3.1"
+llama-index-instrumentation = "0.2.0"
+llama-index-llms-azure-openai = "0.3.4"
+llama-index-llms-openai = "0.4.7"
+llama-index-vector-stores-azureaisearch = "0.3.8"
+llama-index-workflows = "1.1.0"
 azure-search-documents = "11.5.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"             # For testing
 pytest-asyncio = "^0.20.2"    # For async test support
 black = "^23.1"
