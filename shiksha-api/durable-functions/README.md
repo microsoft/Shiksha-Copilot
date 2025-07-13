@@ -18,9 +18,114 @@ The application consists of the following components:
 - **Asynchronous Processing**: Long-running lesson plan generation with status tracking
 - **Workflow Orchestration**: Complex dependency management between lesson plan sections
 - **AI-Powered Content**: Integration with Azure OpenAI for intelligent content generation
+- **Multiple RAG Strategies**: Support for both vector-based and graph-based retrieval-augmented generation
 - **Status Webhooks**: Real-time status updates via HTTP callbacks
 - **Containerized Deployment**: Docker support for consistent deployments
 - **Parallel RAG Execution**: Optimized section generation through parallel execution of independent RAG operations
+
+## RAG Agent Strategies
+
+The system supports two distinct Retrieval-Augmented Generation (RAG) strategies for content generation:
+
+### Vector Index RAG Agent (`VectorIndexRAGAgent`)
+
+- **Strategy**: Traditional vector-based retrieval using similarity search
+- **Implementation**: Uses `InMemRagOps` from the rag-wrapper library
+- **Best for**: General content retrieval and similarity-based matching
+- **How it works**:
+  - Documents are converted to vector embeddings
+  - Queries are embedded and matched against document vectors using cosine similarity
+  - Most relevant content is retrieved based on semantic similarity
+
+### Graph Index RAG Agent (`GraphIndexRAGAgent`)
+
+- **Strategy**: Property graph-based retrieval with entity and relationship awareness
+- **Implementation**: Uses `InMemGraphRagOps` from the rag-wrapper library
+- **Best for**: Complex reasoning requiring understanding of relationships between concepts
+- **How it works**:
+  - Extracts entities and relationships from documents to create a knowledge graph
+  - Enables sophisticated reasoning over interconnected concepts
+  - Supports complex queries that require understanding of entity relationships
+
+Both agents inherit from `BaseAzureBlobRAGAgent` which provides:
+
+- Azure OpenAI integration with structured JSON response formatting
+- Blob storage management for downloading and caching RAG indexes
+- Resource cleanup and error handling
+
+## Lesson Plan Creation Flow
+
+The lesson plan generation follows a sophisticated workflow orchestration pattern using Directed Acyclic Graphs (DAGs) for optimal parallel execution:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            Lesson Plan Creation Flow                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+1. HTTP Request
+   └─ LessonPlanHttpTrigger
+      └─ Validates input and starts orchestration
+
+2. Main Orchestration
+   └─ LessonPlanOrchestrator
+      ├─ Creates DAG from WorkflowDefinition
+      ├─ Splits DAG into independent subgraphs for parallel execution
+      └─ Calls SectionsGraphOrchestrator for each subgraph
+
+3. Section Generation
+   └─ SectionsGraphOrchestrator
+      ├─ Executes ready nodes in parallel
+      ├─ Manages dependencies between sections
+      └─ Calls GenerateSectionActivity for each section
+
+4. Content Generation
+   └─ GenerateSectionActivity
+      ├─ Determines generation mode (RAG vs GPT)
+      ├─ RAG Mode:
+      │  ├─ AgentPool.get_rag_agent(agent_type)
+      │  ├─ VectorIndexRAGAgent OR GraphIndexRAGAgent
+      │  ├─ Downloads index from blob storage
+      │  ├─ QueryGenerator creates optimized prompts
+      │  └─ Returns structured JSON content
+      └─ GPT Mode:
+         ├─ AgentPool.get_gpt_agent()
+         ├─ GPTAgent with direct prompting
+         └─ Returns generated content
+
+5. Status Updates
+   └─ WebhookStatusActivity
+      └─ Sends real-time status updates via HTTP webhooks
+```
+
+### Key Classes and Components
+
+#### Core Orchestration Classes
+
+- **`LessonPlanOrchestrator`**: Main orchestrator managing the overall workflow
+- **`SectionsGraphOrchestrator`**: Sub-orchestrator handling parallel section generation
+- **`DAG`**: Directed Acyclic Graph implementation for dependency management
+- **`AgentPool`**: Singleton factory for managing agent instances
+
+#### Generation Agents
+
+- **`BaseAzureBlobRAGAgent`**: Abstract base class for RAG agents
+- **`VectorIndexRAGAgent`**: Vector similarity-based content retrieval
+- **`GraphIndexRAGAgent`**: Knowledge graph-based content retrieval
+- **`GPTAgent`**: Direct GPT-based content generation
+- **`ValidatorAgent`**: Content validation and quality assurance
+
+#### Data Models
+
+- **`WorkflowDefinition`**: Defines the lesson plan structure and dependencies
+- **`SectionDefinition`**: Individual section configuration and requirements
+- **`RAGInput`**: Input parameters for RAG-based generation
+- **`GPTInput`**: Input parameters for GPT-based generation
+- **`LessonPlanGenerationInput`**: Complete input for lesson plan generation
+
+#### Query Generation
+
+- **`QueryGenerator`**: Creates optimized prompts for initial generation
+- **`RegenQueryGenerator`**: Handles regeneration with user feedback integration
 
 ## Workflow Orchestration & Parallel Execution
 
