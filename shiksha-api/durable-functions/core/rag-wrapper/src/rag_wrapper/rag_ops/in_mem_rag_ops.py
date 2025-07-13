@@ -1,25 +1,20 @@
 import os
 import logging
 from typing import Any
-from llama_index.core import StorageContext, VectorStoreIndex
-from llama_index.core import Document
-from llama_index.core.llms import ChatMessage
+from llama_index.core import StorageContext
 from llama_index.core.indices import load_index_from_storage
-from typing import List, Dict, Optional
-from llama_index.core.retrievers import VectorIndexRetriever
-from llama_index.core.schema import NodeWithScore
-import uuid
-from rag_wrapper.base.base_classes import BaseRagOps
+from llama_index.core.llms import LLM
+from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 
 
-class InMemRagOps(BaseRagOps):
+class InMemRagOps(BaseVectorIndexRagOps):
     """In-memory RAG operations using LlamaIndex."""
 
     _ERROR = ValueError(
         "Index Object is not defined. The `index_path` passed to the constructor doesn't contain the index files."
     )
 
-    def __init__(self, index_path: str, emb_llm: Any, completion_llm: Any, **kwargs):
+    def __init__(self, index_path: str, emb_llm: LLM, completion_llm: LLM, **kwargs):
         """Initialize in-memory RAG operations with models and index path.
 
         Args:
@@ -28,9 +23,8 @@ class InMemRagOps(BaseRagOps):
             completion_llm: Completion language model
             **kwargs: Additional arguments passed to BaseRagOps (similarity_top_k, response_mode)
         """
-        super().__init__(emb_llm, completion_llm, **kwargs)
+        super().__init__(completion_llm=completion_llm, emb_llm=emb_llm, **kwargs)
         self.index_path = index_path
-        # Index initialization is now handled by initiate_index() method
 
     async def persist_index(self):
         """Persist the index to disk."""
