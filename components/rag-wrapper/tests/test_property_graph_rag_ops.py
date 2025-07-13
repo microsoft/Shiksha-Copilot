@@ -231,208 +231,208 @@ The modern AI renaissance has been shaped by three visionary scientists, collect
 
 
 # Integration tests with real Azure OpenAI LLMs
-# @pytest.mark.asyncio
-# async def test_create_index_with_metadata(
-#     graph_rag_ops_instance: InMemGraphRagOps,
-#     metadata_fields,
-#     ai_scientists_markdown_content,
-# ):
-#     """Test index creation with AI scientists markdown content and metadata A"""
+@pytest.mark.asyncio
+async def test_create_index_with_metadata(
+    graph_rag_ops_instance: InMemGraphRagOps,
+    metadata_fields,
+    ai_scientists_markdown_content,
+):
+    """Test index creation with AI scientists markdown content and metadata A"""
 
-#     # Use the structured markdown content paragraphs as text chunks
-#     text_chunks = ai_scientists_markdown_content
+    # Use the structured markdown content paragraphs as text chunks
+    text_chunks = ai_scientists_markdown_content
 
-#     # Create a new index with AI scientists markdown content and metadata
-#     doc_ids = await graph_rag_ops_instance.create_index(
-#         text_chunks, metadata=metadata_fields
-#     )
+    # Create a new index with AI scientists markdown content and metadata
+    doc_ids = await graph_rag_ops_instance.create_index(
+        text_chunks, metadata=metadata_fields
+    )
 
-#     # Assertions
-#     assert len(doc_ids) == len(
-#         text_chunks
-#     ), "Should return correct number of document IDs"
-#     assert graph_rag_ops_instance.rag_index is not None, "RAG index should be created"
+    # Assertions
+    assert len(doc_ids) == len(
+        text_chunks
+    ), "Should return correct number of document IDs"
+    assert graph_rag_ops_instance.rag_index is not None, "RAG index should be created"
 
-#     logger.info(
-#         f"Successfully created graph index with {len(doc_ids)} AI scientists markdown chunks and metadata"
-#     )
-
-
-# @pytest.mark.asyncio
-# async def test_query_index(
-#     graph_rag_ops_instance: InMemGraphRagOps,
-#     ai_scientists_markdown_content,
-#     transformations,
-# ):
-#     """Test LLM query with AI scientists content"""
-
-#     # Use the structured markdown content paragraphs
-#     text_chunks = ai_scientists_markdown_content
-
-#     # Create an index with the AI scientists markdown content
-#     await graph_rag_ops_instance.create_index(
-#         text_chunks, transformations=transformations
-#     )
-
-#     # Test query_index with questions about AI scientists
-#     query = "What is the Turing Test and who created it?"
-#     logger.info(f"Testing query_index with query: '{query}'")
-#     response = await graph_rag_ops_instance.query_index(query)
-
-#     # Log the response
-#     logger.info(f"Query response: {response.response}")
-
-#     # Assertions
-#     assert response is not None, "query_index should return a response"
-#     assert hasattr(response, "response"), "Response should have a response attribute"
-#     assert isinstance(response.response, str), "Response text should be a string"
+    logger.info(
+        f"Successfully created graph index with {len(doc_ids)} AI scientists markdown chunks and metadata"
+    )
 
 
-# @pytest.mark.asyncio
-# async def test_chat(
-#     graph_rag_ops_instance: InMemGraphRagOps,
-#     ai_scientists_markdown_content,
-#     transformations,
-# ):
-#     """Test conversational query with AI scientists content"""
+@pytest.mark.asyncio
+async def test_query_index(
+    graph_rag_ops_instance: InMemGraphRagOps,
+    ai_scientists_markdown_content,
+    transformations,
+):
+    """Test LLM query with AI scientists content"""
 
-#     # Use the structured markdown content paragraphs
-#     text_chunks = ai_scientists_markdown_content
+    # Use the structured markdown content paragraphs
+    text_chunks = ai_scientists_markdown_content
 
-#     # Create an index with the AI scientists markdown content
-#     await graph_rag_ops_instance.create_index(
-#         text_chunks, transformations=transformations
-#     )
+    # Create an index with the AI scientists markdown content
+    await graph_rag_ops_instance.create_index(
+        text_chunks, transformations=transformations
+    )
 
-#     # Test chat_with_index about AI scientists
-#     message = "Tell me about the three scientists known as the Godfathers of AI"
-#     chat_history = []  # Empty chat history for first interaction
+    # Test query_index with questions about AI scientists
+    query = "What is the Turing Test and who created it?"
+    logger.info(f"Testing query_index with query: '{query}'")
+    response = await graph_rag_ops_instance.query_index(query)
 
-#     logger.info(f"Testing chat_with_index with message: '{message}'")
-#     response = await graph_rag_ops_instance.chat_with_index(
-#         curr_message=message, chat_history=chat_history
-#     )
+    # Log the response
+    logger.info(f"Query response: {response.response}")
 
-#     # Log the chat response
-#     logger.info(f"Chat response: {response}")
-
-#     # Assertions
-#     assert response is not None, "chat_with_index should return a response"
-#     assert isinstance(response, str), "Chat response should be a string"
+    # Assertions
+    assert response is not None, "query_index should return a response"
+    assert hasattr(response, "response"), "Response should have a response attribute"
+    assert isinstance(response.response, str), "Response text should be a string"
 
 
-# @pytest.mark.asyncio
-# async def test_index_persistence(
-#     temp_index_dir,
-#     embedding_llm,
-#     completion_llm,
-#     metadata_fields,
-#     ai_scientists_markdown_content,
-#     transformations,
-# ):
-#     """Test that the AI scientists index is persisted to disk and can be reloaded"""
-#     # Create an initial RAG ops instance
-#     initial_graph_rag_ops = InMemGraphRagOps(
-#         persist_dir=temp_index_dir,
-#         emb_llm=embedding_llm,
-#         completion_llm=completion_llm,
-#         embed_kg_nodes=True,
-#     )
+@pytest.mark.asyncio
+async def test_chat(
+    graph_rag_ops_instance: InMemGraphRagOps,
+    ai_scientists_markdown_content,
+    transformations,
+):
+    """Test conversational query with AI scientists content"""
 
-#     # Use the AI scientists markdown content
-#     text_chunks = ai_scientists_markdown_content
-#     doc_ids = await initial_graph_rag_ops.create_index(
-#         text_chunks, metadata=metadata_fields, transformations=transformations
-#     )
-#     assert len(doc_ids) == len(
-#         text_chunks
-#     ), f"Should have indexed {len(text_chunks)} documents"
+    # Use the structured markdown content paragraphs
+    text_chunks = ai_scientists_markdown_content
 
-#     # Create a new RAG ops instance pointing to the same index location
-#     # This simulates restarting the application
-#     reloaded_graph_rag_ops = InMemGraphRagOps(
-#         persist_dir=temp_index_dir,
-#         emb_llm=embedding_llm,
-#         completion_llm=completion_llm,
-#         embed_kg_nodes=True,
-#     )
+    # Create an index with the AI scientists markdown content
+    await graph_rag_ops_instance.create_index(
+        text_chunks, transformations=transformations
+    )
 
-#     # Test that the index was loaded correctly by querying about AI scientists
-#     query = "Who shared the 2018 Turing Award for deep learning?"
-#     response = await reloaded_graph_rag_ops.query_index(query)
-#     assert response is not None, "Should get a response from the persisted index"
-#     logger.info(f"Query response from persisted index: {response.response}")
+    # Test chat_with_index about AI scientists
+    message = "Tell me about the three scientists known as the Godfathers of AI"
+    chat_history = []  # Empty chat history for first interaction
+
+    logger.info(f"Testing chat_with_index with message: '{message}'")
+    response = await graph_rag_ops_instance.chat_with_index(
+        curr_message=message, chat_history=chat_history
+    )
+
+    # Log the chat response
+    logger.info(f"Chat response: {response}")
+
+    # Assertions
+    assert response is not None, "chat_with_index should return a response"
+    assert isinstance(response, str), "Chat response should be a string"
 
 
-# @pytest.mark.asyncio
-# async def test_metadata_filtering(
-#     graph_rag_ops_instance: InMemGraphRagOps,
-#     ai_scientists_markdown_content,
-#     transformations,
-# ):
-#     """Test metadata filtering with single field filter"""
+@pytest.mark.asyncio
+async def test_index_persistence(
+    temp_index_dir,
+    embedding_llm,
+    completion_llm,
+    metadata_fields,
+    ai_scientists_markdown_content,
+    transformations,
+):
+    """Test that the AI scientists index is persisted to disk and can be reloaded"""
+    # Create an initial RAG ops instance
+    initial_graph_rag_ops = InMemGraphRagOps(
+        persist_dir=temp_index_dir,
+        emb_llm=embedding_llm,
+        completion_llm=completion_llm,
+        embed_kg_nodes=True,
+    )
 
-#     # Create documents with different source metadata
-#     text_chunks = ai_scientists_markdown_content
-#     metadata_source_1 = {"source": "research_papers"}
-#     metadata_source_2 = {"source": "textbooks"}
-#     metadata_source_3 = {"source": "wikipedia"}
+    # Use the AI scientists markdown content
+    text_chunks = ai_scientists_markdown_content
+    doc_ids = await initial_graph_rag_ops.create_index(
+        text_chunks, metadata=metadata_fields, transformations=transformations
+    )
+    assert len(doc_ids) == len(
+        text_chunks
+    ), f"Should have indexed {len(text_chunks)} documents"
 
-#     # Create index with first document
-#     await graph_rag_ops_instance.create_index(
-#         [text_chunks[0]], metadata=metadata_source_1, transformations=transformations
-#     )
+    # Create a new RAG ops instance pointing to the same index location
+    # This simulates restarting the application
+    reloaded_graph_rag_ops = InMemGraphRagOps(
+        persist_dir=temp_index_dir,
+        emb_llm=embedding_llm,
+        completion_llm=completion_llm,
+        embed_kg_nodes=True,
+    )
 
-#     if len(text_chunks) > 1:
-#         await graph_rag_ops_instance.insert_text_chunks(
-#             [text_chunks[1]],
-#             metadata=metadata_source_2,
-#         )
+    # Test that the index was loaded correctly by querying about AI scientists
+    query = "Who shared the 2018 Turing Award for deep learning?"
+    response = await reloaded_graph_rag_ops.query_index(query)
+    assert response is not None, "Should get a response from the persisted index"
+    logger.info(f"Query response from persisted index: {response.response}")
 
-#     if len(text_chunks) > 2:
-#         await graph_rag_ops_instance.insert_text_chunks(
-#             [text_chunks[2]],
-#             metadata=metadata_source_3,
-#         )
 
-#     # Query about Turing Test - only answerable by document 0 (research_papers)
-#     query_1 = "What is the Turing Test and when was it proposed?"
-#     # Query about LISP programming language - only answerable by document 1 (textbooks)
-#     query_2 = "Who developed the LISP programming language and what conference did they organize?"
-#     # Query about 2018 Turing Award winners - only answerable by document 2 (wikipedia)
-#     query_3 = "Which three scientists shared the 2018 Turing Award for deep learning?"
+@pytest.mark.asyncio
+async def test_metadata_filtering(
+    graph_rag_ops_instance: InMemGraphRagOps,
+    ai_scientists_markdown_content,
+    transformations,
+):
+    """Test metadata filtering with single field filter"""
 
-#     response_for_metadata_1 = await graph_rag_ops_instance.query_index(
-#         text_str=query_2, metadata_filter=metadata_source_1
-#     )
-#     logger.info(f"Response for metadata source 1: {response_for_metadata_1.response}")
-#     assert (
-#         "empty response" in str(response_for_metadata_1.response).lower()
-#     ), "Should return empty response"
+    # Create documents with different source metadata
+    text_chunks = ai_scientists_markdown_content
+    metadata_source_1 = {"source": "research_papers"}
+    metadata_source_2 = {"source": "textbooks"}
+    metadata_source_3 = {"source": "wikipedia"}
 
-#     response_for_metadata_2 = await graph_rag_ops_instance.query_index(
-#         text_str=query_3, metadata_filter=metadata_source_2
-#     )
-#     logger.info(f"Response for metadata source 2: {response_for_metadata_2.response}")
-#     assert (
-#         "empty response" in str(response_for_metadata_2.response).lower()
-#     ), "Should return empty response"
+    # Create index with first document
+    await graph_rag_ops_instance.create_index(
+        [text_chunks[0]], metadata=metadata_source_1, transformations=transformations
+    )
 
-#     response_for_metadata_3 = await graph_rag_ops_instance.query_index(
-#         text_str=query_1, metadata_filter=metadata_source_3
-#     )
-#     logger.info(f"Response for metadata source 3: {response_for_metadata_3.response}")
-#     assert (
-#         "empty response" in str(response_for_metadata_3.response).lower()
-#     ), "Should return empty response"
+    if len(text_chunks) > 1:
+        await graph_rag_ops_instance.insert_text_chunks(
+            [text_chunks[1]],
+            metadata=metadata_source_2,
+        )
 
-#     response = await graph_rag_ops_instance.query_index(
-#         text_str=query_1,
-#     )
-#     logger.info(f"Response for correct metadata: {response.response}")
-#     assert (
-#         "empty response" not in str(response.response).lower()
-#     ), "Should NOT return empty response"
+    if len(text_chunks) > 2:
+        await graph_rag_ops_instance.insert_text_chunks(
+            [text_chunks[2]],
+            metadata=metadata_source_3,
+        )
+
+    # Query about Turing Test - only answerable by document 0 (research_papers)
+    query_1 = "What is the Turing Test and when was it proposed?"
+    # Query about LISP programming language - only answerable by document 1 (textbooks)
+    query_2 = "Who developed the LISP programming language and what conference did they organize?"
+    # Query about 2018 Turing Award winners - only answerable by document 2 (wikipedia)
+    query_3 = "Which three scientists shared the 2018 Turing Award for deep learning?"
+
+    response_for_metadata_1 = await graph_rag_ops_instance.query_index(
+        text_str=query_2, metadata_filter=metadata_source_1
+    )
+    logger.info(f"Response for metadata source 1: {response_for_metadata_1.response}")
+    assert (
+        "empty response" in str(response_for_metadata_1.response).lower()
+    ), "Should return empty response"
+
+    response_for_metadata_2 = await graph_rag_ops_instance.query_index(
+        text_str=query_3, metadata_filter=metadata_source_2
+    )
+    logger.info(f"Response for metadata source 2: {response_for_metadata_2.response}")
+    assert (
+        "empty response" in str(response_for_metadata_2.response).lower()
+    ), "Should return empty response"
+
+    response_for_metadata_3 = await graph_rag_ops_instance.query_index(
+        text_str=query_1, metadata_filter=metadata_source_3
+    )
+    logger.info(f"Response for metadata source 3: {response_for_metadata_3.response}")
+    assert (
+        "empty response" in str(response_for_metadata_3.response).lower()
+    ), "Should return empty response"
+
+    response = await graph_rag_ops_instance.query_index(
+        text_str=query_1,
+    )
+    logger.info(f"Response for correct metadata: {response.response}")
+    assert (
+        "empty response" not in str(response.response).lower()
+    ), "Should NOT return empty response"
 
 
 @pytest.mark.asyncio

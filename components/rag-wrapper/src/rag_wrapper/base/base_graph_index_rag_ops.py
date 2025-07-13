@@ -212,13 +212,10 @@ class BaseGraphIndexRagOps(ABC):
         async def _aquery_with_retries():
             """Internal retry wrapper."""
             try:
-                _token_counter = TokenCountingHandler(logger=self.logger, verbose=True)
-
                 # Create query engine with token tracking and sub-retrievers
                 query_engine_kwargs = {
                     "llm": self.completion_llm,
                     "response_mode": self._get_response_mode(),
-                    "callback_manager": CallbackManager([_token_counter]),
                     "include_text": self.include_text,
                     "similarity_top_k": self.similarity_top_k,
                 }
@@ -235,7 +232,7 @@ class BaseGraphIndexRagOps(ABC):
 
                 # Generate response using the query engine
                 response = await query_engine.aquery(text_str)
-                return response, _token_counter
+                return response
             except Exception as e:
                 self.logger.error(traceback.format_exc())
                 raise e
@@ -272,15 +269,8 @@ class BaseGraphIndexRagOps(ABC):
                 )
 
         try:
-            answer, token_counter = await self._query_with_retries(
+            answer = await self._query_with_retries(
                 text_str, sub_retrievers, metadata_filter
-            )
-
-            # Log token usage for monitoring
-            self.logger.debug(
-                f"TOKEN COUNTS: completion {token_counter.completion_llm_token_count}, "
-                f"prompt {token_counter.prompt_llm_token_count}, "
-                f"total: {token_counter.total_llm_token_count}",
             )
 
             # Validate response quality
