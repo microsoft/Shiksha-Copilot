@@ -1,5 +1,4 @@
 from typing import Any, Dict, Optional, List
-
 import nest_asyncio
 from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
