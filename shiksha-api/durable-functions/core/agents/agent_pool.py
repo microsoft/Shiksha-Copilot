@@ -52,7 +52,7 @@ class AgentPool:
         """
         if identifier not in cls._rag_instances:
             # TODO: Improve this logic to handle different types of RAG agents
-            if "graph" in identifier:
+            if "graph-index" in identifier:
                 cls._rag_instances[identifier] = cls.GRAPH_INDEX_AGENT_CLASS(identifier)
             else:
                 cls._rag_instances[identifier] = cls.VECTOR_INDEX_AGENT_CLASS(
