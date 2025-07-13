@@ -52,11 +52,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             else QueryGenerator(lp_gen_input, section)
         )
 
-        # Generate retrieval and synthesis queries
-        # retrieval_query = query_generator.generate_retrieval_query()
-        retrieval_query = query_generator.generate_synthesis_query(
-            dependencies=dependencies
-        )
+        # Generate synthesis queries
         synthesis_query = query_generator.generate_synthesis_query(
             dependencies=dependencies
         )
@@ -75,7 +71,6 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             result = await rag_agent.generate(
                 RAGInput(
                     index_path=lp_gen_input.chapter_info.index_path,
-                    retrieval_query=retrieval_query,
                     response_synthesis_query=synthesis_query,
                 )
             )

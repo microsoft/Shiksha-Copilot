@@ -1,8 +1,9 @@
 from typing import Dict, Type, TypeVar, Any
 
-from core.agents.base_rag_agent import BaseRagAgent
+from core.agents.base_azure_blob_rag_agent import BaseAzureBlobRAGAgent
 from core.agents.gpt_agent import GPTAgent
-from core.agents.in_mem_rag_agent import InMemRAGAgent
+from core.agents.vector_index_rag_agent import VectorIndexRAGAgent
+from core.agents.graph_index_rag_agent import GraphIndexRAGAgent
 from core.agents.validator_agent import ValidatorAgent
 
 
@@ -19,13 +20,13 @@ class AgentPool:
     which helps with resource management and consistency.
     """
 
-    # Define which RAG Agent implementation to use - change this ONE line to switch implementations
-    RAG_AGENT_CLASS = InMemRAGAgent
+    VECTOR_INDEX_AGENT_CLASS = VectorIndexRAGAgent
+    GRAPH_INDEX_AGENT_CLASS = GraphIndexRAGAgent
 
     # Dictionary to store agent instances
     _instances: Dict[Type, Any] = {}
     # Dictionary to store RAG agent instances by identifier
-    _rag_instances: Dict[str, BaseRagAgent] = {}
+    _rag_instances: Dict[str, BaseAzureBlobRAGAgent] = {}
 
     @classmethod
     def get_gpt_agent(cls) -> GPTAgent:
@@ -38,7 +39,7 @@ class AgentPool:
         return cls._get_agent(GPTAgent)
 
     @classmethod
-    def get_rag_agent(cls, identifier: str = "default") -> BaseRagAgent:
+    def get_rag_agent(cls, identifier: str = "default") -> BaseAzureBlobRAGAgent:
         """
         Returns a singleton instance of a RAG agent for the given identifier.
         The specific implementation is determined by RAG_AGENT_CLASS.
@@ -50,7 +51,13 @@ class AgentPool:
             BaseRagAgent: A singleton instance of RAG agent for the given identifier
         """
         if identifier not in cls._rag_instances:
-            cls._rag_instances[identifier] = cls.RAG_AGENT_CLASS(identifier)
+            # TODO: Improve this logic to handle different types of RAG agents
+            if "graph" in identifier:
+                cls._rag_instances[identifier] = cls.GRAPH_INDEX_AGENT_CLASS(identifier)
+            else:
+                cls._rag_instances[identifier] = cls.VECTOR_INDEX_AGENT_CLASS(
+                    identifier
+                )
 
         return cls._rag_instances[identifier]
 

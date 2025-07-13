@@ -48,7 +48,6 @@ class RAGInput(BaseModel):
     """Input for RAG-based section generation"""
 
     index_path: str = Field(..., description="Path to the index for content retrieval")
-    retrieval_query: str = Field(..., description="Query to retrieve relevant content")
     response_synthesis_query: str = Field(
         ..., description="Query to synthesize the response"
     )
