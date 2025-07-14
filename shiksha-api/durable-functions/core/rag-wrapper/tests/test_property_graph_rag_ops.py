@@ -52,6 +52,27 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 
+def _log_token_usage(graph_rag_ops_instance):
+    """Log token usage for a given message"""
+    if graph_rag_ops_instance.token_counter:
+        logger.info(
+            "Embedding Tokens: %s",
+            graph_rag_ops_instance.token_counter.total_embedding_token_count,
+        )
+        logger.info(
+            "LLM Prompt Tokens: %s",
+            graph_rag_ops_instance.token_counter.prompt_llm_token_count,
+        )
+        logger.info(
+            "LLM Completion Tokens: %s",
+            graph_rag_ops_instance.token_counter.completion_llm_token_count,
+        )
+        logger.info(
+            "Total LLM Token Count: %s",
+            graph_rag_ops_instance.token_counter.total_llm_token_count,
+        )
+
+
 @pytest.fixture
 def metadata_fields():
     """Source metadata for group A test documents"""
@@ -246,6 +267,7 @@ async def test_create_index_with_metadata(
     doc_ids = await graph_rag_ops_instance.create_index(
         text_chunks, metadata=metadata_fields
     )
+    _log_token_usage(graph_rag_ops_instance)
 
     # Assertions
     assert len(doc_ids) == len(
@@ -273,6 +295,7 @@ async def test_query_index(
     await graph_rag_ops_instance.create_index(
         text_chunks, transformations=transformations
     )
+    _log_token_usage(graph_rag_ops_instance)
 
     # Test query_index with questions about AI scientists
     query = "What is the Turing Test and who created it?"
@@ -281,6 +304,7 @@ async def test_query_index(
 
     # Log the response
     logger.info(f"Query response: {response.response}")
+    _log_token_usage(graph_rag_ops_instance)
 
     # Assertions
     assert response is not None, "query_index should return a response"
@@ -315,6 +339,7 @@ async def test_chat(
 
     # Log the chat response
     logger.info(f"Chat response: {response}")
+    _log_token_usage(graph_rag_ops_instance)
 
     # Assertions
     assert response is not None, "chat_with_index should return a response"
@@ -344,6 +369,7 @@ async def test_index_persistence(
     doc_ids = await initial_graph_rag_ops.create_index(
         text_chunks, metadata=metadata_fields, transformations=transformations
     )
+    _log_token_usage(initial_graph_rag_ops)
     assert len(doc_ids) == len(
         text_chunks
     ), f"Should have indexed {len(text_chunks)} documents"
@@ -360,6 +386,7 @@ async def test_index_persistence(
     # Test that the index was loaded correctly by querying about AI scientists
     query = "Who shared the 2018 Turing Award for deep learning?"
     response = await reloaded_graph_rag_ops.query_index(query)
+    _log_token_usage(reloaded_graph_rag_ops)
     assert response is not None, "Should get a response from the persisted index"
     logger.info(f"Query response from persisted index: {response.response}")
 
@@ -382,18 +409,21 @@ async def test_metadata_filtering(
     await graph_rag_ops_instance.create_index(
         [text_chunks[0]], metadata=metadata_source_1, transformations=transformations
     )
+    _log_token_usage(graph_rag_ops_instance)
 
     if len(text_chunks) > 1:
         await graph_rag_ops_instance.insert_text_chunks(
             [text_chunks[1]],
             metadata=metadata_source_2,
         )
+        _log_token_usage(graph_rag_ops_instance)
 
     if len(text_chunks) > 2:
         await graph_rag_ops_instance.insert_text_chunks(
             [text_chunks[2]],
             metadata=metadata_source_3,
         )
+        _log_token_usage(graph_rag_ops_instance)
 
     # Query about Turing Test - only answerable by document 0 (research_papers)
     query_1 = "What is the Turing Test and when was it proposed?"
@@ -405,6 +435,7 @@ async def test_metadata_filtering(
     response_for_metadata_1 = await graph_rag_ops_instance.query_index(
         text_str=query_2, metadata_filter=metadata_source_1
     )
+    _log_token_usage(graph_rag_ops_instance)
     logger.info(f"Response for metadata source 1: {response_for_metadata_1.response}")
     assert (
         "empty response" in str(response_for_metadata_1.response).lower()
@@ -413,6 +444,7 @@ async def test_metadata_filtering(
     response_for_metadata_2 = await graph_rag_ops_instance.query_index(
         text_str=query_3, metadata_filter=metadata_source_2
     )
+    _log_token_usage(graph_rag_ops_instance)
     logger.info(f"Response for metadata source 2: {response_for_metadata_2.response}")
     assert (
         "empty response" in str(response_for_metadata_2.response).lower()
@@ -421,6 +453,7 @@ async def test_metadata_filtering(
     response_for_metadata_3 = await graph_rag_ops_instance.query_index(
         text_str=query_1, metadata_filter=metadata_source_3
     )
+    _log_token_usage(graph_rag_ops_instance)
     logger.info(f"Response for metadata source 3: {response_for_metadata_3.response}")
     assert (
         "empty response" in str(response_for_metadata_3.response).lower()
@@ -429,6 +462,7 @@ async def test_metadata_filtering(
     response = await graph_rag_ops_instance.query_index(
         text_str=query_1,
     )
+    _log_token_usage(graph_rag_ops_instance)
     logger.info(f"Response for correct metadata: {response.response}")
     assert (
         "empty response" not in str(response.response).lower()
@@ -450,6 +484,7 @@ async def test_query_index_with_schema_extractor(
     await graph_rag_ops_instance_with_schema_extractor.create_index(
         text_chunks, transformations=transformations
     )
+    _log_token_usage(graph_rag_ops_instance_with_schema_extractor)
 
     # Test query_index with questions about specific AI scientists defined in schema
     query = (
@@ -460,6 +495,7 @@ async def test_query_index_with_schema_extractor(
 
     # Log the response
     logger.info(f"Schema extractor query response: {response.response}")
+    _log_token_usage(graph_rag_ops_instance_with_schema_extractor)
 
     # Assertions
     assert response is not None, "query_index should return a response"
@@ -475,6 +511,7 @@ async def test_query_index_with_schema_extractor(
     response2 = await graph_rag_ops_instance_with_schema_extractor.query_index(query2)
 
     logger.info(f"Second schema extractor query response: {response2.response}")
+    _log_token_usage(graph_rag_ops_instance_with_schema_extractor)
     assert response2 is not None, "Second query should return a response"
     assert isinstance(
         response2.response, str

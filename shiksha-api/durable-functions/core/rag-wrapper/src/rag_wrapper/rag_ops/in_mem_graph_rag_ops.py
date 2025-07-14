@@ -84,6 +84,7 @@ class InMemGraphRagOps(BaseGraphIndexRagOps):
                     storage_context,
                     embed_model=self.emb_llm if self.embed_kg_nodes else None,
                     llm=self.completion_llm,
+                    callback_manager=self._callback_manager,
                 )
 
                 self.storage_context = storage_context

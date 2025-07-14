@@ -44,6 +44,7 @@ class InMemRagOps(BaseVectorIndexRagOps):
                 self.rag_index = load_index_from_storage(
                     storage_context=self.storage_context,
                     embed_model=self.emb_llm,
+                    callback_manager=self._callback_manager,
                 )
                 self.logger.info("Successfully loaded existing index")
             else:

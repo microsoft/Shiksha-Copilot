@@ -73,6 +73,8 @@ class BaseVectorIndexRagOps(ABC):
         self.similarity_top_k = similarity_top_k
         self.response_mode = response_mode
         self.logger = logging.getLogger(__name__)
+        self.token_counter = TokenCountingHandler()
+        self._callback_manager = CallbackManager([self.token_counter])
 
     def _get_response_mode(self) -> ResponseMode:
         """Convert string response mode to ResponseMode enum."""
@@ -108,7 +110,7 @@ class BaseVectorIndexRagOps(ABC):
         self,
         text_str: str,
         metadata_filter: Optional[Dict[str, str]] = None,
-    ) -> tuple[Any, TokenCountingHandler]:
+    ):
         """Internal method with retry logic for robust querying."""
 
         @retry(
@@ -129,7 +131,11 @@ class BaseVectorIndexRagOps(ABC):
             try:
                 # Create query engine with metadata filters and response synthesizer
                 query_engine_kwargs = {
-                    "response_mode": self._get_response_mode(),
+                    "response_synthesizer": get_response_synthesizer(
+                        llm=self.completion_llm,
+                        response_mode=self._get_response_mode(),
+                        callback_manager=self._callback_manager,
+                    ),
                     "similarity_top_k": self.similarity_top_k,
                 }
 
@@ -229,6 +235,8 @@ class BaseVectorIndexRagOps(ABC):
                 chat_engine_kwargs["filters"] = filters
 
             chat_engine = self.rag_index.as_chat_engine(**chat_engine_kwargs)
+            if hasattr(chat_engine, "callback_manager"):
+                chat_engine.callback_manager = self._callback_manager
 
             # Generate response with chat history context
             response = await chat_engine.achat(curr_message, chat_history)
@@ -276,6 +284,7 @@ class BaseVectorIndexRagOps(ABC):
                 embed_model=self.emb_llm,
                 use_async=True,
                 transformations=transformations,
+                callback_manager=self._callback_manager,
             )
 
             self.logger.info(f"Created new index with {len(documents)} documents")
@@ -452,6 +461,7 @@ class BaseVectorIndexRagOps(ABC):
             self.rag_index = VectorStoreIndex.from_vector_store(
                 vector_store=self.vector_store,
                 embed_model=self.emb_llm,
+                callback_manager=self._callback_manager,
                 **kwargs,
             )
 
