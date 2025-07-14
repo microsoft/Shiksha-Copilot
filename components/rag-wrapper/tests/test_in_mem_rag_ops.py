@@ -114,10 +114,10 @@ def temp_index_dir():
 
 
 @pytest.fixture(scope="function")
-def rag_ops_instance(temp_index_dir, embedding_llm, completion_llm, metadata_fields_a):
+def rag_ops_instance(temp_index_dir, embedding_llm, completion_llm):
     """Create an InMemRagOps instance for testing"""
     return InMemRagOps(
-        index_path=temp_index_dir,
+        persist_dir=temp_index_dir,
         emb_llm=embedding_llm,
         completion_llm=completion_llm,
     )
@@ -195,6 +195,27 @@ The modern AI renaissance has been shaped by three visionary scientists, collect
     ]
 
 
+def _log_token_usage(rag_ops_instance):
+    """Log token usage for a given message"""
+    if rag_ops_instance.token_counter:
+        logger.info(
+            "Embedding Tokens: %s",
+            rag_ops_instance.token_counter.total_embedding_token_count,
+        )
+        logger.info(
+            "LLM Prompt Tokens: %s",
+            rag_ops_instance.token_counter.prompt_llm_token_count,
+        )
+        logger.info(
+            "LLM Completion Tokens: %s",
+            rag_ops_instance.token_counter.completion_llm_token_count,
+        )
+        logger.info(
+            "Total LLM Token Count: %s",
+            rag_ops_instance.token_counter.total_llm_token_count,
+        )
+
+
 @pytest.mark.asyncio
 async def test_create_index_with_metadata(
     rag_ops_instance, metadata_fields_a, ai_scientists_markdown_content, transformations
@@ -208,7 +229,7 @@ async def test_create_index_with_metadata(
     doc_ids = await rag_ops_instance.create_index(
         text_chunks, metadata=metadata_fields_a, transformations=transformations
     )
-
+    _log_token_usage(rag_ops_instance)
     # Assertions
     assert len(doc_ids) == len(
         text_chunks
@@ -233,12 +254,13 @@ async def test_query_index(
     await rag_ops_instance.create_index(text_chunks, transformations=transformations)
 
     # Test query_index with questions about AI scientists
-    query = "What is the Turing Test and who created it?"
+    query = "What is the Turing Test and who created it? Did he win a nobel prize?"
     logger.info(f"Testing query_index with query: '{query}'")
     response = await rag_ops_instance.query_index(query)
 
     # Log the response
     logger.info(f"Query response: {response.response}")
+    _log_token_usage(rag_ops_instance)
 
     # Assertions
     assert response is not None, "query_index should return a response"
@@ -267,6 +289,7 @@ async def test_chat(rag_ops_instance, ai_scientists_markdown_content, transforma
 
     # Log the chat response
     logger.info(f"Chat response: {response}")
+    _log_token_usage(rag_ops_instance)
 
     # Assertions
     assert response is not None, "chat_with_index should return a response"
@@ -311,6 +334,7 @@ async def test_query_index_with_metadata_a(
     logger.info(
         f"Response with CORRECT filter: {response_with_correct_filter.response}"
     )
+    _log_token_usage(rag_ops_instance)
 
     # Test query with incorrect metadata filter (should not find relevant AI content)
     logger.info(
@@ -323,12 +347,14 @@ async def test_query_index_with_metadata_a(
     logger.info(
         f"Response with INCORRECT filter: {response_with_wrong_filter.response}"
     )
+    _log_token_usage(rag_ops_instance)
 
     # Test query without metadata filter (should potentially find both types of content)
     logger.info(f"Testing WITHOUT metadata filter - query: '{query}'")
     response_without_filter = await rag_ops_instance.query_index(query)
 
     logger.info(f"Response WITHOUT filter: {response_without_filter.response}")
+    _log_token_usage(rag_ops_instance)
 
     # Assertions
     assert (
@@ -401,6 +427,7 @@ async def test_metadata_filtering_effectiveness(
     await rag_ops_instance.insert_text_chunks(
         specific_chunks, metadata=metadata_fields_b, transformations=transformations
     )
+    _log_token_usage(rag_ops_instance)
 
     # Query for AI content with wrong metadata filter - should not retrieve AI content
     query = "What is the Turing Test?"
@@ -411,6 +438,7 @@ async def test_metadata_filtering_effectiveness(
     logger.info(
         f"Query for AI content with non-AI metadata filter: {response.response}"
     )
+    _log_token_usage(rag_ops_instance)
 
     # The response should not contain specific AI details from our indexed content
     # because the metadata filter should have blocked access to AI documents
@@ -449,7 +477,7 @@ async def test_index_persistence(
     """Test that the AI scientists index is persisted to disk and can be reloaded"""
     # Create an initial RAG ops instance
     initial_rag_ops = InMemRagOps(
-        index_path=temp_index_dir,
+        persist_dir=temp_index_dir,
         emb_llm=embedding_llm,
         completion_llm=completion_llm,
     )
@@ -459,6 +487,7 @@ async def test_index_persistence(
     doc_ids = await initial_rag_ops.create_index(
         text_chunks, metadata=metadata_fields_a, transformations=transformations
     )
+    _log_token_usage(initial_rag_ops)
     assert len(doc_ids) == len(
         text_chunks
     ), f"Should have indexed {len(text_chunks)} documents"
@@ -466,7 +495,7 @@ async def test_index_persistence(
     # Create a new RAG ops instance pointing to the same index location
     # This simulates restarting the application
     reloaded_rag_ops = InMemRagOps(
-        index_path=temp_index_dir,
+        persist_dir=temp_index_dir,
         emb_llm=embedding_llm,
         completion_llm=completion_llm,
     )
@@ -474,7 +503,7 @@ async def test_index_persistence(
     # Test that the index was loaded correctly by querying it with AI-related questions
     query = "What is the Turing Test?"
     response = await reloaded_rag_ops.query_index(query)
-
+    _log_token_usage(reloaded_rag_ops)
     # Assertions
     assert response is not None, "Should get a response from the persisted index"
     logger.info(f"Query response from persisted index: {response.response}")
@@ -483,6 +512,7 @@ async def test_index_persistence(
     second_response = await reloaded_rag_ops.query_index(
         "Tell me about Geoffrey Hinton"
     )
+    _log_token_usage(reloaded_rag_ops)
     assert (
         second_response is not None
     ), "Should get a response for second query from persisted index"
