@@ -11,7 +11,13 @@ from tenacity import (
     retry_if_result,
 )
 from llama_index.core.chat_engine.types import ChatMode
-from llama_index.core import StorageContext, Document, PropertyGraphIndex
+from llama_index.core import (
+    StorageContext,
+    Document,
+    PropertyGraphIndex,
+    get_response_synthesizer,
+    Settings,
+)
 from llama_index.core.llms import ChatMessage, LLM
 from llama_index.core.schema import TransformComponent
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
@@ -46,7 +52,6 @@ class BaseGraphIndexRagOps(ABC):
         completion_llm: Completion language model
         logger: Logger for debugging and monitoring
         kg_extractors: Knowledge graph extractors for entity/relation extraction
-        sub_retrievers: Sub-retrievers for backwards compatibility (use sub_retrievers parameter in methods instead)
     """
 
     rag_index: Optional[PropertyGraphIndex] = None
@@ -84,6 +89,12 @@ class BaseGraphIndexRagOps(ABC):
         self.include_text = include_text
         self.embed_kg_nodes = embed_kg_nodes
         self.logger = logging.getLogger(__name__)
+        self.token_counter = TokenCountingHandler()
+        self._callback_manager = CallbackManager([self.token_counter])
+
+        self._add_token_counter_to_llm(
+            self.completion_llm
+        )  # FOR token tracking in KG Extractors while creating the index
 
         # Set default knowledge graph extractors if not provided
         if kg_extractors is None:
@@ -97,6 +108,17 @@ class BaseGraphIndexRagOps(ABC):
             ]
         else:
             self.kg_extractors = kg_extractors
+
+    def _add_token_counter_to_llm(self, llm: LLM):
+        if llm.callback_manager is None:
+            llm.callback_manager = self._callback_manager
+        else:
+            # Add self.token_counter if not already present (by type)
+            if not any(
+                isinstance(h, TokenCountingHandler)
+                for h in llm.callback_manager.handlers
+            ):
+                llm.callback_manager.add_handler(self.token_counter)
 
     def _get_response_mode(self) -> ResponseMode:
         """Convert string response mode to ResponseMode enum."""
@@ -193,7 +215,7 @@ class BaseGraphIndexRagOps(ABC):
         text_str: str,
         sub_retrievers: Optional[List[Any]] = None,
         metadata_filter: Optional[Dict[str, str]] = None,
-    ) -> tuple[Any, TokenCountingHandler]:
+    ):
         """Internal method with retry logic for robust querying."""
 
         @retry(
@@ -215,7 +237,11 @@ class BaseGraphIndexRagOps(ABC):
                 # Create query engine with token tracking and sub-retrievers
                 query_engine_kwargs = {
                     "llm": self.completion_llm,
-                    "response_mode": self._get_response_mode(),
+                    "response_synthesizer": get_response_synthesizer(
+                        llm=self.completion_llm,
+                        response_mode=self._get_response_mode(),
+                        callback_manager=self._callback_manager,
+                    ),
                     "include_text": self.include_text,
                     "similarity_top_k": self.similarity_top_k,
                 }
@@ -330,6 +356,8 @@ class BaseGraphIndexRagOps(ABC):
                 )
 
             chat_engine = self.rag_index.as_chat_engine(**chat_engine_kwargs)
+            if hasattr(chat_engine, "callback_manager"):
+                chat_engine.callback_manager = self._callback_manager
 
             # Generate response with chat history context
             response = await chat_engine.achat(curr_message, chat_history)
@@ -385,6 +413,7 @@ class BaseGraphIndexRagOps(ABC):
                 transformations=transformations,
                 storage_context=self.storage_context,
                 embed_kg_nodes=self.embed_kg_nodes,
+                callback_manager=self._callback_manager,
             )
 
             self.logger.info(
@@ -533,6 +562,7 @@ class BaseGraphIndexRagOps(ABC):
                 vector_store=self.vector_store,
                 embed_model=self.emb_llm if self.embed_kg_nodes else None,
                 embed_kg_nodes=self.embed_kg_nodes,
+                callback_manager=self._callback_manager,
                 **kwargs,
             )
 
@@ -571,23 +601,24 @@ class BaseGraphIndexRagOps(ABC):
             VectorContextRetriever,
         )
 
+        def build_vector_context_retriever(filters=None):
+            self._add_token_counter_to_llm(self.emb_llm)
+            return VectorContextRetriever(
+                graph_store=self.property_graph_store,
+                embed_model=self.emb_llm,
+                similarity_top_k=self.similarity_top_k,
+                path_depth=self.path_depth,
+                include_text=self.include_text,
+                filters=filters,
+            )
+
         default_sub_retrievers = []
 
         if self.embed_kg_nodes and self.emb_llm and metadata_filter:
             filters = self._create_metadata_filters(metadata_filter)
-            default_sub_retrievers.append(
-                VectorContextRetriever(
-                    graph_store=self.property_graph_store,
-                    embed_model=self.emb_llm,
-                    similarity_top_k=self.similarity_top_k,
-                    path_depth=self.path_depth,
-                    include_text=self.include_text,
-                    filters=filters,
-                )
-            )
+            default_sub_retrievers.append(build_vector_context_retriever(filters))
             return default_sub_retrievers
 
-        # Add LLMSynonymRetriever with our completion LLM
         default_sub_retrievers.append(
             LLMSynonymRetriever(
                 graph_store=self.property_graph_store,
@@ -597,16 +628,7 @@ class BaseGraphIndexRagOps(ABC):
             )
         )
 
-        # Add VectorContextRetriever if vector store is available
         if self.embed_kg_nodes and self.emb_llm:
-            default_sub_retrievers.append(
-                VectorContextRetriever(
-                    graph_store=self.property_graph_store,
-                    embed_model=self.emb_llm,
-                    similarity_top_k=self.similarity_top_k,
-                    path_depth=self.path_depth,
-                    include_text=self.include_text,
-                )
-            )
+            default_sub_retrievers.append(build_vector_context_retriever())
 
         return default_sub_retrievers
