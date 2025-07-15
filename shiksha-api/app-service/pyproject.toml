@@ -1,48 +1,40 @@
 [tool.poetry]
-name = "shiksha-api"
+name = "shiksha-copilot-fastapi"
 version = "1.0.0"
-description = "Shiksha API service with RAG, completions, and agent capabilities"
-authors = ["Shiksha Team"]
+description = "AI-powered educational chat API for Shiksha platform"
+authors = ["Shiksha Development Team <dev@shiksha.org>"]
 readme = "README.md"
-package-mode = false
+packages = [{ include = "app" }]
 
 [tool.poetry.dependencies]
 python = "~3.11"
-# FastAPI and server dependencies
-fastapi = "0.104.1"
-uvicorn = { extras = ["standard"], version = "0.24.0" }
-pydantic = "2.5.0"
-pydantic-settings = "2.1.0"
-
-# Azure dependencies
-azure-identity = "1.15.0"
-azure-keyvault-secrets = "4.7.0"
-azure-monitor-opentelemetry = "1.2.0"
-opentelemetry-api = "1.21.0"
-opentelemetry-sdk = "1.21.0"
-
-# OpenAI and LLM dependencies
-litellm = "*"
+fastapi = "^0.104.1"
+uvicorn = { extras = ["standard"], version = "^0.24.0" }
+pydantic = "^2.5.0"
+python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+httpx = "^0.25.0"
+aiofiles = "^23.2.1"
+pyyaml = "^6.0.1"
 autogen-agentchat = "*"
-
-# Database and storage
-asyncpg = "0.29.0"
-httpx = "0.25.2"
-
-# Logging and monitoring
-structlog = "23.2.0"
-python-json-logger = "2.0.7"
-
-# Environment and configuration
-python-dotenv = "1.0.0"
+aiohttp = "^3.9.0"
+vellm-rag-wrapper = { path = "app/rag-wrapper", develop = true }
+autogen-ext = {extras = ["azure", "openai"], version = "^0.6.4"}
+pydantic-settings = "^2.10.1"
 
 [tool.poetry.group.dev.dependencies]
-# Development and testing
-pytest = "7.4.3"
-pytest-asyncio = "0.21.1"
-black = "23.11.0"
-isort = "5.12.0"
-mypy = "1.7.0"
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+black = "^23.11.0"
+isort = "^5.12.0"
+flake8 = "^6.1.0"
+mypy = "^1.7.1"
+pre-commit = "^3.5.0"
+
+[tool.poetry.group.test.dependencies]
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+httpx = "^0.25.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -50,19 +42,69 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
-target-version = ['py311']
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
 
 [tool.isort]
 profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
 line_length = 88
 
 [tool.mypy]
 python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
+check_untyped_defs = true
+disallow_any_generics = true
 disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_optional = true
 
-[tool.poetry.dependencies.vellm-rag-wrapper]
-path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/rag-wrapper"
-develop = true
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+  "unit: marks tests as unit tests",
+  "integration: marks tests as integration tests",
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["*/tests/*", "*/venv/*", "*/virtualenv/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+]
