@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     # Blob Store Configuration
     blob_store_connection_string: Optional[str] = None
+    blob_store_url: Optional[str] = None
 
     class Config:
         env_file = ".env"

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -8,12 +8,6 @@ class MessageRole(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
-
-
-class ChatMessage(BaseModel):
-    role: MessageRole
-    content: str
-    timestamp: Optional[datetime] = None
 
 
 class ConversationMessage(BaseModel):
@@ -29,6 +23,13 @@ class ChatRequest(BaseModel):
     messages: List[ConversationMessage] = Field(
         ..., description="List of conversation messages"
     )
+
+    @field_validator("messages")
+    @classmethod
+    def validate_messages_not_empty(cls, v):
+        if not v:
+            raise ValueError("Messages list cannot be empty")
+        return v
 
 
 class ChatResponse(BaseModel):
@@ -46,6 +47,13 @@ class LessonChatRequest(BaseModel):
     messages: List[ConversationMessage] = Field(
         ..., description="List of conversation messages"
     )
+
+    @field_validator("messages")
+    @classmethod
+    def validate_messages_not_empty(cls, v):
+        if not v:
+            raise ValueError("Messages list cannot be empty")
+        return v
 
 
 class LessonChatResponse(BaseModel):

@@ -10,6 +10,8 @@ from app.services.general_chat_service import GENERAL_CHAT_SERVICE_INSTANCE
 from typing import Dict, Any
 import logging
 
+from app.services.lesson_chat_service import LESSON_CHAT_SERVICE_INSTANCE
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -37,12 +39,6 @@ async def chat(
     """
     try:
         logger.info(f"Processing general chat request for user: {request.user_id}")
-
-        if not request.messages:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Messages list cannot be empty",
-            )
 
         response_content = await GENERAL_CHAT_SERVICE_INSTANCE(request.messages)
 
@@ -85,9 +81,11 @@ async def lesson_chat(
             f"Processing lesson chat request for user: {request.user_id}, chapter: {request.chapter_id}"
         )
 
+        response_content = await LESSON_CHAT_SERVICE_INSTANCE(request)
+
         logger.info(f"Successfully processed lesson chat for user: {request.user_id}")
 
-        return LessonChatResponse(user_id=request.user_id, response="response_content")
+        return LessonChatResponse(user_id=request.user_id, response=response_content)
 
     except ValueError as e:
         logger.error(f"Configuration error in lesson chat: {e}")

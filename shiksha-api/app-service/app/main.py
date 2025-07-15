@@ -14,9 +14,11 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     from app.services.general_chat_service import GENERAL_CHAT_SERVICE_INSTANCE
+    from app.services.lesson_chat_service import LESSON_CHAT_SERVICE_INSTANCE
 
     try:
         await GENERAL_CHAT_SERVICE_INSTANCE.cleanup()
+        await LESSON_CHAT_SERVICE_INSTANCE.cleanup()
     except Exception as e:
         print(f"Error during cleanup: {e}")
 
