@@ -124,7 +124,7 @@ class RegenQueryGenerator:
 
         synthesis_query += (
             f"\n# Section Description: {dedent(section_description)}\n\n"
-            "**Note: Adhere to the mentioned learning outcomes and ensure the content is relevant to the chapter.**"
+            "**Note: Adhere to the mentioned learning outcomes and ensure the content is relevant to the chapter. DO NOT include section title in the output unless specifically mentioned in output format.**"
         )
         if mode == Mode.RAG:
             synthesis_query += "**Refer to the retrieved content for context.**"
