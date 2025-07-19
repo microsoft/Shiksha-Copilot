@@ -216,6 +216,50 @@ metadata = extractor.extract(
 
 ## Utilities
 
+### TOCPageFinder
+
+Identify table of contents pages in PDF documents using LLM vision capabilities.
+
+```python
+from ingestion_pipeline.utils.toc_page_finder import TOCPageFinder
+
+toc_finder = TOCPageFinder(
+    api_key="your-azure-openai-key",
+    api_base="https://your-resource.openai.azure.com/",
+    api_version="2023-03-15-preview",
+    deployment_name="gpt-4o"
+)
+
+# Find all consecutive TOC pages
+toc_pages, analysis_summary = toc_finder.find_toc_pages(
+    "textbook.pdf",
+    max_pages_to_check=15,  # Check first 15 pages
+    batch_size=3            # Process 3 pages per LLM call
+)
+
+# Get TOC page range (start inclusive, end exclusive)
+start_page, end_page, summary = toc_finder.get_toc_page_range("textbook.pdf")
+if start_page:
+    print(f"TOC spans pages {start_page} to {end_page-1}")  # end_page is exclusive
+```
+
+**Features:**
+- **Boolean-based Detection**: Uses simplified True/False responses from LLM for each page
+- **Consecutive Page Logic**: Returns all consecutive pages from first True to first False
+- **Early Stopping**: Stops processing once TOC end is detected (optimization)
+- **Batch Processing**: Configurable batch sizes to minimize LLM API calls
+- **Exclusive End Range**: Returns page ranges where end page is excluded (programming standard)
+- **Error Handling**: Graceful handling of PDF conversion and API errors
+- **Flexible Authentication**: Supports both API key and Azure AD token authentication
+
+**Algorithm:**
+1. Convert PDF pages to images in configurable batches
+2. Send batch of page images to LLM with boolean classification prompt
+3. Process LLM response (JSON array of true/false values)
+4. Track consecutive True values starting from first True
+5. Stop when first False is encountered after True values
+6. Return consecutive page numbers and analysis summary
+
 ### PDFSplitter
 
 Split PDF files by page ranges or table of contents.
