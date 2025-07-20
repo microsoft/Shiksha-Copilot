@@ -1,7 +1,7 @@
 import pytest
 import logging
 import os
-from ingestion_pipeline.utils.toc_page_finder import TOCPageFinder
+from ingestion_pipeline.utils import TOCPageFinder
 
 @pytest.fixture
 def azure_openai_credentials():
