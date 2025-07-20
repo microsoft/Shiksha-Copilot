@@ -38,7 +38,7 @@ class TOCExtractionStep(BasePipelineStep):
 
     name = "toc_extraction"
     description = "Extract table of contents from PDF"
-    input_types = {"pdf"}
+    input_types = {"pdf", "toc_page_range"}
     output_types = {"toc"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
@@ -46,21 +46,28 @@ class TOCExtractionStep(BasePipelineStep):
         Process the step - extract TOC from PDF.
 
         Args:
-            input_paths: Dictionary with "pdf" key mapping to PDF file path
+            input_paths: Dictionary with "pdf" and "toc_page_range" keys mapping to file paths
             output_dir: Directory where TOC JSON will be saved
 
         Returns:
             StepResult with status and output paths
         """
         pdf_path = input_paths["pdf"]
+        toc_page_range_path = input_paths["toc_page_range"]
         output_filename = os.path.basename(pdf_path).replace(".pdf", ".json")
         output_path = os.path.join(output_dir, output_filename)
 
         try:
             logger.info(f"Processing {pdf_path}")
 
-            # Get configuration
-            page_number = self.config.get("page_number", 0)
+            # Load TOC page range from step 0 output
+            with open(toc_page_range_path, "r", encoding="utf-8") as f:
+                page_range_data = json.load(f)
+
+            start_page = page_range_data["start"]
+            end_page = page_range_data["end"]
+
+            logger.info(f"Using TOC page range: {start_page}-{end_page}")
 
             # Get credentials for TOC extraction
             credentials = azure_openai_credentials()
@@ -84,7 +91,7 @@ class TOCExtractionStep(BasePipelineStep):
 
             toc = extractor.extract_table_of_contents(
                 pdf_path,
-                page_range=(page_number, page_number + 1),
+                page_range=(start_page, end_page),
                 document_specific_hint=document_hint,
                 **credentials,
             )

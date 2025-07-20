@@ -27,7 +27,7 @@ class PDFSplittingStep(BasePipelineStep):
 
     name = "pdf_splitting"
     description = "Split PDF documents into chapters based on table of contents"
-    input_types = {"pdf", "toc"}
+    input_types = {"pdf", "toc", "page_offset"}
     output_types = {"split_pdfs"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
@@ -43,12 +43,10 @@ class PDFSplittingStep(BasePipelineStep):
         """
         pdf_path = input_paths["pdf"]
         toc_path = input_paths["toc"]
+        page_offset = input_paths["page_offset"]
 
         try:
             logger.info(f"Processing PDF splitting for {pdf_path}")
-
-            # Get page offset from config or default to 0
-            page_offset = self.config.get("page_offset", 0)
 
             # Read the TOC from the JSON file
             toc = self._read_toc_from_json(toc_path)
