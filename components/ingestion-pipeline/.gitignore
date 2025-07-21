@@ -2,3 +2,4 @@ tests/files/
 .pytest_cache/
 **/__pycache__/
 .vscode/
+.env

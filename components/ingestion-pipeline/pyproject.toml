@@ -13,7 +13,7 @@ packages = [
 
 # Where you declare runtime dependencies
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "~3.11"
 pytesseract = "^0.3.9"
 PyPDF2 = "*"
 azure-ai-formrecognizer = "^3.3.3"

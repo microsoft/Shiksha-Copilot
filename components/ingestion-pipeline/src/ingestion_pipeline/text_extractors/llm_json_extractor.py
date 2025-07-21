@@ -199,33 +199,43 @@ Do NOT wrap the output in any code block or add any extra commentary. The output
 
             # Extract the response content
             extracted_json_text = response["choices"][0]["message"]["content"].strip()
-            
+
             # Parse the JSON response
             try:
                 page_sections = json.loads(extracted_json_text)
                 if not isinstance(page_sections, list):
                     raise ValueError("Response is not a JSON array")
-                
+
                 # Validate the structure
                 for section in page_sections:
-                    if not isinstance(section, dict) or "section_title" not in section or "section_content" not in section:
+                    if (
+                        not isinstance(section, dict)
+                        or "section_title" not in section
+                        or "section_content" not in section
+                    ):
                         raise ValueError("Invalid section structure")
-                
+
                 return page_sections
             except (json.JSONDecodeError, ValueError) as e:
-                self.logger.error(f"Error parsing JSON response for page {page_number}: {e}")
+                self.logger.error(
+                    f"Error parsing JSON response for page {page_number}: {e}"
+                )
                 # Return a fallback structure
-                return [{
-                    "section_title": f"Page {page_number} (Parse Error)",
-                    "section_content": f"*Error parsing JSON response: {str(e)}*\n\nRaw response:\n{extracted_json_text}"
-                }]
+                return [
+                    {
+                        "section_title": f"Page {page_number} (Parse Error)",
+                        "section_content": f"*Error parsing JSON response: {str(e)}*\n\nRaw response:\n{extracted_json_text}",
+                    }
+                ]
 
         except Exception as e:
             self.logger.error(f"Error processing page {page_number} with LLM: {e}")
-            return [{
-                "section_title": f"Page {page_number} (Processing Error)",
-                "section_content": f"*Error processing page {page_number}: {str(e)}*"
-            }]
+            return [
+                {
+                    "section_title": f"Page {page_number} (Processing Error)",
+                    "section_content": f"*Error processing page {page_number}: {str(e)}*",
+                }
+            ]
 
     def _process_pages_in_batches(
         self,
@@ -257,12 +267,16 @@ Do NOT wrap the output in any code block or add any extra commentary. The output
             # Determine context to use - limit to recent pages to prevent context overflow
             if i >= batch_size:
                 # Keep only the latest batch_size pages worth of sections
-                context_sections = accumulated_context_sections[-batch_size * 10:]  # Approximate limit
+                context_sections = accumulated_context_sections[
+                    -batch_size * 10 :
+                ]  # Approximate limit
             else:
                 context_sections = accumulated_context_sections
 
             # Convert context sections to JSON string
-            context_json = json.dumps(context_sections, indent=2) if context_sections else ""
+            context_json = (
+                json.dumps(context_sections, indent=2) if context_sections else ""
+            )
 
             # Process the current page with context
             page_sections = self._process_page_with_llm(
