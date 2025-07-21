@@ -38,10 +38,12 @@ For the section content:
 Output ONLY valid JSON in the following format:
 [{
     "section_title": "Introduction",
-    "section_content": "This is the introduction content in markdown..."
+    "section_content": "This is the introduction content in markdown...",
+    "page_number": 1
 }, {
     "section_title": "Method",
-    "section_content": "This is the method section content..."
+    "section_content": "This is the method section content...",
+    "page_number": 1
 }]
 
 Do NOT wrap the output in any code block or add any extra commentary. The output must be PURE JSON content."""
@@ -70,7 +72,8 @@ For the section content:
 Output ONLY valid JSON in the following format for the current image:
 [{
     "section_title": "Section Title",
-    "section_content": "Section content in markdown..."
+    "section_content": "Section content in markdown...",
+    "page_number": 1
 }]
 
 Do NOT wrap the output in any code block or add any extra commentary. The output must be PURE JSON content."""
@@ -198,7 +201,12 @@ Do NOT wrap the output in any code block or add any extra commentary. The output
             response = completion(**completion_args)
 
             # Extract the response content
-            extracted_json_text = response["choices"][0]["message"]["content"].strip()
+            extracted_json_text = (
+                response["choices"][0]["message"]["content"]
+                .strip()
+                .strip("```")
+                .strip("```json")
+            )
 
             # Parse the JSON response
             try:
@@ -218,13 +226,14 @@ Do NOT wrap the output in any code block or add any extra commentary. The output
                 return page_sections
             except (json.JSONDecodeError, ValueError) as e:
                 self.logger.error(
-                    f"Error parsing JSON response for page {page_number}: {e}"
+                    f"Error parsing JSON response for page {page_number}: {e}\nResponse: {extracted_json_text}"
                 )
                 # Return a fallback structure
                 return [
                     {
-                        "section_title": f"Page {page_number} (Parse Error)",
+                        "section_title": f"Page {page_number}",
                         "section_content": f"*Error parsing JSON response: {str(e)}*\n\nRaw response:\n{extracted_json_text}",
+                        "page_number": page_number,
                     }
                 ]
 
@@ -234,6 +243,7 @@ Do NOT wrap the output in any code block or add any extra commentary. The output
                 {
                     "section_title": f"Page {page_number} (Processing Error)",
                     "section_content": f"*Error processing page {page_number}: {str(e)}*",
+                    "page_number": -1,
                 }
             ]
 
