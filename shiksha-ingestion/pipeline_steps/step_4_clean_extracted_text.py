@@ -44,7 +44,7 @@ class TextCleaningStep(BasePipelineStep):
         "Clean and format a single markdown file using CleanMarkdownPostProcessor"
     )
     input_types = {"markdown"}
-    output_types = {"cleaned_markdown"}
+    output_types = {"markdown"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """
@@ -102,7 +102,7 @@ class TextCleaningStep(BasePipelineStep):
 
                 return StepResult(
                     status=StepStatus.COMPLETED,
-                    output_paths={"cleaned_markdown": output_file_path},
+                    output_paths={"markdown": output_file_path},
                     metadata={"original_file": markdown_file_path},
                 )
             except Exception as e:

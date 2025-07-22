@@ -36,6 +36,26 @@ class ChapterMetadata(BaseModel):
 class SubtopicLearningOutcomes(BaseModel):
     """Structured metadata extracted from a textbook chapter."""
 
+    # learning_outcomes: List[str] = Field(
+    #     default_factory=list,
+    #     description=dedent(
+    #         """
+    #         A list of specific, measurable learning outcomes for the `{topic}` based on Bloom's Taxonomy.
+
+    #         Each learning outcome MUST begin with ONLY one of the following precise Bloom's Taxonomy action verbs:
+    #         Define, Describe, Identify, Explain, Summarize, Classify, Demonstrate, Apply, Calculate, Analyze, Differentiate, Compare, Evaluate, Justify, Design, Create, Develop
+
+    #         Each outcome should describe a distinct skill or knowledge that students should demonstrate after studying the topic `{topic}`.
+
+    #         Outcomes must span multiple cognitive levels—from remembering and understanding to applying, analyzing, evaluating, and creating—with each outcome standing independently.
+
+    #         **STRICT REQUIREMENT: Every learning outcome must start with one (and only one) of the approved action verbs listed above. Do NOT use any other verbs or introductory phrases.**
+
+    #         **Focus on measurable outcomes that reflect deep comprehension, practical application, critical analysis, thoughtful evaluation, or creative synthesis relevant to the topic `{topic}`.**
+    #         """
+    #     ),
+    # )
+
     learning_outcomes: List[str] = Field(
         default_factory=list,
         description=dedent(
@@ -94,7 +114,7 @@ class SubtopicWiseLOExtractionStep(BasePipelineStep):
 
     name = "subtopic_wise_lo_extraction"
     description = "Extract subtopic-wise learning outcomes from cleaned text with chapter metadata"
-    input_types = {"cleaned_markdown", "cleaned_chapter_lo_subtopic_names"}
+    input_types = {"markdown", "cleaned_chapter_lo_subtopic_names"}
     output_types = {"subtopic_los"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
@@ -103,14 +123,14 @@ class SubtopicWiseLOExtractionStep(BasePipelineStep):
 
         Args:
             input_paths: Dictionary with keys:
-                - "cleaned_markdown": Path to the cleaned markdown file
+                - "markdown": Path to the cleaned markdown file
                 - "cleaned_chapter_lo_subtopic_names": Path to the chapter metadata file
             output_dir: Directory where output JSON will be saved
 
         Returns:
             StepResult with status and output paths
         """
-        markdown_file = input_paths["cleaned_markdown"]
+        markdown_file = input_paths["markdown"]
         metadata_file = input_paths["cleaned_chapter_lo_subtopic_names"]
 
         # Create base filename for output from the input markdown filename
