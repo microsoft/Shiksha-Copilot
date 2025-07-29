@@ -10,6 +10,12 @@ from .step_4_clean_extracted_text import TextCleaningStep
 from .step_5_subtopic_chapter_level_los_extraction import (
     SubtopicChapterLOsExtractionStep,
 )
+from .knowledge_graph import (
+    ExtractChapterEntitiesStep,
+    ExtractEntityContentStep,
+    ExtractEntityRelationshipsStep,
+    ConstructKnowledgeGraphStep,
+)
 from .step_6_subtopic_extraction_rule_based_cleaning import SubtopicCleaningStep
 from .step_7_subtopic_wise_lo_extraction import SubtopicWiseLOExtractionStep
 from .step_8_create_indexes import CreateIndexStep
@@ -24,6 +30,10 @@ __all__ = [
     # "TextExtractionOLMOcrStep",
     "TextCleaningStep",
     "SubtopicChapterLOsExtractionStep",
+    "ExtractChapterEntitiesStep",
+    "ExtractEntityContentStep",
+    "ExtractEntityRelationshipsStep",
+    "ConstructKnowledgeGraphStep",
     "SubtopicCleaningStep",
     "SubtopicWiseLOExtractionStep",
     "CreateIndexStep",
