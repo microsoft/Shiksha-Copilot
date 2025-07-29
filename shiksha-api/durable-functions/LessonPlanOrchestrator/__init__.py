@@ -13,7 +13,7 @@ from core.models.status_webhook import GenStatus, StatusEnum
 from core.models.workflow_models import (
     SectionOutput,
 )
-from core.models.requests import LessonPlanGenerationInput
+from core.models.requests import LPLevel, LessonPlanGenerationInput
 from core.models.dag import DAG, NodeStatus
 
 
@@ -131,7 +131,15 @@ def main(
             workflow_id=lp_gen_input.workflow.id,
             chapter_id=lp_gen_input.chapter_info.id,
             subtopics=[subtopic.name for subtopic in lp_gen_input.subtopics],
-            learning_outcomes=lp_gen_input.learning_outcomes,
+            learning_outcomes=(
+                lp_gen_input.learning_outcomes
+                if lp_gen_input.lp_level == LPLevel.CHAPTER
+                else [
+                    lo
+                    for subtopic in lp_gen_input.subtopics
+                    for lo in subtopic.learning_outcomes
+                ]
+            ),
             lp_level=lp_gen_input.lp_level,
             lp_type_english=lp_gen_input.lp_type_english,
             sections=all_sections,

@@ -76,18 +76,18 @@ class LessonPlanGenerationInput(BaseModel):
     lp_level: LPLevel = Field(
         ..., description="Level of the lesson plan (CHAPTER or SUBTOPIC)"
     )
-    learning_outcomes: List[str] = Field(
+    chapter_info: ChapterInfo = Field(..., description="Information about the chapter")
+    learning_outcomes: Optional[List[str]] = Field(
         default_factory=list, description="Learning outcomes for the lesson plan"
     )
-    lp_type_english: EnglishLPType = Field(
+    lp_type_english: Optional[EnglishLPType] = Field(
         default=EnglishLPType.NONE,
         description="Type of English lesson plan (PROSE, POEM, or NONE)",
     )
     start_from_section_id: Optional[str] = Field(
         None, description="ID of the section to start from for regeneration"
     )
-    chapter_info: ChapterInfo = Field(..., description="Information about the chapter")
-    subtopics: List[SubtopicInfo] = Field(
+    subtopics: Optional[List[SubtopicInfo]] = Field(
         default_factory=list, description="List of subtopics for the lesson plan"
     )
     lesson_plan: Optional[LessonPlanContent] = Field(
