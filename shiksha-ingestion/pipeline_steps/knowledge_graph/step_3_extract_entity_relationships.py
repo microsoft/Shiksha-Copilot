@@ -1,10 +1,4 @@
-"""
-Entity Relationship Extraction Pipeline Step
-
-This module implements a pipeline step that extracts relationships between entities
-from textbook chapters using Azure OpenAI. It analyzes entity content and identifies
-connections, prerequisites, and semantic relationships between educational components.
-"""
+"""Entity Relationship Extraction Pipeline Step"""
 
 import json
 import os
@@ -19,36 +13,19 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
+from pipeline_steps.knowledge_graph.models import EntityRelationship
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv(".env")
 
 
-class EntityRelationship(BaseModel):
-    """Represents a relationship between two entities."""
-
-    source_entity_id: str = Field(description="ID of the source entity")
-    target_entity_id: str = Field(description="ID of the target entity")
-    relationship_type: str = Field(
-        description="Type of relationship: 'prerequisite', 'builds_upon', 'demonstrates', 'tests', 'explains', 'applies', 'related'"
-    )
-    description: str = Field(
-        description="Brief description of how the entities are related"
-    )
-    confidence: float = Field(
-        description="Confidence score (0.0-1.0) for this relationship"
-    )
-
-
 class ExtractedEntityRelationships(BaseModel):
-    """
-    Pydantic model representing all relationships extracted between entities in a chapter.
-    """
+    """All relationships extracted between entities in a chapter."""
 
     relationships: List[EntityRelationship] = Field(
         description=dedent(
@@ -131,26 +108,15 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
 
     name = "extract_entity_relationships"
     description = "Extract relationships between entities using Azure OpenAI"
-    input_types = {"entity_content", "chapter_concepts"}
+    input_types = {"entity_content", "chapter_entities"}
     output_types = {"entity_relationships"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
-        """
-        Process the entity relationship extraction step.
-
-        Args:
-            input_paths (Dict[str, str]): Dictionary containing input file paths:
-                - "entity_content": Path to JSON file with extracted entity content
-                - "chapter_concepts": Path to JSON file with entity metadata
-            output_dir (str): Directory where the relationship data will be saved
-
-        Returns:
-            StepResult: Result object with extraction results
-        """
+        """Run the entity relationship extraction step."""
         try:
             # Validate input parameters
             entity_content_path = input_paths.get("entity_content")
-            chapter_concepts_path = input_paths.get("chapter_concepts")
+            chapter_concepts_path = input_paths.get("chapter_entities")
 
             if not entity_content_path or not chapter_concepts_path:
                 raise ValueError(
@@ -229,22 +195,7 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
     ) -> ExtractedEntityRelationships:
-        """
-        Extract relationships between entities using Azure OpenAI.
-
-        Process each entity one at a time to extract comprehensive relationships.
-        For each entity, we extract its relationships with all other entities,
-        considering both incoming and outgoing relationships.
-
-        Args:
-            entity_content_data: List of entity content data
-            chapter_concepts_data: Chapter concepts metadata
-            extractor: Metadata extraction instance
-            credentials: Azure OpenAI credentials
-
-        Returns:
-            ExtractedEntityRelationships: Object containing all extracted relationships
-        """
+        """Extract relationships between entities using Azure OpenAI."""
         try:
             logger.info("Analyzing entity content to extract relationships...")
 

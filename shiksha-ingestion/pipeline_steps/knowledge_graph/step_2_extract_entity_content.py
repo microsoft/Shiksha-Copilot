@@ -1,10 +1,4 @@
-"""
-Entity Content Extraction Pipeline Step
-
-This module implements a pipeline step that extracts detailed content for specific entities
-from textbook chapters using Azure OpenAI. It processes markdown content and extracts
-comprehensive entity-specific information while preserving the original structure.
-"""
+"""Entity Content Extraction Pipeline Step"""
 
 import json
 import os
@@ -19,23 +13,19 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
+from pipeline_steps.knowledge_graph.models import GraphEntity
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv(".env")
 
 
 class ExtractedEntityContent(BaseModel):
-    """
-    Pydantic model representing the extracted entity content from a textbook chapter.
-
-    This model ensures that extracted content is comprehensive, unmodified, and strictly
-    relevant to the specified entity.
-    """
+    """Extracted entity content from a textbook chapter."""
 
     content: str = Field(
         description=dedent(
@@ -97,19 +87,7 @@ class ExtractedEntityContent(BaseModel):
 
 
 def azure_openai_credentials() -> Dict[str, Optional[str]]:
-    """
-    Retrieve Azure OpenAI service credentials from environment variables.
-
-    Returns:
-        Dict[str, Optional[str]]: A dictionary containing Azure OpenAI credentials:
-            - api_key: Azure OpenAI API key
-            - api_base: Azure OpenAI endpoint URL
-            - api_version: API version to use
-            - deployment_name: Model deployment name
-
-    Raises:
-        ValueError: If any required environment variables are missing
-    """
+    """Get Azure OpenAI credentials from environment variables."""
     credentials = {
         "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
         "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -139,37 +117,14 @@ class ExtractEntityContentStep(BasePipelineStep):
     description = (
         "Extract comprehensive entity content from textbook chapters using Azure OpenAI"
     )
-    input_types = {"chapter_concepts", "markdown"}
+    input_types = {"chapter_entities", "markdown"}
     output_types = {"entity_content"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
-        """
-        Process the entity content extraction step.
-
-        This method extracts detailed content for each entity from a textbook chapter
-        by dynamically updating the content extraction model and using Azure OpenAI
-        for intelligent content extraction.
-
-        Args:
-            input_paths (Dict[str, str]): Dictionary containing input file paths:
-                - "chapter_concepts": Path to JSON file with chapter entity metadata
-                - "markdown": Path to markdown file containing the chapter content
-            output_dir (str): Directory where the extracted entity content JSON will be saved
-
-        Returns:
-            StepResult: Result object containing:
-                - status: COMPLETED if successful, FAILED if error occurred
-                - output_paths: Dictionary with "entity_content" key mapping to output file path
-                - error: Exception object if processing failed
-
-        Raises:
-            ValueError: If required input paths are not provided
-            FileNotFoundError: If input files do not exist
-            Exception: For any other processing errors
-        """
+        """Extract entity content from chapter using Azure OpenAI."""
         try:
             # Validate input parameters
-            input_file_path = input_paths.get("chapter_concepts")
+            input_file_path = input_paths.get("chapter_entities")
             markdown_file_path = input_paths.get("markdown")
 
             if not input_file_path or not markdown_file_path:
@@ -201,12 +156,12 @@ class ExtractEntityContentStep(BasePipelineStep):
             logger.info("Azure OpenAI credentials validated successfully")
 
             # Load chapter metadata and markdown content
-            chapter_metadata = self._load_chapter_metadata(input_file_path)
+            chapter_entities = self._load_chapter_metadata(input_file_path)
             markdown_content = self._load_markdown_content(markdown_file_path)
 
             # Extract content for each entity
             extracted_contents = self._extract_entity_contents(
-                chapter_metadata, markdown_content, extractor, credentials
+                chapter_entities, markdown_content, extractor, credentials
             )
 
             # Save results to output file
@@ -229,25 +184,21 @@ class ExtractEntityContentStep(BasePipelineStep):
             logger.exception("Error during entity content extraction: %s", str(e))
             return StepResult(status=StepStatus.FAILED, error=e)
 
-    def _load_chapter_metadata(self, file_path: str) -> Dict:
-        """
-        Load chapter metadata from JSON file.
-
-        Args:
-            file_path (str): Path to the JSON file containing chapter metadata
-
-        Returns:
-            Dict: Parsed chapter metadata
-
-        Raises:
-            json.JSONDecodeError: If the file contains invalid JSON
-            IOError: If the file cannot be read
-        """
+    def _load_chapter_metadata(self, file_path: str) -> List[GraphEntity]:
+        """Load chapter metadata from JSON and parse into GraphEntity objects."""
         try:
             with open(file_path, "r", encoding="utf-8") as file:
-                metadata = json.load(file)
-            logger.debug("Successfully loaded chapter metadata from %s", file_path)
-            return metadata
+                metadata_list = json.load(file)
+
+            # Parse each entity dictionary into GraphEntity objects
+            entities = [GraphEntity(**entity_dict) for entity_dict in metadata_list]
+
+            logger.debug(
+                "Successfully loaded and parsed %d entities from %s",
+                len(entities),
+                file_path,
+            )
+            return entities
         except json.JSONDecodeError as e:
             logger.error(
                 "Invalid JSON in chapter metadata file %s: %s", file_path, str(e)
@@ -258,20 +209,12 @@ class ExtractEntityContentStep(BasePipelineStep):
                 "Error reading chapter metadata file %s: %s", file_path, str(e)
             )
             raise
+        except Exception as e:
+            logger.error("Error parsing entities from %s: %s", file_path, str(e))
+            raise
 
     def _load_markdown_content(self, file_path: str) -> str:
-        """
-        Load markdown content from file.
-
-        Args:
-            file_path (str): Path to the markdown file
-
-        Returns:
-            str: Content of the markdown file
-
-        Raises:
-            IOError: If the file cannot be read
-        """
+        """Load markdown content from file."""
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
@@ -283,26 +226,12 @@ class ExtractEntityContentStep(BasePipelineStep):
 
     def _extract_entity_contents(
         self,
-        chapter_metadata: Dict,
+        chapter_entities: List[GraphEntity],
         markdown_content: str,
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
     ) -> List[Dict[str, str]]:
-        """
-        Extract content for each entity using Azure OpenAI.
-
-        Args:
-            chapter_metadata (Dict): Chapter metadata containing entity information
-            markdown_content (str): Full markdown content of the chapter
-            extractor (SimpleMetadataExtractor): Metadata extraction instance
-            credentials (Dict[str, str]): Azure OpenAI credentials
-
-        Returns:
-            List[Dict[str, str]]: List of dictionaries containing entity and content pairs
-
-        Raises:
-            Exception: If content extraction fails for any entity
-        """
+        """Extract content for each entity using Azure OpenAI."""
         # Store original field description for restoration
         original_content_description = ExtractedEntityContent.model_fields[
             "content"
@@ -311,21 +240,19 @@ class ExtractEntityContentStep(BasePipelineStep):
 
         try:
 
-            # Get entities from the new output structure: entity_graph -> nodes
-            entity_nodes = chapter_metadata.get("entity_graph", {}).get("nodes", [])
-            logger.info("Extracting content for %d entities", len(entity_nodes))
+            logger.info("Extracting content for %d entities", len(chapter_entities))
 
-            for idx, entity in enumerate(entity_nodes, 1):
-                entity_name = entity.get("name", "")
-                entity_id = entity.get("id", f"entity_{idx}")
-                entity_type = entity.get("type", "concept")
-                location_context = entity.get("location_context", "")
-                content_summary = entity.get("content_summary", "")
+            for idx, entity in enumerate(chapter_entities, 1):
+                entity_name = entity.name
+                entity_id = entity.id
+                entity_type = entity.type
+                location_context = entity.location_context
+                content_summary = entity.content_summary
 
                 logger.info(
                     "Processing entity %d/%d: %s (%s)",
                     idx,
-                    len(entity_nodes),
+                    len(chapter_entities),
                     entity_name,
                     entity_type,
                 )
@@ -385,16 +312,8 @@ class ExtractEntityContentStep(BasePipelineStep):
                         max_retries,
                     )
 
-                extracted_contents.append(
-                    {
-                        "entity_id": entity_id,
-                        "entity_name": entity_name,
-                        "entity_type": entity_type,
-                        "location_context": location_context,
-                        "content_summary": content_summary,
-                        "content": entity_content.content if entity_content else "",
-                    }
-                )
+                entity.content = entity_content.content if entity_content else ""
+                extracted_contents.append(entity.model_dump())
 
                 logger.debug(
                     "Successfully extracted content for entity: %s (length: %d chars)",
@@ -417,20 +336,7 @@ class ExtractEntityContentStep(BasePipelineStep):
         markdown_file_path: str,
         output_dir: str,
     ) -> str:
-        """
-        Save extracted subtopic contents to JSON file.
-
-        Args:
-            extracted_contents (List[Dict[str, str]]): List of extracted subtopic contents
-            markdown_file_path (str): Original markdown file path (used for naming output file)
-            output_dir (str): Directory to save the output file
-
-        Returns:
-            str: Path to the saved output file
-
-        Raises:
-            IOError: If the file cannot be written
-        """
+        """Save extracted entity contents to a JSON file and return the output path."""
         try:
             # Generate output filename based on input markdown filename
             output_filename = os.path.basename(markdown_file_path).replace(

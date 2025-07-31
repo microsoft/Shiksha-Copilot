@@ -1,11 +1,4 @@
-"""
-Concept Extraction Pipeline Step
-
-This module implements a pipeline step that automatically extracts headings and
-subheadings from textbook chapters using Azure OpenAI. It analyzes the chapter
-structure to identify all major headings, sections, and subsections to create
-a hierarchical map for subsequent content extraction.
-"""
+"""Concept Extraction Pipeline Step"""
 
 import json
 import os
@@ -19,6 +12,7 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
+from .models import GraphEntity
 
 # Configure logging
 logging.basicConfig(
@@ -26,33 +20,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables
 load_dotenv(".env")
 
 
-class GraphEntity(BaseModel):
-    """Represents a heading or subheading that will become a graph node."""
-
-    id: str = Field(description="Unique identifier for the heading")
-    name: str = Field(
-        description="The exact heading/subheading text as it appears in the chapter"
-    )
-    type: str = Field(
-        description="Type of heading: 'section', 'subsection', 'activity', 'assessment', 'introduction', 'content_block'"
-    )
-    content_summary: str = Field(
-        description="A detailed 2-3 line summary describing the specific content, concepts, activities, and information that appears under this heading"
-    )
-
-
 class ExtractedChapterEntities(BaseModel):
-    """
-    Pydantic model representing all headings and subheadings extracted from a textbook chapter.
-
-    Each entity represents a heading or subheading that will become a node
-    in the knowledge graph, with names exactly as they appear in the chapter text.
-    Location contexts are provided separately to be combined with entities later.
-    """
+    """Headings and subheadings extracted from a textbook chapter."""
 
     entities: List[GraphEntity] = Field(
         description=dedent(
@@ -125,19 +97,7 @@ class ExtractedChapterEntities(BaseModel):
 
 
 def azure_openai_credentials() -> Dict[str, Optional[str]]:
-    """
-    Retrieve Azure OpenAI service credentials from environment variables.
-
-    Returns:
-        Dict[str, Optional[str]]: A dictionary containing Azure OpenAI credentials:
-            - api_key: Azure OpenAI API key
-            - api_base: Azure OpenAI endpoint URL
-            - api_version: API version to use
-            - deployment_name: Model deployment name
-
-    Raises:
-        ValueError: If any required environment variables are missing
-    """
+    """Get Azure OpenAI credentials from environment variables."""
     credentials = {
         "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
         "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
@@ -156,43 +116,17 @@ def azure_openai_credentials() -> Dict[str, Optional[str]]:
 
 
 class ExtractChapterEntitiesStep(BasePipelineStep):
-    """
-    Pipeline step for extracting chapter entities and structure from textbook content.
-
-    This step analyzes markdown-formatted textbook chapters and extracts all headings,
-    subheadings, and content blocks to create a structured map for subsequent analysis.
-    """
+    """Extracts structured chapter entities (headings, subheadings, content blocks) from markdown chapters."""
 
     name = "extract_chapter_entities"
     description = (
         "Extract headings and subheadings from textbook chapters for structural mapping"
     )
     input_types = {"markdown"}
-    output_types = {"chapter_concepts"}
+    output_types = {"chapter_entities"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
-        """
-        Process the concept extraction step.
-
-        This method analyzes the complete chapter content to identify all structural
-        headings and subheadings using Azure OpenAI.
-
-        Args:
-            input_paths (Dict[str, str]): Dictionary containing input file paths:
-                - "markdown": Path to markdown file containing the chapter content
-            output_dir (str): Directory where the extracted headings JSON will be saved
-
-        Returns:
-            StepResult: Result object containing:
-                - status: COMPLETED if successful, FAILED if error occurred
-                - output_paths: Dictionary with "chapter_concepts" key mapping to output file path
-                - error: Exception object if processing failed
-
-        Raises:
-            ValueError: If required input paths are not provided
-            FileNotFoundError: If input files do not exist
-            Exception: For any other processing errors
-        """
+        """Process the extraction of chapter entities from markdown using Azure OpenAI."""
         try:
             # Validate input parameters
             markdown_file_path = input_paths.get("markdown")
@@ -240,7 +174,7 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
 
             return StepResult(
                 status=StepStatus.COMPLETED,
-                output_paths={"chapter_concepts": output_path},
+                output_paths={"chapter_entities": output_path},
             )
 
         except Exception as e:
@@ -248,18 +182,7 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
             return StepResult(status=StepStatus.FAILED, error=e)
 
     def _load_markdown_content(self, file_path: str) -> str:
-        """
-        Load markdown content from file.
-
-        Args:
-            file_path (str): Path to the markdown file
-
-        Returns:
-            str: Content of the markdown file
-
-        Raises:
-            IOError: If the file cannot be read
-        """
+        """Load markdown content from file."""
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
@@ -275,20 +198,7 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
     ) -> ExtractedChapterEntities:
-        """
-        Extract all headings from the chapter using Azure OpenAI.
-
-        Args:
-            markdown_content (str): Full markdown content of the chapter
-            extractor (SimpleMetadataExtractor): Metadata extraction instance
-            credentials (Dict[str, str]): Azure OpenAI credentials
-
-        Returns:
-            ExtractedChapterEntities: Object containing all extracted heading entities
-
-        Raises:
-            Exception: If heading extraction fails
-        """
+        """Extract headings/entities from chapter markdown using Azure OpenAI."""
         try:
             logger.info(
                 "Analyzing chapter content to extract headings and subheadings..."
@@ -322,20 +232,7 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
         markdown_file_path: str,
         output_dir: str,
     ) -> str:
-        """
-        Save extracted headings to JSON file.
-
-        Args:
-            extracted_concepts (ExtractedChapterEntities): Extracted heading entities object
-            markdown_file_path (str): Original markdown file path (used for naming output file)
-            output_dir (str): Directory to save the output file
-
-        Returns:
-            str: Path to the saved output file
-
-        Raises:
-            IOError: If the file cannot be written
-        """
+        """Save extracted headings to JSON. Returns output file path."""
 
         try:
             # Generate output filename based on input markdown filename
@@ -352,9 +249,8 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
                     extracted_concepts.entities, extracted_concepts.location_contexts
                 ):
                     # Convert to dict and add location_context
-                    entity_dict = entity.dict()
-                    entity_dict["location_context"] = location_context
-                    combined_entities.append(entity_dict)
+                    entity.location_context = location_context
+                    combined_entities.append(entity.model_dump())
             else:
                 logger.warning(
                     "Mismatch between number of entities (%d) and location contexts (%d). Using entities without location contexts.",
@@ -367,34 +263,13 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
                 )
                 # Fallback if lengths don't match - use empty location contexts
                 combined_entities = [
-                    {**entity.dict(), "location_context": ""}
-                    for entity in extracted_concepts.entities
+                    {**entity.model_dump()} for entity in extracted_concepts.entities
                 ]
 
-            # Convert to dict format compatible with existing pipeline and graph construction
-            output_data = {
-                "entity_graph": {
-                    "nodes": combined_entities,
-                    "metadata": {
-                        "total_entities": len(extracted_concepts.entities),
-                        "types": {
-                            type: len(
-                                [
-                                    e
-                                    for e in extracted_concepts.entities
-                                    if e.type == type
-                                ]
-                            )
-                            for type in set(e.type for e in extracted_concepts.entities)
-                        },
-                    },
-                },
-            }
-
-            # Write extracted concepts to JSON file
+            # Write extracted entities directly to JSON file (no metadata or wrapper keys)
             with open(output_path, "w", encoding="utf-8") as json_file:
                 json.dump(
-                    output_data,
+                    combined_entities,
                     json_file,
                     indent=2,
                     ensure_ascii=False,
