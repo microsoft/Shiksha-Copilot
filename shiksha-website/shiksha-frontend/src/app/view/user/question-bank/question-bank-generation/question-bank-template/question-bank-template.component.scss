@@ -1,0 +1,19 @@
+.base-table {
+  table,
+  th,
+  td {
+    @media (min-width: 1024px) {
+      border: 1px solid #dcdcdc;
+    }
+  }
+}
+
+.error-table {
+  table,
+  th,
+  td {
+    @media (min-width: 1024px) {
+      border: 1px solid var(--warn-80) !important;
+    }
+  }
+}

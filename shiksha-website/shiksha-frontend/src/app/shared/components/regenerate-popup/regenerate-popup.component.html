@@ -1,0 +1,57 @@
+<div class="disable-popup-wrapper z-50" *ngIf="!showInstructions">
+  <div class="flex items-center justify-between mb-2">
+    <h1 class="font-bold text-[20px] text-content">Regenerate Plan</h1>
+    <img
+      class="w-5 h-5 cursor-pointer"
+      src="../../../../assets/icons/remove.svg"
+      (click)="closeModal()"
+      alt=""
+    />
+  </div>
+
+  <div class="mt-4 p-2 rounded-sm bg-[#ED7D2D0F]">
+    <p class="font-semibold">Note:</p>
+    <ul class="list-disc list-inside text-sm mt-2">
+      <li>Regenerating the current plan will override the existing content.</li>
+      <li>
+        Please provide instruction for one or more 5E phases which you would
+        like to modify.
+        <a
+          class="underline text-warn-100 cursor-pointer"
+          (click)="showInstructions = true"
+        >
+          [Click here for sample instructions]</a
+        >
+      </li>
+    </ul>
+  </div>
+
+  <div *ngFor="let feedback of regenFeedback" class="mt-4">
+    <p class="text-sm my-1 font-bold capitalize">{{ feedback.type }}</p>
+    <textarea
+      placeholder="Enter Feedback"
+      class="text-sm w-full p-1 rounded bg-shade-80"
+      [(ngModel)]="feedback.feedback"
+      (ngModelChange)="feedbackUpdated()"
+      maxlength="500"
+    ></textarea>
+  </div>
+
+  <div class="buttons my-4 flex items-center justify-end gap-2">
+    <button class="btn-outline-primary" (click)="closeModal()">Cancel</button>
+    <button
+      (click)="regeneratePlan()"
+      [disabled]="disabled"
+      class="btn-primary flex gap-2 items-center my-2 md:my-0"
+    >
+      <img src="../../../../assets/icons/Replay_light.svg" alt="" />
+      <span class="ms-1">Regenerate Plan</span>
+    </button>
+  </div>
+</div>
+
+<app-instructions-popup
+  *ngIf="showInstructions"
+  (showInstructions)="showInstructions = $event"
+  [instructions]="instructions"
+></app-instructions-popup>

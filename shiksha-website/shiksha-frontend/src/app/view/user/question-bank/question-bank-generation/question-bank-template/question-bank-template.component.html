@@ -1,0 +1,166 @@
+<div class="px-4 md:px-8 mt-4">
+  <div class="flex items-center gap-2">
+    <img
+      src="../../../../../assets/icons/back-arrow.svg"
+      alt=""
+      class="cursor-pointer w-5 md:w-fit"
+      (click)="previousStep()"
+    />
+    <h2 class="text-base md:text-xl font-bold text-content">
+      Step {{ currentStep }}/{{ totalSteps }}: Question Paper Template
+    </h2>
+  </div>
+  <p class="text-sm md:text-base">Customize the question paper template according to your needs.</p>
+</div>
+
+<div class="p-2 md:p-8 relative" *ngIf="templateData && templateData.length">
+  <div class="flex justify-between items-center">
+    <h2 class="text-base font-bold text-content">Template</h2>
+    <h2 class="text-base font-bold text-content">Total Marks: {{ totalMarks }}</h2>
+  </div>
+  <table
+    class="table-auto w-full text-content rounded-lg z-50"
+    [ngClass]="totalTemplateMarks === totalMarks ? 'base-table' : 'error-table'"
+    aria-label="question-configuration-list"
+  >
+    <thead
+      class="text-xs text-content bg-[#edf6fe] hidden lg:table-header-group"
+    >
+      <tr>
+        <th
+          class="px-4 py-3 border text-sm text-content"
+          *ngFor="let templateTableHeader of templateTableHeaders"
+        >
+          {{ templateTableHeader }}
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr
+        class="flex flex-col border rounded lg:rounded-none lg:border-none p-4 lg:p-0 lg:table-row mt-4 md:mt-0"
+        [ngClass]="totalTemplateMarks !== totalMarks ? 'border-warn' : ''"
+        *ngFor="let templateRow of templateData; let i = index"
+      >
+        <td class="px-2 py-2 text-sm">
+          <div class="w-[75vw] md:w-[30vw]">
+            <label for="question-type" class="lg:hidden mb-1 form-control-label"
+              >{{ "Question Type" | translate }}
+              <span class="text-[16px] text-error">*</span></label
+            >
+
+            <div>
+              <app-common-dropdown
+              [dropDownValues]="questionTypeDropdownOptions"
+              [config]="questionTypeDropdownconfig"
+              [(ngModel)]="templateRow.type"
+              [ngModelOptions]="{ standalone: true }"
+            ></app-common-dropdown>
+            </div>
+            <small
+              class="form-control-error"
+              *ngIf="submittedTemplate && !templateRow.type"
+              >{{ "Question type is required" | translate }}</small
+            >
+          </div>
+        </td>
+
+        <td class="px-1 py-1 lg:px-4 lg:py-4 text-sm">
+          <label class="lg:hidden mb-1 form-control-label" for="marks">
+            {{ "Number of Questions" | translate }}
+            <span class="text-[16px] text-error">*</span></label
+          >
+          <input
+            maxlength="3"
+            oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+            class="table-form-control"
+            [(ngModel)]="templateRow.number_of_questions"
+            placeholder="{{ 'Number of Questions' | translate }}"
+            (input)="reCalculateTemplate(i, 'number_of_questions')"
+          />
+          <small
+            class="form-control-error"
+            *ngIf="submittedTemplate && !templateRow.number_of_questions"
+            >{{ "Number of Questions is required" | translate }}</small
+          >
+        </td>
+
+        <td class="px-1 py-1 lg:px-4 lg:py-4 text-sm">
+          <label class="lg:hidden mb-1 form-control-label" for="marks">
+            {{ "Marks per question" | translate }}
+            <span class="text-[16px] text-error">*</span></label
+          >
+          <input
+            maxlength="3"
+            oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+            class="table-form-control"
+            [(ngModel)]="templateRow.marks_per_question"
+            placeholder="{{ 'Marks per Question' | translate }}"
+            (input)="reCalculateTemplate(i, 'marks_per_question')"
+          />
+          <small
+            class="form-control-error"
+            *ngIf="submittedTemplate && !templateRow.marks_per_question"
+            >{{ "Marks per Question is required" | translate }}</small
+          >
+        </td>
+
+        <td class="px-1 py-1 lg:px-4 lg:py-4">
+          <div
+            class="flex lg:w-24 gap-2 mt-2 lg:mt-0 justify-end lg:justify-start"
+          >
+            <button
+              class="btn-danger md:w-11"
+              (click)="removeQuestionBankTemplateRow(i)"
+              *ngIf="templateData.length > 1"
+              type="button"
+            >
+              <div class="flex items-center gap-2">
+                <img
+                  src="../../.././../../assets/icons/delete-icon.svg"
+                  alt=""
+                  class="w-5"
+                />
+                <span class="md:hidden">
+                  {{ "Delete" | translate }}
+                </span>
+              </div>
+            </button>
+            <button
+              class="btn-primary md:w-11"
+              (click)="addQuestionBankTemplateRow()"
+              type="button"
+              *ngIf="i === templateData.length - 1"
+            >
+              <div class="flex items-center gap-2">
+                <img src="../../../../../assets/icons/add-icon.svg" alt="" />
+                <span class="md:hidden">
+                  {{ "Add" | translate }}
+                </span>
+              </div>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div
+    class="my-1 flex flex-col-reverse gap-2 md:flex-row justify-center md:justify-between items-center"
+  >
+    <div>
+      <small
+        class="text-sm text-warn"
+        *ngIf="totalTemplateMarks !== totalMarks"
+      >
+        The total marks distributed in the template must equal the total marks
+        of the question paper.
+      </small>
+    </div>
+    <p class="text-sm text-content-50">
+      [ Total Template Marks/Total Marks ] :
+      <span class="font-semibold text-content"
+        >[ {{ totalTemplateMarks }}/{{ totalMarks }} ]</span
+      >
+    </p>
+  </div>
+</div>

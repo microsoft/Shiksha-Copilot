@@ -1,0 +1,56 @@
+<div class="center upload-wrapper">
+  <form>
+    <h2 class="text-lg font-bold mb-4">{{'Bulk Upload' | translate}}</h2>
+
+    <div class="my-4 p-4 rounded bg-warn-50 text-sm text-content-80">
+        <p>1. Make sure that every column in your file is completely filled.</p>
+        <p>2. Do not modify the names of the columns in your file.</p>
+        <p>3. The DISE Code in your file must be an 11-digit number.</p>
+    </div>
+    <ngx-file-drop
+      dropZoneLabel="Drop files here"
+      [multiple]="multiUpload"
+      (onFileDrop)="dropped($event)"
+      [accept]="acceptFileTypes"
+    >
+      <ng-template
+        ngx-file-drop-content-tmp
+        let-openFileSelector="openFileSelector"
+      >
+        <div class="flex flex-col p-2">
+          <img
+            (click)="openFileSelector()"
+            class="h-16"
+            src="../../../../assets/icons/file-upload.svg"
+            alt=""
+          />
+          <button class="text-nowrap" type="button" (click)="openFileSelector()">
+            {{'Browse Files' | translate}}
+          </button>
+          <p class="text-content-100 text-sm">
+            {{'File supported .xlsx file, up to 5MB in size' | translate}}.
+          </p>
+          <button class="text-nowrap text-base" (click)="downloadTemplate()">{{'Download Template' | translate}}</button>
+        </div>
+      </ng-template>
+    </ngx-file-drop>
+
+    <div class="upload-table mt-4" *ngIf="files.length > 0">
+      <p class="text-sm text-content-80">{{'Uploaded File' | translate}}</p>
+      <div
+        *ngFor="let item of files; let i = index"
+        class="flex flex-wrap-reverse justify-between content-center mt-2 py-2 px-4 rounded-sm border-content-80 bg-shade-80"
+      >
+        <p class="w-60 truncate">{{ item.relativePath }}</p>
+        <button class="btn-danger" (click)="deleteFile(i)">
+          <img src="../../../../assets/icons/delete.svg" alt="" />
+        </button>
+      </div>
+    </div>
+
+    <div class="flex justify-end mt-4 gap-2">
+      <button class="btn-outline-primary" (click)="closeModal()">{{'Cancel' | translate}}</button>
+      <button class="btn-primary" [disabled]="files.length === 0" (click)="uploadFile()">{{'Upload' | translate}}</button>
+    </div>
+  </form>
+</div>

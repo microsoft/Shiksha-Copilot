@@ -1,0 +1,270 @@
+<div class="mb-0 lg:mb-4 p-4 lg:p-0 pb-0">
+    <h1 class="text-xl text-content md:text-3xl font-bold mb-3">
+        Dashboard
+    </h1>
+    <div class="px-6 py-8 rounded bg-white border ">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center justify-start">
+                <img src="../../../../assets/icons/dashboard.svg" alt="">
+                <h2 class="ms-2 text-content md:text-2xl font-bold ">Overview</h2>
+            </div>
+            <button class="btn-primary h-9  py-2 px-5" (click)="exportDashboardDataToExcel()">
+              <div class="flex content-center">
+                <img width="18" src="../../.././../assets/icons/download-2.svg" alt="" />
+                <span class="ml-[6px] text-nowrap">{{'Download Report' | translate}}</span>
+              </div>
+            </button>
+        </div>
+        
+        <div class="flex md:gap-1 mt-5 ">
+    <div class="w-full cursor-pointer md:flex-1">
+        <app-common-dropdown [dropDownValues]="stateDropdownOptions" #stateDropDown 
+            (valueUpdate)="onStateChange($event)" [config]="stateDropdownconfig"></app-common-dropdown>
+    </div>
+
+    <!-- Decreased width for Zone dropdown -->
+    <div class="w-3/4 cursor-pointer md:flex-1">
+        <app-common-dropdown [dropDownValues]="zoneDropdownOptions" #zoneDropDown (valueCleared)="resetData()"
+            (valueUpdate)="onZoneChange($event)" [config]="zoneDropdownconfig"></app-common-dropdown>
+    </div>
+
+    <div class="w-full cursor-pointer md:flex-1">
+        <app-common-dropdown [dropDownValues]="districtDropdownOptions" #districtDropDown (valueCleared)="resetData()"
+            (valueUpdate)="onDistrictChange($event)" [config]="districtDropdownconfig"></app-common-dropdown>
+    </div>
+
+    <div class="w-full cursor-pointer md:flex-1">
+        <app-common-dropdown [dropDownValues]="blockDropdownOptions" #blockDropDown (valueCleared)="resetData()"
+            (valueUpdate)="onBlockChange($event)" [config]="blockDropdownconfig"></app-common-dropdown>
+    </div>
+
+    <div class="w-full cursor-pointer md:flex-1">
+        <app-common-dropdown [dropDownValues]="schoolDropdownOptions" #schoolDropDown (valueCleared)="resetData()"
+            (valueUpdate)="onSchoolChange($event)" [config]="schoolDropdownconfig"></app-common-dropdown>
+    </div>
+
+    <div class="w-full cursor-pointer md:flex-1">
+        <app-common-dropdown
+            [dropDownValues]="planTypeDropdownOptions"
+            #planTypeDropDown
+            (valueUpdate)="onPlanTypeChange($event)"
+            [config]="planTypeDropdownconfig"
+        ></app-common-dropdown>
+    </div>
+
+    <div class="relative flex-col">
+        <label class="form-control-label">From</label>
+        <div class="relative">
+            <input 
+            type="date" 
+            [(ngModel)]="selectedFromDate" 
+            (change)="onFrmDateSelection($event)" 
+            name="fromDate" 
+            class="form-control h-[35px] border-0 bg-shade-80 pr-3 pl-2" />
+            <button type="button" (click)="clearFrmDate()" *ngIf="selectedFromDate" class="absolute inset-y-0 right-6 flex items-center pr-3 cursor-pointer" >
+            <svg width="10" fill="#6E7787" class="bi bi-x" viewBox="0 0 16 16" >
+                <path d="M1.5 1.5a.75.75 0 0 1 1.061 0L8 6.439 13.439 1.5a.75.75 0 1 1 1.061 1.061L9.061 8l5.439 5.439a.75.75 0 0 1-1.061 1.061L8 9.061 2.561 14.5a.75.75 0 0 1-1.061-1.061L6.939 8 1.5 2.561a.75.75 0 0 1 0-1.061z"/>
+            </svg>
+            </button>
+        </div>
+    </div>              
+    
+    <div class="relative flex-col">
+        <label class="form-control-label">To</label>
+        <div class="relative">
+            <input 
+            type="date" 
+            [(ngModel)]="selectedToDate" 
+            (change)="onToDateSelection($event)" 
+            name="fromDate" 
+            class="form-control h-[35px] border-0 bg-shade-80 pr-3 pl-2" />
+            <button type="button" (click)="clearToDate()" *ngIf="selectedToDate" class="absolute inset-y-0 right-6 flex items-center pr-3 cursor-pointer" >
+            <svg width="10" fill="#6E7787" class="bi bi-x" viewBox="0 0 16 16" >
+                <path d="M1.5 1.5a.75.75 0 0 1 1.061 0L8 6.439 13.439 1.5a.75.75 0 1 1 1.061 1.061L9.061 8l5.439 5.439a.75.75 0 0 1-1.061 1.061L8 9.061 2.561 14.5a.75.75 0 0 1-1.061-1.061L6.939 8 1.5 2.561a.75.75 0 0 1 0-1.061z"/>
+            </svg>
+            </button>
+        </div>
+    </div> 
+</div>
+
+        <div class="">
+            <ng-template #noData>
+                <div class="flex flex-col justify-center items-center h-[400px]">
+                    <img width="80" src="../../../../assets/icons/three-bars-chart-svgrepo-com.svg" alt="">
+                    <p class="text-content-50 mt-2">No Data Available!</p>
+                </div>
+            </ng-template>     
+            <ng-template #nodonutData>
+                <div class="flex flex-col justify-center items-center h-[400px]">
+                    <img width="100" src="../../../../assets/icons/donut-chart-svgrepo-com.svg" alt="">
+                    <p class="text-content-50">No Data Available!</p>
+                </div>
+            </ng-template>   
+
+            <div class="canvas-container overflow-x-auto h-fit mt-8 bg-[#EBFDFF] py-7 px-6 rounded-xl border ">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg text-content font-bold">
+                        {{ selectedPlanType === 'lesson' ? 'Lesson Plans' : 'Lesson Resources' }} {{ getSelectedLocationLevel() }}
+                    </h2>
+                </div>
+                <div class="flex items-center justify-center" *ngIf="userDataAvailable">
+                    <div class="w-4 h-4 bg-[#379AE6] rounded-full me-1"></div>
+                    <p class="!text-[14px] text-content">No. of {{ selectedPlanType === 'lesson' ? 'Lesson Plans' : 'Lesson Resources' }}</p>
+                </div>
+                <div  class="chartWrapper ">
+                    <div [ngClass]="{'w-[3000px]': (byUserBarChartData.labels?.length ?? 0) > 18}" *ngIf="userDataAvailable; else noData">
+                        <canvas baseChart height="400px" [data]="byUserBarChartData" [options]="byUserBarChartOptions"
+                            [plugins]="byUserBarChartPlugins" [legend]="byUserBarChartLegend" [type]="'bar'">
+                        </canvas>
+                    </div>
+                </div>
+                
+            </div>
+
+            
+            <div class="grid grid-cols-1 md:grid-cols-[1fr_25%] gap-4 mt-4">
+                <div class="canvas-container h-fit bg-[#F5F2FD] py-7 px-6 rounded-xl border">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-lg text-content font-bold mb-6">
+                            {{ selectedPlanType === 'lesson' ? 'Lesson Plans' : 'Lesson Resources' }} by Subject 
+                        </h2>
+                    </div>
+                    <div class="flex items-center justify-center" *ngIf="subDataAvailable">
+                        <div class="w-4 h-4 bg-[#8353E2] rounded-full me-1"></div>
+                        <p class="!text-[14px] text-content">No. of {{ selectedPlanType === 'lesson' ? 'Lesson Plans' : 'Lesson Resources' }}</p>
+                    </div>
+                    <div>
+                        <div *ngIf="subDataAvailable; else noData">
+                            <canvas class="subCanvas" baseChart height="400px" [data]="bySubjectBarChartData" [options]="bySubjectBarChartOptions"
+                                [plugins]="bySubjectBarChartPlugins" [legend]="bySubjectBarChartLegend" [type]="'bar'">
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="canvas-container h-fit bg-[#FFF4E5] py-7 px-6 rounded-xl border">
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-lg text-content font-bold mb-6">
+                            {{ selectedPlanType === 'lesson' ? 'Lesson Plans' : 'Lesson Resources' }} by Medium
+                        </h2>
+                    </div>
+                    <div *ngIf="mediumDataAvailable; else nodonutData">
+                        <canvas baseChart [data]="byMediumDonutChartData" [options]="byMediumDonutChartOptions"
+                            [plugins]="byMediumDonutChartPlugins" [legend]="byMediumDonutChartLegend" [type]="'doughnut'">
+                        </canvas>
+                    </div>
+                </div>
+            </div>
+                     
+
+        </div>
+    </div>
+
+    <!-- 2nd row -->
+    <div class="px-6 py-8 mt-3 rounded bg-white border">
+        <h2 class="ms-2 text-content md:text-2xl font-bold ">All Users Info</h2>
+        <div class="grid grid-cols-10 gap-4">
+            <div class="col-span-3 canvas-container flex30 mt-8 bg-white py-7 px-6 rounded-xl border flex-1">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-lg text-content font-bold">
+                        {{ "Active/Inactive" | translate }}
+                    </h2>
+                </div>
+                <div class="relative flex justify-center items-center">
+                    <div *ngIf="statusDataAvailable; else nodonutData">
+                        <canvas baseChart [data]="statusDonutChartData" height="315" width="315" [options]="statusDonutChartOptions"
+                            [plugins]="statusDonutChartPlugins" [legend]="statusDonutChartLegend" [type]="'doughnut'">
+                        </canvas>
+                        <div class="absolute top-[60%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                            <h2 class="text-[20px] font-bold">{{activeUsersCount}} / {{allUsersCount}}</h2>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+            <div class="col-span-7 mt-8 bg-white py-7 px-6 rounded-xl border flex-1">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-lg text-content font-bold">
+                        {{ "Activity" | translate }}
+                    </h2>
+                    <button *ngIf="filteredUsersList.length >= 3" class="text-primary bg-[#F1F8FE] p-3 rounded" (click)="navigateToUserMgmt(selectedSchoolId)">
+                        View All
+                    </button>
+                </div>
+                <div class="flex text-content">
+                    <p (click)="setMedium('all')" [class.text-primary]="selectedMedium === 'all'"
+                        class="me-4 cursor-pointer">All</p>
+                    <p (click)="setMedium('english')" [class.text-primary]="selectedMedium === 'english'"
+                        class="me-4 cursor-pointer">English Medium</p>
+                    <p (click)="setMedium('kannada')" [class.text-primary]="selectedMedium === 'kannada'"
+                        class="me-4 cursor-pointer">Kannada Medium</p>
+                </div>
+                <div *ngIf="filteredUsersList.length > 0; else notableData" class="overflow-y-hidden h-[260px] mt-5">
+                    <!-- Set a fixed height -->
+                    <table class="min-w-full ">
+                        <thead>
+                            <tr class="bg-primary-60 rounded-lg border-b">
+                                <th class="text-left p-4 rounded  text-sm text-content"
+                                    *ngFor="let header of tableHeaders">{{ header }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr *ngFor="let item of filteredUsersList | slice:0:3">
+                                <td class="px-4 py-2  whitespace-nowrap flex items-center space-x-4 w-[15rem]">
+                                    <img src="../../../../assets/icons/profile.svg" alt="Profile Pic"
+                                        class="w-12 h-12 rounded-full">
+                                    <span class="font-bold">{{item?.name | titlecase}}</span>
+                                </td>
+                                <td class="px-4 py-2 whitespace-nowrap w-[24rem]">
+                                    <span *ngIf="item?.role?.length">
+                                        {{ item.role.join(', ') | titlecase}}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2  whitespace-nowrap w-[9rem]">
+                                    <span class="px-3 py-2 rounded-full"
+                                        [ngClass]="{'text-green bg-success-50': !item.isDeleted, 'text-error bg-error-50': item.isDeleted}">{{!item.isDeleted
+                                        ? 'Active' : 'Inactive'}}</span>
+                                </td>                                
+                            </tr>
+                        </tbody>
+                    </table>                    
+                </div>
+                <ng-template #notableData>
+                    <div class="flex justify-center items-center h-[280px] mt-5">
+                        <p class="text-content-50">No Data Available!</p>
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+
+    <!-- 3rd row -->
+        <div class="grid grid-cols-10 gap-4 mt-4">
+            <div class="col-span-3 canvas-container h-fit bg-white py-7 px-6 rounded-xl border">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-lg text-content font-bold mb-6">
+                        {{ "Average Feedback Score on the Generated Content" | translate }}
+                    </h2>
+                </div>
+                <div *ngIf="avgScoreDataAvailable; else nodonutData">
+                    <canvas baseChart [data]="avgFeedbackDonutChartData" [options]="avgFeedbackDonutChartOptions"
+                        [plugins]="avgFeedbackDonutChartPlugins" [legend]="avgFeedbackDonutChartLegend" [type]="'doughnut'">
+                    </canvas>
+                </div>
+            </div>
+            <div class="col-span-7 canvas-container bg-white py-7 px-6 rounded-xl border h-full flex flex-col">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-lg text-content font-bold mb-6">
+                        {{ "Number of requests made to the Chatbot" | translate }}
+                    </h2>
+                </div>
+                <div *ngIf="chatbotDataAvailable; else noData">
+                    <canvas baseChart class="chatbotCanvas" height="400px" [data]="chatbotRequestsBarChartData" [options]="chatbotRequestsBarChartOptions"
+                        [plugins]="chatbotRequestsBarChartPlugins" [legend]="chatbotRequestsBarChartLegend" [type]="'bar'">
+                    </canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    
+    
+

@@ -1,0 +1,22 @@
+<ngx-spinner
+  bdColor="rgba(240, 240, 240, 0.3)"
+  size="medium"
+  color="#46A0F1"
+  type="ball-scale-multiple"
+>
+  <p class="text-black text-sm">Loading...</p>
+</ngx-spinner>
+<router-outlet></router-outlet>
+
+<app-delete-detail
+  *ngIf="showIdleWarning"
+  [config]="{
+    heading: 'Idle Time',
+    confirmationText: 'idle message',
+    primaryButtonLabel: 'Continue',
+    primaryButtonType: 'logout',
+    idleTime:idleTime
+  }"
+  [showCancelBtn]="false"
+  (close)="closeModal($event)"
+></app-delete-detail>

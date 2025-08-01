@@ -1,0 +1,24 @@
+<div class="backdrop fixed  z-[99] inset-0 w-full h-full flex items-center justify-center">
+	<div class="dialogue-warpper bg-white rounded-lg shadow-lg mx-2 w-[500px]">
+		<div class="header flex justify-between  px-5 py-5 ">
+			<h1 class="text-lg font-bold leading-[26px]">{{ config.heading| translate}}</h1>
+			<div  *ngIf="showCancelBtn" class=" bg-shade-50 rounded-full text-center p-1 cursor-pointer" (click)="closePopUp()">
+				<img src="../../../../../assets/icons/E remove.svg" alt="">
+			</div>
+		</div>
+		<hr>
+		<div class="body px-5 py-5">
+			<h2 class="text-base font-medium ">{{ config.idleTime  ? (config.confirmationText | translate : {minutes:config.idleTime} ) : (config.confirmationText | translate )}}</h2>
+		</div>
+		<div class="footer-container p-4">
+			<div class="buttons flex items-center justify-end gap-2">
+				<button *ngIf="showCancelBtn" type="button" class="btn-outline-primary" (click)="closePopUp('close')">{{(config.cancelButtonLabel ? config.cancelButtonLabel : 'Cancel') | translate}}</button>
+				<button type="submit" class="flex items-center justify-center" [ngClass]="{'btn-danger': config.primaryButtonType === 'delete', 'btn-primary': ['ok', 'logout'].includes(config.primaryButtonType)}" (click)="onPrimaryAction()">
+					<span class="mr-1">{{ config.primaryButtonLabel | translate }}</span>
+					<img *ngIf="config.primaryButtonType === 'delete'" src="../../../../../assets/icons/delete.svg" alt="">
+				</button>
+			</div>
+
+		</div>
+	</div>
+</div>

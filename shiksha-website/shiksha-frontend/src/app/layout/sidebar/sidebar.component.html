@@ -1,0 +1,48 @@
+<div
+  class="sidebar-backdrop lg:h-full"
+  [ngClass]="isSidebarOpen ? 'show' : 'hide'"
+  (click)="closeSidebar($event)"
+>
+  <div
+    class="grid sidebar p-4 top-0 bottom-0 left-0 w-[270px] bg-white fixed z-[999] lg:static h-full"
+    [ngClass]="isSidebarOpen ? 'show' : 'hide'"
+  >
+    <div class="text-shade-80 text-xl">
+      <div class="p-2.5 pl-0 mt-1 flex items-center rounded-md">
+        <img src="../../../assets/images/logo.svg" alt="" class="logo" />
+        <img
+          src="../../../assets/icons/E remove.svg"
+          alt="remove"
+          class="ml-auto block lg:hidden"
+          (click)="closeSidebar($event)"
+        />
+      </div>
+
+      <p class="text-content text-sm mt-4">
+        {{ (isAdmin ? "Admin Panel" : "Teacher Panel") | translate }}
+      </p>
+      <div>
+        <ng-container *ngFor="let menuItem of menuItems">
+          <div
+            *ngIf="utilitService.hasPermission(menuItem.permission)"
+            class="mt-1 flex text-shade items-center rounded-md px-3 py-4 duration-300 cursor-pointer menu-item"
+            (click)="closeSidebar($event)"
+            [routerLinkActive]="'bg-[#EDF6FE] !text-primary-70'"
+            [routerLink]="menuItem.route"
+          >
+            <img
+              class="menu-icon w-5"
+              [src]="
+                isActive(menuItem.match)
+                  ? menuItem.lightIcon
+                  : menuItem.darkIcon
+              "
+              alt=""
+            />
+            <span class="text-sm ml-2">{{ menuItem.text | translate }}</span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

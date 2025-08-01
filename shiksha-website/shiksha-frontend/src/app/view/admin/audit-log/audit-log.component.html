@@ -1,0 +1,101 @@
+<div class="audit-log-list-wrapper">
+  <div class="flex content-center">
+    <h1 class="text-[30px] leading-[48px] font-bold text-content">
+      {{ "Audit Log" | translate }}
+    </h1>
+  </div>
+
+  <div class="audit-log-list-container p-4 sm:p-8 bg-white mt-6 border rounded">
+    <div class="flex flex-col sm:flex-row justify-between items-center">
+      <p class="text-content text-[30px] leading-[48px] font-bold">
+        {{ "Audit Log List" | translate }}
+      </p>
+      <div class="buttons flex items-center justify-between gap-2">
+        <div class="action-btn flex gap-2">
+          <button
+            class="btn-primary"
+            [hasPermission]="['admin']"
+            (click)="refresh()"
+          >
+            <div class="flex items-center gap-2">
+              <img src="../../../../assets/icons/Replay_light.svg" alt="" />
+              <span class="text-nowrap">{{ "Refresh" | translate }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full">
+      <table
+        class="table-auto w-full border mt-5 rounded-lg"
+        aria-label="audit-log-list"
+      >
+        <thead>
+          <tr
+            class="header font-semibold text-left text-content table-header border-b border-shade"
+          >
+            <th
+              class="px-4 py-6 border text-sm"
+              *ngFor="let listHeader of auditLogHeaders"
+            >
+              {{ listHeader | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white">
+          <tr
+            class="text-gray-700"
+            *ngFor="let auditLogData of auditLogListData; let i = index"
+          >
+            <td class="px-4 py-6 text-sm border">
+              <p class="capitalize">{{ auditLogData?.eventType }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border">
+              <p class="capitalize">{{ auditLogData?.name }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border">
+              <p>{{ auditLogData?.createdAt | date : "d/M/yy, h:mm a" }}</p>
+            </td>
+
+            <td class="px-4 py-6 text-sm border w-96">
+              <a
+                *ngIf="auditLogData?.logUrl"
+                [href]="auditLogData?.logUrl"
+                class="block text-nowrap whitespace-nowrap w-80 overflow-x-hidden text-ellipsis underline text-primary cursor-pointer"
+                >{{ auditLogData?.logUrl }}</a
+              >
+              <p *ngIf="!auditLogData?.logUrl">
+                {{auditLogData?.eventType}} Failed
+              </p>
+            </td>
+            <td class="p-4 text-sm border">
+              <span
+                class="px-3 py-2 rounded-full capitalize"
+                [ngClass]="{
+                  'text-green bg-success-50':
+                    auditLogData?.status === 'success',
+                  'text-error bg-error-50': auditLogData?.status === 'failure'
+                }"
+                >{{ auditLogData?.status }}</span
+              >
+            </td>
+          </tr>
+          <tr *ngIf="!auditLogListData || !auditLogListData.length">
+            <td colspan="7" class="text-center text-content-60 py-2">
+              {{ "No Data Found" | translate }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<app-pagination
+  [totalItems]="totalItems"
+  [pageSize]="pageSize"
+  [currentPage]="currentPage"
+  (pageChange)="onPageChange($event)"
+>
+</app-pagination>

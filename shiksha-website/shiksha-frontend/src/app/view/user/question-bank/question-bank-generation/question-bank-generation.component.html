@@ -1,0 +1,441 @@
+<div class="rounded-sm bg-shade-50 p-4 md:py-0 md:px-2">
+  <div class="flex gap-2">
+    <img
+      src="../../../../../assets/icons/back-arrow.svg"
+      alt=""
+      class="cursor-pointer"
+      (click)="backNavigation()"
+    />
+    <h1 class="text-xl md:text-3xl font-bold text-content leading-[48px]">
+      {{ "Question Paper Generation" | translate }}
+    </h1>
+  </div>
+
+  <div class="bg-primary-30 px-2 py-4 md:px-4 rounded-t border mt-0 md:mt-4">
+    <div
+      class="flex items-center justify-center relative space-x-2 md:space-x-4"
+    >
+      <div
+        *ngFor="let step of [].constructor(totalSteps); let i = index"
+        class="flex items-center gap-2"
+      >
+        <div
+          class="w-8 h-8 flex items-center justify-center rounded-full border-2 transition-all duration-300"
+          [ngClass]="{
+            'bg-primary text-white border-primary': currentStep > i + 1,
+            'bg-blue-100 text-primary border-primary': currentStep === i + 1,
+            'bg-gray-200 text-gray-400 border-gray-300': currentStep < i + 1
+          }"
+        >
+          {{ i + 1 }}
+        </div>
+
+        <p class="hidden lg:block font-semibold text-content">
+          {{ stepNames[i] }}
+        </p>
+        <div
+          *ngIf="i < totalSteps - 1"
+          class="flex-1 h-1 ml-1 transition-all duration-300 w-[24vw] md:w-[21vw]"
+          [ngClass]="{
+            'bg-primary': currentStep > i + 1,
+            'bg-gray-300': currentStep <= i + 1
+          }"
+        ></div>
+      </div>
+    </div>
+
+    <div class="md:hidden flex items-start justify-between mt-2">
+      <p
+        class="font-semibold text-sm text-content w-16"
+        *ngFor="let stepName of stepNames"
+      >
+        {{ stepName }}
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="h-[64vh] overflow-y-auto overflow-x-hidden configuration-container rounded-b bg-white border border-t-0 pb-12 md:pb-4"
+  >
+    <ng-container [ngSwitch]="currentStep">
+      <div *ngSwitchCase="1" class="" [@fadeInOut]="currentStep === 1">
+        <div class="px-4 md:px-8 mt-4">
+          <h2 class="text-base md:text-xl font-bold text-content">
+            Step {{ currentStep }}/{{ totalSteps }}: Question Paper Configuration
+          </h2>
+          <p class="text-sm md:text-base">Configure the question paper type here.</p>
+        </div>
+        <div class="text-content rounded">
+          <form [formGroup]="questionBankConfigForm">
+            <div class="bg-white rounded-lg p-3 md:p-8">
+              <div class="grid lg:grid-cols-2 gap-4">
+                <div>
+                  <app-form-dropdown
+                    [dropDownControlName]="'board'"
+                    (valueChange)="onBoardChange($event)"
+                    [dropDownCtrl]="convertToFormControl(f['board'])"
+                    [dropDownValues]="boardDropdownOptions"
+                    [config]="boardDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+                <div>
+                  <app-form-dropdown
+                    [dropDownControlName]="'medium'"
+                    (valueChange)="onMediumChange($event)"
+                    [dropDownCtrl]="convertToFormControl(f['medium'])"
+                    [dropDownValues]="mediumDropdownOptions"
+                    [config]="mediumDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+              </div>
+
+              <div class="grid lg:grid-cols-2 gap-4 mt-7">
+                <div>
+                  <app-form-dropdown
+                    [dropDownControlName]="'grade'"
+                    (valueChange)="onStandardChange($event)"
+                    [dropDownCtrl]="convertToFormControl(f['grade'])"
+                    [dropDownValues]="classDropdownOptions"
+                    [config]="classDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+                <div>
+                  <app-form-dropdown
+                    [dropDownControlName]="'subject'"
+                    (valueChange)="onSubjectChange($event)"
+                    [dropDownCtrl]="convertToFormControl(f['subject'])"
+                    [dropDownValues]="subjectDropdownOptions"
+                    [config]="subjectDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+              </div>
+
+              <div class="grid lg:grid-cols-2 gap-4 mt-7">
+                <div>
+                  <label class="form-control-label" for="examination-name">
+                    {{ "Examination Name" | translate }}
+                    <span class="text-[16px] text-error">*</span></label
+                  >
+                  <input
+                    type="text"
+                    class="form-control-disabled border-none"
+                    formControlName="examinationName"
+                    placeholder="{{ 'Examination Name' | translate }}"
+                  />
+                  <small
+                    class="form-control-error"
+                    *ngIf="submittedConfig && f['examinationName'].errors?.['required']"
+                    >{{ "Examination name is required" | translate }}</small
+                  >
+                </div>
+                <div>
+                  <label class="form-control-label" for="marks">
+                    {{ "Total Marks" | translate }}
+                    <span class="text-[16px] text-error">*</span></label
+                  >
+                  <input
+                    type="text"
+                    oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+                    maxlength="3"
+                    class="form-control-disabled border-none"
+                    formControlName="totalMarks"
+                    placeholder="{{ 'Total Marks' | translate }}"
+                  />
+                  <small
+                    class="form-control-error"
+                    *ngIf="submittedConfig && f['totalMarks'].errors?.['required']"
+                    >{{ "Total Marks is required" | translate }}</small
+                  >
+                  <small
+                    class="form-control-error"
+                    *ngIf="f['totalMarks'].value && f['totalMarks'].value > 100"
+                    >{{ "Total Marks cannot exceed 100" | translate }}</small
+                  >
+                </div>
+              </div>
+
+              <div class="grid lg:grid-cols-2 gap-4 mt-7">
+                <div>
+                  <label class="form-control-label" for="examination-name">
+                    {{ "Question Paper Scope" | translate }}
+                    <span class="text-[16px] text-error">*</span></label
+                  >
+                  <div class="flex gap-4 items-center">
+                    <div
+                      *ngFor="
+                        let questionBankType of questionBankTypes;
+                        let i = index
+                      "
+                    >
+                      <input
+                        type="radio"
+                        [(ngModel)]="questionBankTypeValue"
+                        [ngModelOptions]="{ standalone: true }"
+                        [id]="questionBankType.name + i"
+                        [name]="'questionBank' + i"
+                        [value]="questionBankType.value"
+                        class="mt-[3px] md:mt-0"
+                        (change)="onQuestionTypeChange()"
+                      />
+                      <label [for]="questionBankType.name + i" class="ms-1">{{
+                        questionBankType.name | translate
+                      }}</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid lg:grid-cols-2 gap-4 mt-7">
+                <div>
+                  <app-form-dropdown
+                    [dropDownControlName]="'chapter'"
+                    [dropDownCtrl]="convertToFormControl(f['chapter'])"
+                    (valueChange)="onChapterChange($event)"
+                    [dropDownValues]="chapterDropdownOptions"
+                    [config]="chapterDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+                <div
+                  *ngIf="questionBankTypeValue === 'singleChapter'"
+                >
+                  <app-form-dropdown
+                    [dropDownControlName]="'subTopic'"
+                    [dropDownCtrl]="convertToFormControl(f['subTopic'])"
+                    (valueChange)="onSubtopicChange()"
+                    [dropDownValues]="subtopicsDropdownOptions"
+                    [config]="subTopicDropdownconfig"
+                    [submitted]="submittedConfig"
+                  ></app-form-dropdown>
+                </div>
+              </div>
+
+              <div
+                class="mt-4"
+                *ngIf="questionBankObjectives && questionBankObjectives.length"
+              >
+                <h2 class="text-base font-bold">Objectives</h2>
+                <table
+                  class="table-auto w-full text-content rounded-lg"
+                  [ngClass]="
+                    totalPercentage === 100 ? 'base-table' : 'error-table'
+                  "
+                  aria-label="question-configuration-list"
+                >
+                  <thead
+                    class="text-xs text-content bg-[#edf6fe] hidden lg:table-header-group"
+                  >
+                    <tr>
+                      <th
+                        class="px-4 py-3 border text-sm text-content"
+                        *ngFor="
+                          let questionBankObjective of questionBankObjectives
+                        "
+                      >
+                        {{ questionBankObjective.objective }}
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr
+                      class="flex flex-col border rounded lg:rounded-none lg:border-none p-4 lg:p-0 lg:table-row"
+                      [ngClass]="totalPercentage !== 100 ? 'border-warn' : ''"
+                    >
+                      <td
+                        class="px-1 py-1 lg:px-4 lg:py-4 w-full md:w-[25%]"
+                        *ngFor="
+                          let questionBankObjective of questionBankObjectives;
+                          let i = index
+                        "
+                      >
+                        <label
+                          class="lg:hidden mb-1 form-control-label"
+                          for="marks"
+                        >
+                          {{ questionBankObjective.objective }}
+                          <span class="text-[16px] text-error">*</span></label
+                        >
+
+                        <div class="relative">
+                          <input
+                            type="text"
+                            oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+                            class="table-form-control"
+                            [id]="questionBankObjective.objective + i"
+                            [(ngModel)]="
+                              questionBankObjective.percentage_distribution
+                            "
+                            [ngModelOptions]="{ standalone: true }"
+                            (ngModelChange)="calculateTotalPercentage(i)"
+                            placeholder="Enter percentage"
+                            autocomplete="off"
+                          />
+                          <span class="absolute right-2 top-2 text-gray-500"
+                            >%</span
+                          >
+                        </div>
+                        <small
+                          class="form-control-error"
+                          *ngIf="
+                            submittedConfig &&
+                            questionBankObjective.percentage_distribution === null
+                          "
+                          >{{ "Percentage required" | translate }}</small
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <small class="text-xs text-warn" *ngIf="totalPercentage !== 100"
+                  >Please ensure the sum of all objectives adds up to
+                  100%.</small
+                >
+              </div>
+
+              <div class="mt-4" *ngIf="marksDistribution.length">
+                <h2 class="text-base font-bold">Marks Distribution</h2>
+                <div class="overflow-x-auto">
+                  <table
+                    class="min-w-full table-auto border-collapse"
+                    [ngClass]="
+                      totalMarks === totalDistributedMarks
+                        ? 'marks-base-table'
+                        : 'marks-error-table'
+                    "
+                  >
+                    <thead class="bg-[#edf6fe]">
+                      <tr>
+                        <th class="px-2 py-2">
+                          {{
+                            questionBankTypeValue === "multiChapter"
+                              ? "Chapters"
+                              : "Topics"
+                          }}
+                        </th>
+                        <th class="px-2 py-2">{{ "Marks" | translate }}</th>
+                        <th class="px-2 py-2">
+                          {{ "Percentage" | translate }}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        *ngFor="let config of marksDistribution; let i = index"
+                      >
+                        <td class="px-2 py-2 text-sm md:w-[50%]">
+                          <p class="font-semibold">{{ config.unit_name }}</p>
+                        </td>
+                        <td class="px-2 py-2 text-sm">
+                          <input
+                            type="text"
+                            oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+                            maxlength="3"
+                            class="table-form-control"
+                            placeholder="Enter Marks"
+                            [(ngModel)]="config.marks"
+                            [ngModelOptions]="{ standalone: true }"
+                            (ngModelChange)="updatePercentage(i)"
+                            autocomplete="off"
+                          />
+                          <small
+                            class="form-control-error"
+                            *ngIf="submittedConfig && !config.marks"
+                            >{{ "Marks required" | translate }}</small
+                          >
+                        </td>
+                        <td class="px-2 py-2 capitalize text-sm">
+                          <p class="text-content font-semibold">
+                            {{ config.percentage_distribution }}%
+                          </p>
+                        </td>
+                      </tr>
+
+                      <tr class="bg-primary-30">
+                        <td class="px-2 py-2 capitalize text-sm">
+                          <p class="text-sm hidden md:block font-semibold">
+                            Total
+                          </p>
+                        </td>
+                        <td class="px-2 py-2 capitalize text-sm">
+                          <p class="text-sm text-content-50">
+                            [ Total Marks Distributed/Total Marks ] :
+                            <span class="font-semibold text-content"
+                              >[ {{ totalDistributedMarks }}/{{
+                                totalMarks
+                              }}
+                              ]</span
+                            >
+                          </p>
+                        </td>
+                        <td class="px-2 py-2 text-sm">
+                          <p class="text-sm font-semibold">
+                            {{ totalDistributedPercentage }}%
+                          </p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <small
+                  class="text-xs text-warn"
+                  *ngIf="totalMarks !== totalDistributedMarks"
+                  >The total distribution of marks must equal the total marks of
+                  the question paper.</small
+                >
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div *ngSwitchCase="2" [@fadeInOut]="currentStep === 2">
+        <app-question-bank-template
+          [currentStep]="currentStep"
+          [totalMarks]="totalMarks"
+          [templateData]="templateData"
+          [submittedTemplate]="submittedTemplate"
+          [totalTemplateMarks]="totalTemplateMarks"
+          (totalTemplateMarksUpdate)="totalTemplateMarksChange($event)"
+          (backClick)="previousStep()"
+        >
+        </app-question-bank-template>
+      </div>
+      <div
+        *ngSwitchCase="3"
+        [@fadeInOut]="currentStep === 3"
+        class="p-4 rounded bg-white relative"
+      >
+        <app-question-bank-blue-print
+          [currentStep]="currentStep"
+          [questionBankBluePrintData]="questionBankBluePrintData"
+          [objectiveChartMapper]="objectiveChartMapper"
+          [bluePrintChapterDropdownOptions]="bluePrintChapterDropdownOptions"
+          [bluePrintObjectiveDropdownOptions]="
+            bluePrintObjectiveDropdownOptions
+          "
+          (backClick)="previousStep()"
+        ></app-question-bank-blue-print>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+  <!-- Navigation Buttons -->
+
+  <div class="flex justify-end items-center gap-2 mt-0 md:mt-4 absolute md:relative bottom-0 bg-shade-50 w-full p-4 md:p-0 md:px-2 z-10">
+    <button
+      *ngIf="currentStep > 1"
+      (click)="previousStep()"
+      class="btn-outline-primary"
+    >
+      Previous
+    </button>
+    <button (click)="onSubmit(currentStep)" class="btn-primary">
+      {{ currentStep === totalSteps ? "Generate Question Paper" : "Next" }}
+    </button>
+  </div>

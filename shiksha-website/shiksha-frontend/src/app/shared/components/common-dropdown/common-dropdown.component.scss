@@ -1,0 +1,83 @@
+.select-wrapper {
+  position: relative;
+  ::ng-deep
+    .ng-select.ng-select-focused:not(.ng-select-opened)
+    > .ng-select-container {
+    box-shadow: none;
+    border: 1px solid #9095a0;
+
+  }
+
+  ::ng-deep .with-background.ng-select .ng-select-container {
+    background: #f3f4f6 !important;
+    border: none;
+  }
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: #fff !important;
+    height: 100% !important;
+    border: 1px solid var(--content-50);
+  }
+
+  ::ng-deep .ng-select .ng-select-container .ng-value-container .ng-input>input[readonly]{
+    user-select: unset;
+    -webkit-user-select: unset;
+  }
+
+  // ::ng-deep
+  //   .ng-select.ng-select-focused:not(.ng-select-opened)
+  //   > .ng-select-container {
+  // }
+
+  ::ng-deep
+    .with-background.ng-select.ng-select-focused:not(.ng-select-opened)
+    > .ng-select-container {
+    border: none;
+  }
+
+  ::ng-deep .ng-select .ng-arrow-wrapper .ng-arrow {
+    border-color: none !important;
+    border-style: none !important;
+    border-width: 0 !important;
+  }
+  ::ng-deep .ng-select .ng-arrow-wrapper {
+    background-image: url("../../../../assets/icons/drop-down.svg") !important;
+    background-repeat: no-repeat;
+    background-size: 14px 14px;
+    margin-top: 10px;
+  }
+
+  ::ng-deep .ng-dropdown-panel.ng-select-bottom {
+    border: none;
+    margin-top: 5px;
+    box-shadow: 0px 4px 9px 0px #171a1f1f;
+  }
+
+  ::ng-deep .ng-dropdown-panel {
+    min-width: 200px !important;
+  }
+
+  ::ng-deep
+    .ng-dropdown-panel
+    .ng-dropdown-panel-items
+    .ng-option.ng-option-selected,
+  .ng-dropdown-panel
+    .ng-dropdown-panel-items
+    .ng-option.ng-option-selected.ng-option-marked {
+    background-color: var(--shade-80) !important;
+  }
+
+  ::ng-deep
+    .ng-dropdown-panel
+    .ng-dropdown-panel-items
+    .ng-option.ng-option-marked {
+    background-color: var(--shade-80) !important;
+  }
+
+  .area-label {
+    position: absolute;
+    left: 11px;
+    color: var(--content-50);
+    z-index: 1;
+    font-size: 0.875rem;
+  }
+}

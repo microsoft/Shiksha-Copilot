@@ -1,0 +1,228 @@
+<div class="rounded-sm bg-shade-50 p-5">
+  <div class="flex gap-2">
+    <img
+    src="../../../../../assets/icons/back-arrow.svg"
+    alt=""
+    class="cursor-pointer"
+    (click)="backNavigation()"
+  />
+  <h1 class="text-xl md:text-3xl font-bold text-content leading-[48px]">
+    {{ "Question Paper" | translate }}
+  </h1>
+  </div>
+
+<div class="max-w-full mx-auto py-4">
+  <div class="space-y-4">
+    <div class="bg-white shadow-md rounded-lg">
+      <button
+        (click)="toggleAccordion()"
+        class="w-full text-left px-4 py-2 text-white text-sm bg-primary rounded-sm"
+      >
+        <div class="flex items-center justify-between">
+          <p>{{ "Click here to view question paper blue print" | translate }}</p>
+          <img
+            src="{{
+              isOpen
+                ? '../../../../../assets/icons/up-arrow.svg'
+                : '../../../../../assets/icons/down-arrow.svg'
+            }}"
+            alt=""
+          />
+        </div>
+      </button>
+      <div *ngIf="isOpen" class="p-4 overflow-x-auto">
+        <table
+          class="min-w-full table-auto border-collapse"
+          [@slideInOut]="isOpen"
+        >
+          <thead>
+            <tr>
+              <th class="border px-2 py-2">{{ "Topic" | translate }}</th>
+              <th class="border px-2 py-2">{{ "Question Type" | translate }}</th>
+              <th class="border px-2 py-2">{{ "Objective" | translate }}</th>
+              <th class="border px-2 py-2">{{ "Marks" | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let questionBankObjective of questionBankDetails.bluePrintTemplate; let i=index">
+            <tr
+              *ngFor="let objective of questionBankObjective.questionDistribution; let j=index"
+            >
+            <td class="border px-2 py-2 capitalize text-sm">
+              {{ objective.unitName }}
+            </td>
+              <td class="border px-2 py-2 text-sm">
+                {{ questionTypeMapper[questionBankObjective.type] }}
+              </td>
+              <td class="border px-2 py-2 text-sm">
+                {{ objective.objective }}
+              </td>
+              <td class="border px-2 py-2 text-sm">
+                {{ questionBankObjective.marksPerQuestion }}
+              </td>
+            </tr>
+          </ng-container>
+          </tbody>
+        </table>
+        <div class="flex justify-end">
+          <span class="mr-4 mt-2" *ngIf="questionBankDetails"
+            ><b>{{ 'Total' | translate}}</b> :
+            {{ questionBankDetails?.totalMarks }} {{'Marks' | translate}}</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="grid gap-8 mt-4 grid-cols-1 md:grid-cols-3">
+  <div class="w-full md:col-span-2">
+    <div
+      class="question-bank-container p-4 md:px-12 rounded-md border h-[88vh] bg-white overflow-y-auto"
+    >
+      <h2 class="text-center text-2xl font-bold text-content">
+        {{ questionBankDetails?.questionBank?.metadata.schoolName }}
+      </h2>
+      <h2 class="text-center text-xl mt-2 font-bold text-content">
+        {{ questionBankDetails?.examinationName}}
+      </h2>
+
+      <div class="flex justify-between my-4">
+        <p>{{'Subject' | translate}} : {{ questionBankDetails?.subject }}</p>
+        <p>{{'Class' | translate}} : {{ questionBankDetails?.grade }}</p>
+        <p>
+          {{'Marks' | translate}} : {{ questionBankDetails?.totalMarks || 0 }}
+        </p>
+      </div>
+      <hr />
+
+      <div
+        class="mt-5"
+        *ngFor="let questionBankData of questionBank?.questions; let q=index"
+      >
+        <div class="flex items-start justify-between gap-2">
+          <h2 class="font-bold text-content">
+            {{utilityService.intToRoman(q+1)}}. {{questionTypeMapper[questionBankData.type]}}
+          </h2>
+          <b class="text-content flex items-center justify-end gap-1 min-w-[15vw] md:min-w-[7vw]"
+            >{{ questionBankData.numberOfQuestions }} X {{ questionBankData.marksPerQuestion }} = {{questionBankData.numberOfQuestions * questionBankData.marksPerQuestion }}
+            </b
+          >
+        </div>
+        <div
+          *ngFor="let questionData of questionBankData.questions;
+            let i = index
+          "
+        >
+          <div class="flex justify-between items-start mt-2 gap-2" *ngIf="questionBankData.type !== 'Match the following'">
+            <p class="text-content">
+              {{ i + 1 }}. {{ questionData.question }}
+            </p>
+          </div>
+
+          <div *ngIf="questionBankData.type === 'Match the following'">
+            <table
+            class="min-w-full table-auto border-collapse"
+          >
+            <tbody>
+              <tr *ngFor="let columnOneValue of questionData.columnOneValues; let i=index">
+              <td class="border px-2 py-2 text-sm">
+                {{ columnOneValue }}
+              </td>
+                <td class="border px-2 py-2 text-sm">
+                  {{ shuffledColumns[i] }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+          <ul *ngIf="questionBankData.type === 'Four alternatives are given for each of the following questions, choose the correct alternative'" class="list-alpha">
+            <li *ngFor="let option of questionData.options">
+              {{ option }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-4 bg-white border rounded-lg">
+    <div>
+      <h2 class="font-semibold text-content mb-2">
+        {{ "Question Paper Feedback" | translate }}
+      </h2>
+
+      <div class="mt-3 gap-4 flex text-[14px] flex-col">
+        <p class="font-semibold text-content">
+          {{ questionBankFeedbackQuestion | translate }}
+        </p>
+        <div *ngFor="let feedbackType of questionBankFeedbackValues; let i = index">
+          <input
+            [disabled]="questionBankDetails?.questionBank?.feedback?.feedback"
+            type="radio"
+            [id]="feedbackType.name + i"
+            [name]="feedbackType.name + i"
+            [value]="feedbackType.name"
+            [(ngModel)]="questionBankFeedback.feedback"
+            class="mt-[3px] md:mt-0"
+          />
+          <label [for]="feedbackType.name + i" class="ms-1"
+            >{{ feedbackType.name | translate }}
+            {{ feedbackType.symbol }}</label
+          >
+        </div>
+      </div>
+
+      <div>
+        <textarea
+          [disabled]="questionBankDetails?.questionBank?.feedback?.feedback"
+          [(ngModel)]="questionBankFeedback.overallFeedback"
+          class="p-2 mt-2 border rounded-sm w-fullfocus:outline-none w-full"
+          placeholder="{{ 'Leave your comments here' | translate }}"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <button
+        [disabled]="!questionBankFeedback.feedback"
+        *ngIf="!questionBankDetails?.questionBank?.feedback?.feedback"
+        type="button"
+        class="btn-primary w-full"
+        (click)="submitFeedback()"
+      >
+        {{ "Submit Feedback" | translate }}
+      </button>
+    </div>
+
+    <h2 class="font-semibold text-content mt-4">
+      {{ "Download Question Paper" | translate }}
+    </h2>
+    <div
+      class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
+      (click)="downloadQp()"
+    >
+      <div class="flex justify-center">
+        <img
+          class="px-10 py-8"
+          src="../../../../../assets/images/docx.svg"
+          alt=""
+        />
+        <div></div>
+      </div>
+      <div class="bg-white p-2 flex items-center gap-2 justify-between">
+        <div class="flex items-center gap-1">
+          <div class="p-1 rounded-lg bg-primary-60">
+            <img src="../../../../../assets/icons/docx-file.svg" alt="" />
+          </div>
+          <span class="max-w-52 text-nowrap overflow-hidden text-ellipsis">{{
+            questionBankDetails?.examinationName
+          }}</span>
+        </div>
+
+        <div class="p-1 rounded-lg bg-primary-60">
+          <img src="../../../../../assets/icons/download.svg" alt="" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

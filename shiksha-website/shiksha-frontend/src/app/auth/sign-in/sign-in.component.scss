@@ -1,0 +1,171 @@
+.sign-in-container {
+  .ms-logo{
+    height: auto;
+    width: 12vw;
+    object-fit: contain;
+    @media (max-width:756px) {
+      width: 30vw;
+    }
+  }
+  .s-logo{
+    height: auto;
+    width: 8vw;
+    object-fit: contain;
+    @media (max-width:756px) {
+      width: 24vw;
+    }
+  }
+  .logo{
+    width: min(180px,65%);
+  }
+  .sign_in{
+    background: url(../../../assets/images/login_bg.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .login-card 
+    .header-text {
+      &::after {
+        content: url(../../../assets/images/double-underline.svg);
+        display: block;
+        transform: translateY(1px);
+      }
+    }
+
+    //   hide the spinner icon of the input field
+    // chrome
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    // firefox
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+  }
+  .slider-container {
+    height: 320px;
+    .slides {
+      display: none;
+      position: relative;
+      &.active-slide {
+        display: flex;
+      }
+      &::after {
+        content: url(../../../assets/images/quotes.svg);
+        position: absolute;
+        top: 8%;
+        left: 0;
+      }
+
+      p:first-child {
+        min-height: 90px;
+      }
+    }
+    // .dot-container {
+    //   position: absolute;
+    //   right: 0;
+    //   left: 0;
+    //   bottom: 0;
+    //   display: flex;
+    //   justify-content: center;
+    //   align-items: center;
+    //   margin-bottom: 1rem;
+    //   .dot {
+    //     width: 10px;
+    //     height: 10px;
+    //     border-radius: 50%;
+    //     background-color: var(--shade-100);
+    //     margin: 0 0.5rem;
+    //     display: inline-block;
+    //     opacity: 0.5;
+    //     cursor: pointer;
+    //     padding: 0;
+    //     transition: opacity 0.5s ease;
+    //     &:hover,
+    //     &.active {
+    //       opacity: 1;
+    //       background-color: var(--primary-DEFAULT);
+    //     }
+    //   }
+    //   .btn-carousel {
+    //     border-radius: 50%;
+    //     padding: 0.5rem;
+    //     transition: all 0.23s ease;
+    //     cursor: pointer;
+    //     &:hover,
+    //     &:active {
+    //       background-color: var(--shade-100);
+    //     }
+    //   }
+    // }
+  }
+
+
+// pop up style
+
+.pop-up-container {
+  .backdrop {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 90;
+  }
+
+  .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 3rem 5rem;
+    z-index: 100;
+    min-width: 35vw;
+    button {
+      background-color: var(--success-50);
+    }
+
+    ::ng-deep .error .otp-input{
+      border: 1px solid var(--error-DEFAULT) !important;
+    }
+
+    ::ng-deep .otp-input:focus-visible {
+      outline: none;
+    }
+  }
+
+  &.hidden-modal {
+    .backdrop{
+      display: none;
+    }
+    .modal {
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.2s ease-in-out ;
+    }
+  }
+  &.visible-modal {
+    .backdrop{
+      display: block;
+    }
+    .modal {
+      transform: translate(-50%, -50%) scale(1);
+      transition: transform 0.2s ease-in-out;
+    }
+  }
+}
+
+@media (max-width:756px) {
+ .pop-up-container {
+  .modal{
+    width: 90vw;
+    padding:3rem 1rem ;
+  }
+ }
+}

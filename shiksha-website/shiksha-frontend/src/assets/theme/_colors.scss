@@ -1,0 +1,62 @@
+$colors: (
+  primary: (
+    DEFAULT:#46A0F1,
+    100:#379AE6,
+    80:#b5d9f9,
+    70:#46A0F1,
+    60:#f8fbff,
+    50:#F1F8FE,
+    40:#EDF6FE,
+    30:#f2f6fb
+  ),
+  secondary: (
+    DEFAULT: #ED7D2D,
+    100:#EF7B45,
+    80:#F5772F,
+    50:#FEF6F1
+  ),
+  tertiary: (
+    DEFAULT: #8353E2,
+    100:#A062F7,
+    80:#A07CE9,
+    60:#B978EC,
+    50:#F5F2FD,
+    30:#f6f5f9
+  ),
+  error: (
+    DEFAULT: #de3b40,
+    100:#E77E7E,
+    50:#fff0f0,
+    30:#F5F5F5
+  ),
+  warn: (
+    DEFAULT: #f3b416,
+    100:#F0B94B,
+    80:#FFC11E,
+    50:#fef7f3
+  ),
+  success: (
+    DEFAULT: #117B34,
+    100:#42AC31,
+    80:#70CF97,
+    50:#D3F9E0
+  ),
+  shade: (
+    DEFAULT: #565E6C,
+    100:#BCC1CA,
+    80:#F3F4F6,
+    50:#F8F9FA
+  ),
+  content:(
+    DEFAULT:#4B4B4B,
+    100:#585757,
+    60:#6E7787,
+    70:#54577A,
+    50:#9095A0,
+    30:#DEE1E6
+  ),
+  contrast:(
+    TEAL:#00BDD6,
+    BLUE:#3874E1
+  )
+);

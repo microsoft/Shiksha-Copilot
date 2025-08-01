@@ -1,0 +1,93 @@
+<div class="inspect-wrapper rounded-sm bg-shade-50 p-5">
+    <div class="flex items-center">
+        <img class="w-5 h-5 cursor-pointer" src="../../../../../assets/icons/Vector (3).svg"
+            routerLink="/admin/content-activity" alt="">
+        <h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px] ml-4">
+            Lesson Plan
+        </h1>
+    </div>
+
+
+    <section class="container mx-auto mt-5 bg-white">
+        <div class="w-full overflow-hidden rounded-lg">
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-content" aria-label="lesson-plan-list">
+                    <thead class="bg-white">
+                        <tr class="header font-bold text-left table-header border-b border-content-30">
+                            <th class="text-content px-4 py-5 border text-sm" *ngFor="let header of tableHeaders">
+                                {{header}}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <tr>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{data?.board }}
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{data?.medium | titlecase}}
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                Class {{data?.class}}
+                            </td>
+                            <td class="px-4 py-6 max-w-[220px] text-sm border text-nowrap">
+                                <span class="topic-chips text-[12px]">{{utilityService.getSubjectDisplayName(data?.subjects)}}</span>
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{data?.chapter.topics}}
+                            </td>
+                            <td class="px-4 py-6 w-[450px] text-sm border whitespace-normal">
+                                <span class="ms-2 inline-block" *ngFor="let item of data?.subTopics">{{item}}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="tabs flex items-stretch justify-between my-4 overflow-auto sticky top-0 py-4 bg-shade-50">
+        <div class="h-[46px] p-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
+            [class.active]="selectedTab === 'Learning Outcomes'" (click)="selectTab('Learning Outcomes')">
+            <img [src]="selectedTab !== 'Learning Outcomes' ? 'assets/icons/learning_p.svg' : 'assets/icons/learning_l.svg'"
+                alt="">
+            <span class="text-sm ms-2">Learning Outcomes</span>
+        </div>
+        <div *ngFor="let tab of tabs"
+            class="h-[46px] ms-2 p-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
+            [class.active]="selectedTab === tab.type" (click)="selectTab(tab.type)">
+            <img [src]="selectedTab !== tab.type ? 'assets/icons/' + tab.type + '_p.svg' : 'assets/icons/' + tab.type + '_l.svg'"
+                alt="" />
+            <span class="text-sm ms-2">{{tab.type}}</span>
+        </div>
+
+    </div>
+
+    <div class="tab-content text-sm">
+        <div *ngIf="selectedTab === 'Learning Outcomes'"
+            class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white">
+
+            <div class="learning-outcomes-section">
+                <div class="h-96 overflow-y-auto mb-3">
+                    <ul class="list-decimal space-y-2 text-content pl-3">
+                        <li *ngFor="let learningOutcome of learningOutcomes; let i = index">
+                            {{ learningOutcome }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <ng-container *ngFor="let tab of tabs">
+            <div *ngIf="selectedTab === tab.type">
+                <div class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white">
+                    <div *ngFor="let info of tab.info">
+                        <div class="h-96 overflow-y-auto mb-3" [innerHTML]="info.content.main | formatContent"></div>                        
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+
+    </div>
+
+</div>

@@ -1,0 +1,30 @@
+<div class="disable-popup-wrapper z-100">
+  <div class="flex items-center justify-between mb-2">
+    <h1 class="font-bold text-[20px] text-content">{{ modalHeader }}</h1>
+    <img
+      class="w-5 h-5 cursor-pointer"
+      src="../../../../assets/icons/remove.svg"
+      (click)="closeModal()"
+      alt=""
+    />
+  </div>
+
+  <div>
+    We encountered issues with your upload.
+    Please review the issue report to understand what went wrong.
+    You can download the report using the link below:
+  </div>
+
+  <br />
+  <a
+    class="text-primary underline"
+    (click)="closeModal()"
+    [href]="errorUrl"
+    target="_blank"
+    >[Click here to download the error report]</a
+  >
+
+  <div class="buttons mt-8 flex items-center justify-end gap-2">
+    <button class="w-24 btn-primary" (click)="closeModal()">Close</button>
+  </div>
+</div>

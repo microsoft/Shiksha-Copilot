@@ -1,0 +1,15 @@
+<app-common-dropdown
+  #languageSwitcher
+  [dropDownValues]="languageDropdownOptions"
+  [config]="languageDropDownConfig"
+  (valueUpdate)="changeLanguage($event)"
+></app-common-dropdown>
+
+
+<app-delete-detail *ngIf="showLanguageSwitcher"
+[config]="{	
+	heading: languageSwitchConfig.heading,	
+	confirmationText : languageSwitchConfig.confirmText,
+	primaryButtonLabel : 'Continue',
+	primaryButtonType : 'ok'}"
+(close)="confirmSwitch($event)"></app-delete-detail>

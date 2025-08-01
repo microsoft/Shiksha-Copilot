@@ -1,0 +1,242 @@
+
+<div class="mt-16 lg:mt-0 mb-0 lg:mb-4 p-4 lg:p-0 pb-0">
+  <h1 class="text-xl text-content md:text-2xl font-bold">
+    {{ "Hi" | translate }}, {{ utiltyService.loggedInUserData?.name }}
+  </h1>
+  <h6 class="text-sm md:text-sm font-light text-content-60">
+    {{ "Your Teacher Toolkit at a Glance" | translate }}
+  </h6>
+</div>
+<div
+  class="dashboard-wrapper grid grid-cols-1 md:grid-cols-10 md:gap-[22px] p-4 lg:p-0"
+>
+  <div class="w-full col-span-6">
+    <div class="dashboard-landing-card">
+      <div class="flex flex-col md:flex-row gap-6 mx-7 my-7">
+        <img
+          class="h-[186px]"
+          src="../../../../assets/images/dashboard-computer.png"
+          alt=""
+        />
+        <div>
+          <h2 class="mt-1 text-xl text-white font-semibold">
+            {{ "Lesson Plan Generation" | translate }}
+          </h2>
+          <h6 class="mt-3 text-white text-sm">
+            {{
+              "Generating Comprehensive Lesson Plans: Strategies for Creating Engaging and Effective Learning Experiences in the Classroom"
+                | translate
+            }}
+          </h6>
+          <button
+            routerLink="/user/content-generation/lesson-plan"
+            class="text-primary bg-white px-7 py-2 mt-7 rounded font-medium text-sm"
+          >
+            <h6>{{ "Generate" | translate }}</h6>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-10">
+      <div class="flex justify-between">
+        <h3 class="text-xl md:text-2xl font-medium text-content-100">
+          {{ "Recently Generated Plans" | translate }}
+        </h3>
+        <p
+          class="text-sm font-medium text-primary cursor-pointer"
+          routerLink="/user/content-generation"
+          *ngIf="recentPlans.length > 0"
+        >
+          {{ "View All" | translate }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div
+          class="px-6 py-8 rounded-xl bg-white border flex flex-col justify-between"
+          *ngFor="let plan of recentPlans"
+        >
+         <div>
+          <div class="flex justify-between">
+            <div
+              class="icon flex justify-center items-center"
+              [ngClass]="plan.iconBackground"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                [attr.fill]="plan.iconColor"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M14.25 2.5C14.25 2.4337 14.2237 2.37011 14.1768 2.32322C14.1299 2.27634 14.0663 2.25 14 2.25H7C6.27065 2.25 5.57118 2.53973 5.05546 3.05546C4.53973 3.57118 4.25 4.27065 4.25 5V19C4.25 19.7293 4.53973 20.4288 5.05546 20.9445C5.57118 21.4603 6.27065 21.75 7 21.75H17C17.7293 21.75 18.4288 21.4603 18.9445 20.9445C19.4603 20.4288 19.75 19.7293 19.75 19V9.147C19.75 9.0807 19.7237 9.01711 19.6768 8.97022C19.6299 8.92334 19.5663 8.897 19.5 8.897H15C14.8011 8.897 14.6103 8.81798 14.4697 8.67733C14.329 8.53668 14.25 8.34591 14.25 8.147V2.5ZM15 12.25C15.1989 12.25 15.3897 12.329 15.5303 12.4697C15.671 12.6103 15.75 12.8011 15.75 13C15.75 13.1989 15.671 13.3897 15.5303 13.5303C15.3897 13.671 15.1989 13.75 15 13.75H9C8.80109 13.75 8.61032 13.671 8.46967 13.5303C8.32902 13.3897 8.25 13.1989 8.25 13C8.25 12.8011 8.32902 12.6103 8.46967 12.4697C8.61032 12.329 8.80109 12.25 9 12.25H15ZM15 16.25C15.1989 16.25 15.3897 16.329 15.5303 16.4697C15.671 16.6103 15.75 16.8011 15.75 17C15.75 17.1989 15.671 17.3897 15.5303 17.5303C15.3897 17.671 15.1989 17.75 15 17.75H9C8.80109 17.75 8.61032 17.671 8.46967 17.5303C8.32902 17.3897 8.25 17.1989 8.25 17C8.25 16.8011 8.32902 16.6103 8.46967 16.4697C8.61032 16.329 8.80109 16.25 9 16.25H15Z"
+                />
+                <path
+                  d="M15.75 2.82396C15.75 2.63996 15.943 2.52296 16.086 2.63796C16.207 2.73596 16.316 2.84996 16.409 2.97996L19.422 7.17696C19.49 7.27296 19.416 7.39696 19.298 7.39696H16C15.9337 7.39696 15.8701 7.37062 15.8232 7.32373C15.7763 7.27685 15.75 7.21326 15.75 7.14696V2.82396Z"
+                />
+              </svg>
+            </div>
+            <h6 class="text-xs font-normal text-content-70">
+              {{ "Generated on" | translate }}:
+              <span>{{ plan.createdAt | date : "MMM dd,yyyy" }}</span>
+            </h6>
+          </div>
+
+          <div class="mt-5">
+            <h4 class="text-base font-medium">
+              {{ "Subject" | translate }}:
+              <span>{{ plan.isLesson ? utiltyService.getSubjectDisplayName(plan.lesson.subjects) : utiltyService.getSubjectDisplayName(plan.resource.subjects)}}</span>
+            </h4>
+            <h6 class="mt-2 text-xs font-normal text-content-70">
+              {{ "Topic" | translate }}: {{plan.isLesson ?  plan.lesson.chapter?.orderNumber+'. '+plan.lesson.chapter.topics:plan.resource.chapter?.orderNumber +'. '+plan.resource.chapter.topics }}
+            </h6>
+          </div>
+         </div>
+
+          <button
+            class="mt-8 w-full py-2 rounded"
+            [ngClass]="plan.btnColor"
+            (click)="onView(plan)"
+          >
+            <h6 class="text-white text-sm">
+              {{ (plan.isLesson ? "View Lesson Plan" : "View Resource Plan") | translate }}
+            </h6>
+          </button>
+        </div>
+
+        <div
+          class="px-6 py-8 rounded-xl bg-white border flex flex-col items-center"
+          *ngIf="recentPlans.length === 0"
+        >
+          <div class="rounded-full bg-warn-50 p-4 my-8">
+            <img src="../../../../assets/icons/no-file.svg" alt="" />
+          </div>
+          <h4 class="text-base text-center font-medium">
+            {{ "No plans found" | translate }}
+          </h4>
+          <button
+          routerLink="/user/content-generation"
+            class="mt-7 w-full py-2 rounded bg-warn"
+          >
+            <h6 class="text-white text-sm">
+              {{ "Generate" | translate }}
+            </h6>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-container mt-8 bg-white py-7 px-6 rounded-xl border">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-base text-content">
+          {{ "Lesson Plan/Resources Generated" | translate }}
+        </h2>
+        <div class="w-44">
+          <app-common-dropdown
+            #analyticsDropdown
+            [dropDownValues]="analyticsDropdownOptions"
+            [config]="analyticsDropdownconfig"
+            (valueUpdate)="onFilterChange($event)"
+          ></app-common-dropdown>
+        </div>
+      </div>
+      <canvas
+        baseChart
+        height="400"
+        [type]="'line'"
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+      >
+      </canvas>
+    </div>
+  </div>
+  <div class="w-full col-span-4 mt-8 md:mt-0">
+    <div
+      class="bg-white px-5 py-7 rounded-xl border open-calender-wrapper h-full"
+    >
+      <h2
+        class="font-bold text-xl md:text-[24px] pl-3 text-content-100"
+      >
+        {{ "Calendar" | translate }}
+      </h2>
+      <div class="flex justify-between items-center flex-wrap gap-4 mt-4 pl-3">
+        <div class="min-w-fit">
+          <h3
+            class="font-normal md:text-xl text-lg md:leading-9 text-content-100"
+          >
+            {{ monthViewDate | date : "MMMM YYYY" }}
+          </h3>
+        </div>
+
+        <div class="btn-group flex gap-4 items-center ml-auto min-w-fit">
+          <button
+            class="p-1 md:py-2 md:px-4 rounded text-sm md:text-lg"
+            mwlCalendarPreviousView
+            [view]="view"
+            [(viewDate)]="monthViewDate"
+            (viewDateChange)="closeOpenMonthViewDay()"
+          >
+            <img
+              src="../../../../../assets/icons/Chevron left large.svg"
+              alt=""
+              class="inline-block mb-[2px]"
+            />
+          </button>
+
+          <button
+            class="p-1 md:py-2 md:px-4 rounded text-primary text-sm md:text-lg"
+            mwlCalendarNextView
+            [view]="view"
+            [(viewDate)]="monthViewDate"
+            (viewDateChange)="closeOpenMonthViewDay()"
+          >
+            <img
+              src="../../../../../assets/icons/Chevron right large.svg"
+              alt=""
+              class="inline-block"
+            />
+          </button>
+        </div>
+      </div>
+
+      <mwl-calendar-month-view
+        [viewDate]="monthViewDate"
+        [weekStartsOn]="1"
+        (dayClicked)="dayClicked($event.day)"
+        [ngClass]="currentDay ? 'current-blur' : ''"
+      >
+      </mwl-calendar-month-view>
+
+      <button
+        routerLink="/user/schedule"
+        class="px-6 py-4 bg-primary rounded w-full mt-7 mb-5"
+      >
+        <h6 class="text-white text-left font-medium">
+          {{ "My Schedule" | translate }}
+        </h6>
+      </button>
+
+      <div class="mt-5 dashboard-events">
+        <mwl-calendar-day-view
+          [viewDate]="viewDate"
+          [events]="events"
+          #calender_ele
+          [hourSegmentHeight]="55"
+          [dayStartHour]="7"
+          [dayEndHour]="18"
+          [hourSegments]="1"
+          [refresh]="refresh"
+          [tooltipTemplate]="customTooltip"
+        >
+        </mwl-calendar-day-view>
+      </div>
+    </div>
+  </div>
+  <ng-template #customTooltip let-event="event">
+    <div class="z-10 custom-tooltip w-[60%] md:w-[20%] bg-gray-950 text-white rounded-lg mb-2 p-2 text-xs" [innerHTML]="getTooltip(event)"></div>
+  </ng-template>
+</div>

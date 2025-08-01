@@ -1,0 +1,199 @@
+<div class="rounded-sm bg-shade-50 p-5">
+	<h1 class="text-xl md:text-3xl font-bold text-content leading-[48px]">
+		{{(getLessonType()?.type === 'plan' ? 'Lesson Plan Details':'Lesson Resources') | translate}}
+	</h1>
+	<p class="text-content-60 text-sm md:text-base mt-2 pb-4 border-b-[3px] border-shade-80">{{'Info' | translate}}: {{(getLessonType()?.type === 'plan' ? 'Lesson':'Resource')}} Plan Type-5E , {{'Board' | translate}}-{{getBoards()}} </p>
+
+	<div class="text-content rounded my-5 ">
+			<form [formGroup]="lessonForm" (ngSubmit)="on_form_submit()">
+
+					<div class="bg-white rounded-lg p-3 md:p-8">
+							<div class="grid lg:grid-cols-2 gap-4">
+									
+									<div>
+											<app-form-dropdown [dropDownControlName]="'board'" (valueChange)="onBoardChange($event)"
+													[dropDownCtrl]="convertToFormControl(f['board'])"
+													[dropDownValues]="boardDropdownOptions" [config]="boardDropdownconfig"
+													[submitted]="submitted"></app-form-dropdown>
+									</div>
+									<div class="cursor-pointer">
+										<app-form-dropdown [dropDownControlName]="'medium'" (valueChange)="onMediumChange($event)"
+												[dropDownCtrl]="convertToFormControl(f['medium'])" [dropDownValues]="mediumDropdownOptions"
+												[config]="mediumDropdownconfig" [submitted]="submitted"></app-form-dropdown>
+								</div> 
+							</div>
+
+							<div class="grid lg:grid-cols-2 gap-4 mt-7">
+									<div class="cursor-pointer">
+											<app-form-dropdown [dropDownControlName]="'class'" (valueChange)="onStandardChange($event)"
+													[dropDownCtrl]="convertToFormControl(f['class'])" [dropDownValues]="classDropdownOptions"
+													[config]="classDropdownconfig" [submitted]="submitted"></app-form-dropdown>
+									</div>
+									<div class="cursor-pointer">
+											<app-form-dropdown [dropDownControlName]="'subject'" (valueChange)="onSubjectChange($event)"
+													[dropDownCtrl]="convertToFormControl(f['subject'])"
+													[dropDownValues]="subjectDropdownOptions" [config]="subjectDropdownconfig"
+													[submitted]="submitted"></app-form-dropdown>
+									</div>
+							</div>
+
+							<div class="grid lg:grid-cols-1 gap-4 mt-7">                    
+									<div class="w-[84vw] md:w-full">
+											<app-form-dropdown [dropDownControlName]="'topics'" (valueChange)="onTopicSelected($event)"
+													[dropDownCtrl]="convertToFormControl(f['topics'])" [dropDownValues]="topicsDropdownOptions"
+													[config]="topicsDropdownconfig" [submitted]="submitted"></app-form-dropdown>
+									</div>                    
+							</div>
+							<div class="grid lg:grid-cols-1 gap-4 mt-7">
+									<div class="w-[84vw] md:w-full">
+											<app-form-dropdown [dropDownControlName]="'subtopics'" (valueChange)="onsubTopicSelected($event)"
+													[dropDownCtrl]="convertToFormControl(f['subtopics'])"
+													[dropDownValues]="subtopicsDropdownOptions" [config]="subtopicsDropdownconfig"
+													[submitted]="submitted"></app-form-dropdown>
+									</div>
+							</div>                
+					</div>
+					<hr class="border-b-[3px] mt-7 border-shade-80">
+					<div class="mt-7">
+							<div class="flex items-center">
+									<img class="me-4" src="../../../../../assets/icons/level_Button.svg" alt="">
+									<h3 class="font-bold text-base md:text-[24px] text-content-100">
+									{{'Student Comprehension Level' | translate}}
+							</h3>
+							</div>
+							
+							<div class="mt-4 p-2 rounded-sm bg-[#ED7D2D0F] flex items-center flex-wrap">
+									<img src="../../../../../assets/icons/Info 2.svg" alt="">
+									<span class="font-semibold text-lg text-shade mx-2">{{'Note' | translate}}:</span>
+									<span class="text-base">{{(getLessonType()?.type === 'plan' ? 'Level selected may impact in the content generated for Evaluate phase' :'Level selected may impact in the content generated for Question bank and Real world scenario phases') | translate}}</span>
+							</div>
+							<div class="inline-flex items-center gap-3 mt-3 flex-wrap">
+											<div *ngFor="let option of checkboxOptions">
+												<label>
+												  <input type="checkbox" [value]="option.value" [(ngModel)]="option.checked" [ngModelOptions]="{ standalone: true }" />
+												  {{ option.label | translate }}
+												</label>
+											  </div>
+							</div>
+					</div>
+
+					
+
+					<div class="mt-7" *ngIf="learningOutcomes || getLessonType()?.type === 'plan'">
+							<div class="flex">
+									<img class="me-4" src="../../../../../assets/icons/l_outcome_button.svg" alt="">
+									<h2 class="md:text-[24px] text-xl font-bold text-content-100 leading-[48px]">
+											{{'Learning Outcomes' | translate}}
+									</h2>
+							</div>                
+					</div>
+					<div class="mt-4 p-5 rounded-sm bg-primary-50" *ngIf="getLessonType()?.type === 'plan'">
+							<span class="font-semibold text-lg text-shade">{{'Note' | translate}}:</span>
+							<ul class="marker:text-primary list-disc pl-5 space-y-3 text-content">
+									<li >{{'Identifying the right learning outcomes is crucial for creating a good learning experience' | translate}}.</li>
+									<li >{{'The below Learning Outcomes are automatically generated using AI. Please read and edit them appropriately' | translate}}.</li>
+									<li >{{'You cannot change the Learning Outcomes after a Lesson Plan is created' | translate}}.</li>
+							</ul>
+					</div>
+					<div class="border text-content rounded my-5 p-6 bg-white" *ngIf="learningOutcomes">
+								  <div class="learning-outcomes-section">
+									<div class="h-60 overflow-y-auto" [ngClass]="getLessonType()?.type === 'plan' ? 'border p-4':''" *ngIf="!isEditable">
+										<ul class="space-y-2 text-content pl-3 text-sm">
+											<li *ngFor="let learningOutcome of learningOutcomes; let i = index">
+												{{ i + 1 }}. {{ learningOutcome }}
+											</li>
+										</ul>
+									</div>
+									<textarea *ngIf="isEditable" class="form-text-area w-full h-60" [(ngModel)]="combinedLearningOutcomes" [ngModelOptions]="{ standalone: true }"></textarea>
+									<small class="form-control-error" *ngIf="learningOutcomes?.length === 0 && !isEditable">{{ 'Learning Outcomes cannot be empty' | translate }}</small>
+									<div class="mt-3 flex items-center gap-2" *ngIf="selectedMedium === 'english'">
+										<button type="button" [hasPermission]="['power']" *ngIf="!isEditable && getLessonType()?.type === 'plan'" (click)="isEditable=true" class="btn-primary" [disabled]="regenerationLimitReached">
+											<div class="flex items-center gap-2">
+												<img src="../../../../../assets/icons/edit_light.svg" alt="" />
+											<span class="ms-1">{{'Edit' | translate}}</span>
+											</div>
+										</button>
+										<button type="button" [hasPermission]="['power']" *ngIf="isEditable"  (click)="splitLearningOutcomes()" class="btn-primary">
+											<span class="ms-1">{{'Update' | translate}}</span>
+										</button>
+	
+										<button type="button" [hasPermission]="['power']" *ngIf="isEditable"  (click)="resetLearningOutcomes()" class="btn-outline-primary">
+											<span class="ms-1">{{'Reset' | translate}}</span>
+										</button>
+									</div>
+								</div>
+
+								<div class="flex items-center gap-2 bg-warn-50 p-2 mt-4"  *ngIf="regenerationLimitReached">
+									<img src="../../../../../assets/icons/Info 2.svg" alt="">
+								<small>{{ 'You have reached the daily limit of 3 attempts to regenerating the lesson plan. Please try tomorrow' | translate }}</small>
+								</div>
+
+								<div *ngIf="generateNew && !isEditable && learningOutcomes?.length !== 0">
+									<div class="flex items-center gap-2 bg-warn-50 p-2 mt-4">
+										<img src="../../../../../assets/icons/Info 2.svg" alt="">
+									<small>{{ 'Content will be regenerated as the learning outcome has been updated. It will take few minutes to regenerate new content for the updated learning outcome' | translate }}</small>
+									</div>								
+								</div>
+					</div>
+					<hr class="border-b-[3px] mt-7 border-shade-80">
+					<div *ngIf="getLessonType()?.type === 'plan'">
+						<div >
+							<h2 class="md:text-[24px] text-xl font-bold text-content-100 mt-5">
+									{{'Include Videos' | translate}}
+							</h2>
+					</div>
+
+					<div>
+							<div class="inline-flex space-x-1 me-5 mt-5 mb-0" *ngFor="let item of radioBtn">
+									<input type="radio" formControlName="videos" [value]="item.value"  [id]="item" autocomplete="off" />
+									<label>{{item.name | translate}}</label>                    
+							</div>
+					</div>
+					</div>
+					
+					<small class="form-control-error" *ngIf="submitted && f['videos']?.errors?.['required']">{{'Please select if videos to include' | translate}}.</small>
+					<div>
+							<button [disabled]="isEditable || learningOutcomes?.length === 0 || (submitBtnTxt === 'Regenerate Lesson Plan' && regenerationLimitReached)" type="submit"  class="btn-primary mt-4  text-sm md:text-lg  py-2 px-3 md:py-3 md:px-4">
+								{{submitBtnTxt | translate}}
+							</button>  
+					</div>
+
+			</form>
+	</div>
+
+</div>
+<div class="relative z-10 rounded-sm bg-shade-50 p-5" *ngIf="modalService.showGettingLessonPlanLoader">
+	<div class="fixed top-0 right-0 bottom-0 left-[270px] pt-8 ps-[54px] pe-[70px] py-0 bg-[#f8f9fa] rounded-sm z-0">
+			<h1 class="text-xl md:text-3xl font-bold text-content-100 leading-[48px]">
+					{{'Lesson Plan Details' | translate}}
+			</h1>
+			<p class="text-content-60 text-sm md:text-base mt-2 pb-4 border-b-[3px] border-shade-80">{{'Info' | translate}}: Lesson Plan Type-5E , {{'Board' | translate}}-{{board}} </p>
+	
+			<div class="bg-white">
+					<div class="border-2 text-content rounded my-5 p-6 bg-[#DAEEFF]">
+							<p class="mb-5 font-medium">{{'Getting Lesson Plan. Please Wait' | translate}}...</p>
+							<div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-80">
+									<div style="width:20%"
+											class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary">
+									</div>
+							</div>
+					</div>
+			</div>
+	</div>
+</div>
+
+<app-delete-detail *ngIf="showConfirmPopup"
+[config]="{	
+	heading: heading,	
+	confirmationText : confirmText,
+	primaryButtonLabel : 'Ok',
+	primaryButtonType : 'ok'}"
+(close)="confirm($event)"></app-delete-detail>
+
+<app-delete-detail *ngIf="showDraftPopup"
+[config]="{	
+	heading: draftPopupConfig.heading,	
+	confirmationText : draftPopupConfig.confirmText,
+	primaryButtonLabel : 'Continue',
+	primaryButtonType : 'ok'}"
+(close)="confirmDraft($event)"></app-delete-detail>

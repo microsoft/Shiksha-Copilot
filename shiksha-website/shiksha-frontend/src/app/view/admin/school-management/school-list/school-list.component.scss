@@ -1,0 +1,31 @@
+.table-header {
+  background-color: #f9fbff;
+}
+.search-icon {
+  position: relative;
+  img {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+  }
+  input[type="text"] {
+    padding-left: 34px;
+  }
+}
+
+.upload-btn {
+  .upload-icon {
+    background-color: var(--primary);
+  }
+  :hover {
+    .upload-icon {
+      color: white;
+    }
+  }
+}
+
+.container {
+  .header:last-child {
+    text-align: center;
+  }
+}

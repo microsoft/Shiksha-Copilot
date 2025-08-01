@@ -1,0 +1,215 @@
+<div>
+	<h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px]">
+			{{ (getType()?.type === 'user' ? 'Teacher Management' :'Staff Management') | translate }}
+	</h1>
+	<div class="table-section border text-content rounded my-5 p-6 bg-white">
+		<div class="flex justify-between items-center">
+
+			<h2 class="text-content text-[30px] font-bold leading-[48px]">{{ (getType()?.type === 'user' ? 'Teacher List' : 'Staff List') | translate}}</h2>
+			<div class="flex gap-2">
+				<button (click)="blukUpload()" [hasPermission]="['admin']"
+						*ngIf="getType()?.type === 'user'"
+						class="btn-outline-primary flex items-center gap-2">
+						<img src="../../../../../assets/icons/Vector (1).svg" alt="">
+						<span class="text-nowrap">{{'Bulk Upload' | translate}}</span>
+				</button>
+				<button [hasPermission]="['admin']"
+						class="btn-primary flex items-center gap-2" (click)="openAddUserFormComp()">
+						<img src="../../../../../assets/icons/E add.svg" alt="">
+						<span class="text-nowrap">{{(getType()?.type === 'user' ? 'Add New Teacher' : 'Add New Staff') | translate}}</span>						
+				</button>
+				<button *ngIf="getType()?.type === 'user'" class="btn-primary" (click)="exportUsersListToExcel()" [disabled]="!usersList.length" >
+					<div class="flex items-center gap-2">
+					  <img src="../../.././../assets/icons/upload_light.svg" alt="" />
+					  <span class="text-nowrap">{{'Export' | translate}}</span>
+					</div>
+				  </button>
+		</div>
+		</div>
+			
+			<div class=" text-sm my-12 ">
+					<div class="flex gap-2 items-end">
+						<div class="min-w-[45%]">
+							<label for="" class="form-control-label">Search</label>
+							<div class="search-icon w-full flex items-center h-9 ">
+							  <img src="../../../../../assets/icons/Search.svg" alt="" class="mr-2"/>
+							  <input [(ngModel)]="searchText" (input)="searchInputChanged($event)"
+											class="appearance-none rounded pl-10 py-2 px-3 text-content leading-tight focus:outline-none bg-shade-80 w-full  h-9"
+											type="text" placeholder="{{'Search' | translate}}">
+							</div>
+						</div>
+
+			
+							<div class="w-full cursor-pointer">
+									<app-common-dropdown [dropDownValues]="userRolesDropdownOptions" (valueUpdate)="onFilterChange('role', $event)"
+											[config]="userRolesDropdownconfig"></app-common-dropdown>
+							</div>
+
+							<div class="w-full cursor-pointer">
+								<app-common-dropdown [dropDownValues]="userStatusDropdownOptions" (valueUpdate)="onStatusChange($event)"
+										[config]="userStatusDropdownconfig"></app-common-dropdown>
+						</div>
+
+						<button 
+						*ngIf="getType()?.type === 'user'"
+						[title]="showAdditionalFilters ? 'Remove Additional Filters' : 'Add Additional Filters'"
+						(click)="toggleFilter()"
+						class="btn-primary flex items-center gap-2 w-28" >
+						<img *ngIf="!showAdditionalFilters" src="../../../../assets/icons/filter-plus.svg" alt="">
+						<img *ngIf="showAdditionalFilters" src="../../../../assets/icons/filter-minus.svg" alt="">
+				</button>
+					</div>
+
+					<div class="flex gap-2 my-4" [@slideInOut]="showAdditionalFilters" *ngIf="getType()?.type === 'user' && showAdditionalFilters">
+
+						<div class="min-w-[78px] flex-1 h-9">
+							<app-common-dropdown
+							  [dropDownValues]="stateDropdownOptions"
+							  [config]="stateDropdownconfig"
+							  (valueUpdate)="onFilterChange('state', $event)"
+							></app-common-dropdown>
+						  </div>
+						
+						  <div class="min-w-[78px] flex-1 h-9">
+							<app-common-dropdown
+							  #zoneDropdown
+							  [dropDownValues]="zoneDropdownOptions"
+							  [config]="zoneDropdownconfig"
+							  (valueUpdate)="onFilterChange('zone', $event)"
+							></app-common-dropdown>
+						  </div>
+						
+						  <div class="min-w-[92px] flex-1 h-9">
+							<app-common-dropdown
+							  #districtDropdown
+							  [dropDownValues]="districtDropdownOptions"
+							  [config]="districtDropdownconfig"
+							  (valueUpdate)="onFilterChange('district', $event)"
+							></app-common-dropdown>
+						  </div>
+						
+						  <div class="min-w-[78px] flex-1 h-9">
+							<app-common-dropdown
+							  #blockDropdown
+							  [dropDownValues]="blockDropdownOptions"
+							  [config]="blockDropdownconfig"
+							  (valueUpdate)="onFilterChange('block', $event)"
+							></app-common-dropdown>
+						  </div>
+						
+						  <div class="min-w-[82px] flex-1 h-9">
+							<app-common-dropdown
+							  #schoolDropdown
+							  [dropDownValues]="schoolDropdownOptions"
+							  [config]="schoolDropdownconfig"
+							  (valueUpdate)="onFilterChange('school', $event)"
+							></app-common-dropdown>
+						  </div>
+					</div>
+					
+			</div>
+			
+			
+
+			<div class="w-full ">
+					<table class="table-auto w-full border mt-5 rounded-lg text-content" aria-label="User list">
+							<thead>
+									<tr class="bg-primary-60 rounded-lg border-b">
+											<th class="text-left p-4 rounded border-r text-sm text-content" *ngFor="let header of getType()?.table_headers">{{ header | translate}}</th>
+									</tr>
+							</thead>
+							<tbody>                 
+									<tr *ngIf="!usersList || usersList.length === 0">
+											<td colspan="6" class="text-center text-content-60 py-2">{{'No items found' | translate}}</td>
+									</tr>
+									<ng-container>
+									<tr *ngFor="let item of usersList; let i = index" class="border-b">
+											<td class="text-sm p-4 border-r w-72 max-w-[20vw] break-all">{{ item.name | titlecase }}</td>
+											<td class="text-sm p-4 border-r whitespace-nowrap w-36">{{ item.phone }}</td>
+											<td class="text-sm p-4 border-r max-w-[20vw] break-all" *ngIf="getType()?.type === 'user'" >{{ item?.school?.name }}</td>
+											<td class="text-sm p-4 border-r whitespace-nowrap w-36">{{ utility.formatValue(item.role)| titlecase }}</td>
+											<td class="text-sm p-4 border-r whitespace-nowrap w-36 text-center"><span class="px-3 py-2 rounded-full"
+															[ngClass]="{'text-green bg-success-50': !item.isDeleted, 'text-error bg-error-50': item.isDeleted}">{{!item.isDeleted
+															? 'Active' : 'Inactive'}}</span>
+											</td>
+	
+											<td class="text-sm p-4 relative #dropdownContainer whitespace-nowrap w-32">
+	
+													<div class="flex justify-center">
+															<div class="relative" [class.open]="isOpen" (click)="toggleDropdown(i, $event)">
+																	<button class="py-2 px-4 rounded inline-flex items-center">
+																			<img class="w-5" src="../../../../../assets/icons/more_vert.svg" alt="" />
+																	</button>
+	
+																	<ul *ngIf="isOpen[i]"
+																			class="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+																			role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+																			<li class="h-10 mt-2 hover:bg-shade-80 cursor-pointer" (click)="viewUser(item)">
+																					<a class="block px-4 py-2 text-sm text-content" role="menuitem">
+																							<div class="flex items-center">
+																									<img class="mx-2" src="../../../../../assets/icons/Visibility.svg"
+																											alt="" />
+																									<span>{{(getType()?.type === 'user' ? 'View Teacher' : 'View Staff') | translate}}</span>
+																							</div>
+																					</a>
+																			</li>
+	
+																			<li class="h-10 hover:bg-shade-80 cursor-pointer" (click)="editUser(item)">
+																					<a class="block px-4 py-2 text-sm text-content" role="menuitem">
+																							<div class="flex items-center">
+																									<img class="mx-2" src="../../../../../assets/icons/Vector.svg" alt="" />
+																									<span>{{(getType()?.type === 'user' ? 'Edit Teacher' : 'Edit Staff') | translate}}</span>
+																							</div>
+																					</a>
+																			</li>
+
+																			
+																			<li *ngIf="!item.isDeleted && loggedUser() !== item._id" class="h-10 mb-2 hover:bg-shade-80 cursor-pointer">
+																					<a class="block px-4 py-2 text-sm text-content" role="menuitem"
+																							(click)="openModalForDeleteConfirm(item)">
+																							<div class="flex items-center">
+																									<img class="mx-2" src="../../../../../assets/icons/Vector (2).svg"
+																											alt="" />
+																									<span class="text-error">{{(getType()?.type === 'user' ? 'Disable Teacher' : 'Disable Staff') | translate}}</span>
+																							</div>
+																					</a>
+																			</li>
+																			<li *ngIf="getType()?.type === 'user' && item.isDeleted" class="h-10 mb-2 hover:bg-shade-80 cursor-pointer">
+																				<a class="block px-4 py-2 text-sm text-content" role="menuitem"  (click)="activateUser(item._id)"	>
+																				  <div class="flex items-center">
+																					<img class="mx-2 w-7" src="../../../../../assets/icons/switch-on.svg"  alt=""/>
+																					<span class="text-success">{{'Activate User' | translate}}</span>
+																				  </div>
+																				</a>
+																			  </li>
+																	</ul>
+															</div>
+													</div>
+											</td>
+									</tr>
+							</ng-container>
+							</tbody>
+					</table>
+			</div>
+
+			<app-modal *ngIf="modalService.showDeleteUserDialog">
+					<app-disable-popup [modalHeader]="getType()?.type === 'user'? 'Disable Teacher' : 'Disable Staff' " [modalSubHeader]="modal_subheader" [tableData]="tableData"  (sendDetails)="ondisableUser($event)"></app-disable-popup>
+			</app-modal>
+
+			<app-modal *ngIf="modalService.showBlukUploadDialog">
+					<app-upload-popup [context]="getType()?.download_file " [allowedFileTypes]="uploadFileTypes" (fileUploaded)="uploadedFile($event)" (upload)="upload($event)"></app-upload-popup>
+			</app-modal>  
+				
+
+	</div>
+
+	
+
+	<app-pagination [totalItems]="totalItems" [pageSize]="pageSize" [currentPage]="currentPage"
+					(pageChange)="onPageChange($event)">
+	</app-pagination>
+</div>
+
+<app-modal *ngIf="modalService.showUploadErrorDialog">
+	<app-upload-error-popup [modalHeader]="'Upload Error'" [errorUrl]="errorUrl"></app-upload-error-popup>
+</app-modal>

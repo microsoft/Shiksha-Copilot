@@ -1,0 +1,17 @@
+<div (click)="toggle()"
+    class="border border-content-30 text-content rounded-t mt-3 p-6 cursor-pointer flex items-center justify-between"
+    [ngClass]="{'mb-3': !isOpen, 'rounded-b' : !isOpen}">
+    <div class="flex">
+        <img src="../../../../../assets/icons/{{imgSrc}}" alt="">
+        <div class="flex-col ms-6">
+            <p class="font-bold text-content-100">{{title | translate}}</p>
+            <p class="text-content-50 text-sm">{{subtitle | translate}}</p>
+        </div>
+    </div>
+    <div>
+        <img class="w-5 " src="../../../../../assets/icons/drop-down.svg" [ngClass]="{'rotate-180': isOpen}" alt="">
+    </div>
+</div>
+<div *ngIf="isOpen" class="p-6 border border-content-30 rounded-b">
+    <ng-content></ng-content>
+</div>

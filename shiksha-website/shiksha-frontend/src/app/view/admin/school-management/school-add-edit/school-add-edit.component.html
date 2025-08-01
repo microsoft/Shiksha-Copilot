@@ -1,0 +1,752 @@
+<div class="school-add-edit-wrapper">
+  <div class="flex content-center">
+    <img
+      src="../../../../../assets/icons/back-arrow.svg"
+      routerLink="/admin/school-management"
+      alt=""
+      class="cursor-pointer"
+    />
+    <h1 class="ml-3 text-[32px] leading-[48px] font-bold text-content">
+      {{'School Management' | translate}}
+    </h1>
+  </div>
+  <div
+    class="school-container p-8 bg-white mt-6 rounded border-content-30"
+  >
+    <div class="flex justify-between content-center">
+      <p class="text-content text-[32px] leading-[48px] font-bold tracking-tight">
+        {{ (mode === "view" ? "View" : mode === "edit" ? "Edit" : "Add") | translate }} {{'School Profile' | translate}}
+      </p>
+
+      <button
+        class="hidden btn-primary h-9"
+        routerLink="/admin/school-management/add"
+        (click)="blukUpload()"
+      >
+        <div class="flex content-center">
+          <img src="../../.././../../assets/icons/add.svg" alt="" />
+          <span class="ml-[6px]">{{'Bulk Upload' | translate}}</span>
+        </div>
+      </button>
+    </div>
+
+    <div class="school-management-form mt-9">
+      <form [formGroup]="schoolAddEditForm" (ngSubmit)="onSubmit()">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="form-control-label" for="school-name"> {{'Name' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+            <input
+              class="form-control"
+              id="school-name"
+              type="text"
+              placeholder="{{'Enter name' | translate}}"
+              autocomplete="off"
+              formControlName="name"
+              maxlength="255"
+            />
+            <small
+              class="form-control-error"
+              *ngIf="submitted && f['name'].errors?.['required']"
+              >{{'School name is required' | translate}}</small
+            >
+            <small
+              class="form-control-error"
+              *ngIf="submitted && f['name'].errors?.['minlength']"
+              >{{'School name should have atleast 5 characters' | translate}}</small
+            >
+          </div>
+
+          <div class="number-type">
+            <label class="form-control-label" for="school-id">
+              {{'DISE Code' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+            </label>
+            <input
+              class="form-control"
+              id="school-id"
+              type="text"
+              oninput="this.value=this.value.replace(/(?![0-9])./gmi,'')"
+              placeholder="{{'Enter DISE Code' | translate}}"
+              autocomplete="off"
+              formControlName="schoolId"
+              (keypress)="checkLimit($event)"
+              (keyup)="updateError()"
+            />
+            <small
+              class="form-control-error"
+              *ngIf="submitted && f['schoolId'].errors?.['required']"
+              >{{'DISE Code is required' | translate}}</small
+            >
+
+            <small
+              class="form-control-error"
+              *ngIf="submitted && !f['schoolId'].errors?.['required'] && schoolIdError"
+              >{{'DISE Code should be of 11 digits' | translate}}</small
+            >
+          </div>
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'state'"
+              [dropDownCtrl]="convertToFormControl(f['state'])"
+              [dropDownValues]="stateDropdownOptions"
+              [config]="stateDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'zone'"
+              [dropDownCtrl]="convertToFormControl(f['zone'])"
+              [dropDownValues]="zoneDropdownOptions"
+              [config]="zoneDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'district'"
+              [dropDownCtrl]="convertToFormControl(f['district'])"
+              [dropDownValues]="districtDropdownOptions"
+              [config]="districtDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'block'"
+              [dropDownCtrl]="convertToFormControl(f['block'])"
+              [dropDownValues]="blockDropdownOptions"
+              [config]="blockDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'boards'"
+              [dropDownCtrl]="convertToFormControl(f['boards'])"
+              [dropDownValues]="boardDropdownOptions"
+              [config]="boardDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+
+          <div>
+            <app-form-dropdown
+              [dropDownControlName]="'mediums'"
+              [dropDownCtrl]="convertToFormControl(f['mediums'])"
+              [dropDownValues]="mediumDropdownOptions"
+              [config]="mediumDropdownconfig"
+              [submitted]="submitted"
+              [mode]="mode"
+            ></app-form-dropdown>
+          </div>
+          <div>
+            <label class="form-control-label" for="academic-start-date">
+              {{'Academic year start date' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+            </label>
+            <input
+              class="form-control"
+              id="academic-start-date"
+              type="date"
+              [min]="minMaxDateValues.currentYearMin | date:'yyyy-MM-dd'"
+              [max]="minMaxDateValues.currentYearMax | date:'yyyy-MM-dd'"
+              placeholder="{{'Select date' | translate}}"
+              autocomplete="off"
+              formControlName="academicYearStartDate"
+            />
+            <small
+              class="form-control-error"
+              *ngIf="submitted && f['academicYearStartDate'].errors?.['required']"
+              >{{'Academic year start date is required' | translate}}</small
+            >
+          </div>
+
+          <div>
+            <label class="form-control-label" for="academic-end-date">
+              {{'Academic year end date' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+            </label>
+            <input
+              class="form-control"
+              id="academic-end-date"
+              type="date"
+              placeholder="Select date"
+              autocomplete="off"
+              [min]="minMaxDateValues.nextYearMin | date:'yyyy-MM-dd'"
+              [max]="minMaxDateValues.nextYearMax | date:'yyyy-MM-dd'"
+              formControlName="academicYearEndDate"
+            />
+            <small
+              class="form-control-error"
+              *ngIf="submitted && f['academicYearEndDate'].errors?.['required']"
+              >{{'Academic year end date is required' | translate}}</small
+            >
+            <small
+            class="form-control-error"
+            *ngIf="submitted && this.schoolAddEditForm.errors?.['lessThanStart']"
+            >{{'Academic year end date must be greater than start date' | translate}}</small
+          >
+          </div>
+        </div>
+
+        <div class="mt-7">
+          <p class="text-lg font-bold text-content">{{'Holiday List' | translate}}</p>
+          <ng-container formArrayName="holidayList">
+            <table class="w-full" aria-label="holiday-list">
+              <thead>
+                <tr
+                  class="header font-semibold text-center text-content table-header border-b border-shade"
+                >
+                  <th class="px-4 py-3 border text-sm text-content">{{'Date' | translate}} </th>
+                  <th class="px-4 py-3 border text-sm text-content">{{'Reason' | translate}} </th>
+                  <th class="px-4 py-3 border text-sm text-content" *ngIf="mode !== 'view'">
+                    {{'Action' | translate}}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white">
+                <tr
+                  class="text-gray-700"
+                  *ngFor="let holiday of holidayList.controls; let i = index"
+                >
+                  <ng-container [formGroupName]="i">
+                    <td class="px-4 py-4 text-sm border w-[40%]">
+                      <p *ngIf="mode === 'view'">
+                        {{ holiday.get("date")?.value ||  '-'}}
+                      </p>
+                      <div *ngIf="mode !== 'view'">
+                        <div>
+                          <input 
+                            class="form-control h-9 focus:outline-none"
+                            type="date"
+                            [min]="schoolAddEditForm.get('academicYearStartDate')?.value | date:'yyyy-MM-dd'"
+                            [max]="schoolAddEditForm.get('academicYearEndDate')?.value | date:'yyyy-MM-dd'"
+                            placeholder="{{'Select date' | translate}}"
+                            autocomplete="off"
+                            formControlName="date"
+                            [required]="holiday.get('reason')?.value !== ''"
+                          />
+                          <small
+                            class="form-control-error"
+                            *ngIf="submitted && holiday.get('date')?.errors?.['required']"
+                            >{{'Date is required' | translate}}</small
+                          >
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-4 text-sm border w-[40%]">
+                      <p *ngIf="mode === 'view'">
+                        {{ holiday.get("reason")?.value ||  '-' }}
+                      </p>
+
+                      <div *ngIf="mode !== 'view'">
+                        <div>
+                          <input
+                            class="form-control h-9"
+                            type="text"
+                            placeholder="{{'Reason' | translate}}"
+                            autocomplete="off"
+                            formControlName="reason"
+                            [required]="holiday.get('date')?.value !== ''"
+                          />
+                          <p
+                            class="form-control-error"
+                            *ngIf="submitted && holiday.get('reason')?.errors?.['required']"
+                          >
+                            {{'Reason is required' | translate}}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td
+                      class="px-4 py-4 text-sm border w-[20%]"
+                      *ngIf="mode !== 'view'"
+                    >
+                      <div
+                        class="flex gap-2"
+                        [ngClass]="i === 0 ? 'justify-center' : 'justify-start'"
+                      >
+                        <button
+                          class="btn-danger h-9"
+                          (click)="removeHoliday(i)"
+                          *ngIf="i !== 0"
+                          type="button"
+                        >
+                          <div class="flex content-center">
+                            <img
+                              src="../../.././../../assets/icons/delete.svg"
+                              alt=""
+                            />
+                            <span class="ml-[6px]">{{'Delete' | translate}}</span>
+                          </div>
+                        </button>
+                        <button
+                          class="btn-primary h-9"
+                          (click)="addHoliday()"
+                          type="button"
+                          *ngIf="i === holidayList.controls.length - 1"
+                        >
+                          <div class="flex content-center">
+                            <img
+                              src="../../.././../../assets/icons/add.svg"
+                              alt=""
+                            />
+                            <span class="ml-[6px]">{{'Add' | translate}}</span>
+                          </div>
+                        </button>
+                      </div>
+                    </td>
+                  </ng-container>
+                </tr>
+              </tbody>
+            </table>
+          </ng-container>
+        </div>
+
+        <div class="mt-7">
+          <p class="text-lg font-bold text-content">{{'Resources' | translate}}</p>
+          <ng-container formArrayName="facilities">
+            <table class="w-full" aria-label="resource">
+              <thead>
+                <tr
+                  class="header font-semibold text-center text-content table-header border-b border-shade"
+                >
+                  <th class="px-4 py-3 border text-sm text-content">{{'Resource Type' | translate}}</th>
+                  <th class="px-4 py-3 border text-sm text-content">{{'Resource details' | translate}}</th>
+                  <th class="px-4 py-3 border text-sm text-content" *ngIf="mode !== 'view'">
+                    {{'Action' | translate}}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white">
+                <tr
+                  class="text-gray-700"
+                  *ngFor="let resource of facilities.controls; let i = index"
+                >
+                  <ng-container [formGroupName]="i">
+                    <td class="px-4 py-4 border w-[40%] content-start">
+                      <p *ngIf="mode === 'view'">
+                        {{
+                          resource.get("otherType")?.value
+                            ? resource.get("otherType")?.value
+                            : resource.get("type")?.value  ||  '-' 
+                        }}
+                      </p>
+                      <ng-container *ngIf="mode !== 'view'">
+                        <div>
+                          <app-form-dropdown
+                            [dropDownControlName]="'type'"
+                            [dropDownCtrl]="
+                              convertToFormControl(resource.get('type'))
+                            "
+                            [dropDownValues]="resourceTypeDropdownOptions"
+                            [config]="
+                              resource.get('typeChipSet')?.value
+                                ? resourceTypeDropdownconfig
+                                : resourceTypeDarkDropdownconfig
+                            "
+                            [submitted]="submitted"
+                            [mode]="mode"
+                            (valueChange)="setResourceDetailsValues(i, $event)"
+                          ></app-form-dropdown>
+                        </div>
+
+                        <input
+                          *ngIf="!resource.get('typeChipSet')?.value"
+                          class="form-control h-9 mt-4"
+                          type="text"
+                          placeholder="{{'Enter resource type' | translate}}"
+                          autocomplete="off"
+                          formControlName="otherType"
+                        />
+
+                        <p
+                          class="form-control-error"
+                          *ngIf="!resource.get('typeChipSet')?.value && submitted && resource.get('otherType')?.errors?.['required']"
+                        >
+                          {{'Resource type is required' | translate}}
+                        </p>
+                      </ng-container>
+                    </td>
+                    <td class="px-4 py-4 text-sm border w-[40%] content-start">
+                      <p *ngIf="mode === 'view'">
+                        {{ resource.get("details")?.value?.length ? resource.get("details")?.value : '-' }}
+                      </p>
+
+                      <div *ngIf="mode !== 'view'">
+                        <div [hidden]="!resource.get('detailsChipSet')?.value">
+                          <app-form-dropdown
+                            [dropDownControlName]="'details'"
+                            [dropDownCtrl]="
+                              convertToFormControl(resource.get('details'))
+                            "
+                            [dropDownValues]="resourceDetailsDropdownOptions[i]"
+                            [config]="resourceDetailsDropdownconfig"
+                            [submitted]="submitted"
+                            [mode]="mode"
+                          ></app-form-dropdown>
+                        </div>
+
+                        <div *ngIf="!resource.get('detailsChipSet')?.value">
+                          <div class="flex gap-2">
+                            <input
+                              class="form-control h-9"
+                              type="text"
+                              placeholder="{{'Enter resource details' | translate}}"
+                              autocomplete="off"
+                              [(ngModel)]="resourceOtherValue[i]"
+                              [ngModelOptions]="{ standalone: true }"
+                              (keydown.enter)="
+                                $event.preventDefault();
+                                $event.stopPropagation();
+                                addOtherResource(resource, i, $event)
+                              "
+                            />
+                            <button
+                              class="btn-primary h-9"
+                              (click)="addOtherResource(resource, i, $event)"
+                              type="button"
+                            >
+                              <div class="flex content-center">
+                                <img
+                                  src="../../.././../../assets/icons/add.svg"
+                                  alt=""
+                                />
+                              </div>
+                            </button>
+                          </div>
+                          <p
+                            class="form-control-error"
+                            *ngIf="!resource.get('detailsChipSet')?.value && submitted && resource.get('details')?.errors?.['required']"
+                          >
+                            {{'Resource details are required' | translate}}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="selected-items mt-2" *ngIf="mode !== 'view'">
+                        <ng-container
+                          *ngFor="
+                            let item of resource.get('details')?.value;
+                            let i = index
+                          "
+                        >
+                          <span class="chip"
+                            >{{ item }}
+                            <span
+                              class="close-icon"
+                              (click)="removeItem(resource, i)"
+                              >×</span
+                            >
+                          </span>
+                        </ng-container>
+                      </div>
+                    </td>
+                    <td
+                      class="px-4 py-4 text-sm border w-[20%] content-start"
+                      *ngIf="mode !== 'view'"
+                    >
+                      <div
+                        class="flex gap-2"
+                        [ngClass]="i === 0 ? 'justify-center' : 'justify-start'"
+                      >
+                        <button
+                          class="btn-danger h-9"
+                          (click)="removeResource(i)"
+                          *ngIf="i !== 0"
+                          type="button"
+                        >
+                          <div class="flex content-center">
+                            <img
+                              src="../../.././../../assets/icons/delete.svg"
+                              alt=""
+                            />
+                            <span class="ml-[6px]">{{'Delete' | translate}}</span>
+                          </div>
+                        </button>
+                        <button
+                          class="btn-primary h-9"
+                          (click)="addResource()"
+                          type="button"
+                          *ngIf="i === facilities.controls.length - 1"
+                        >
+                          <div class="flex content-center">
+                            <img
+                              src="../../.././../../assets/icons/add.svg"
+                              alt=""
+                            />
+                            <span class="ml-[6px]">{{'Add' | translate}}</span>
+                          </div>
+                        </button>
+                      </div>
+                    </td>
+                  </ng-container>
+                </tr>
+              </tbody>
+            </table>
+          </ng-container>
+        </div>
+
+        <p class="text-lg font-bold mt-7 text-content" *ngIf="!(mode === 'view' && classes.length === 0)">{{'Add Board/Class Details' | translate}}</p>
+
+        <div class="py-6 border rounded flex items-center justify-center" *ngIf="classes.length === 0 && mode === 'edit'">
+          <button class="btn-primary" (click)="createBoard()">
+            <div class="flex items-center gap-2">
+              <img
+                src="../../.././../../assets/icons/add.svg"
+                alt=""
+              />
+              <span>Add Board/Class Details</span>
+            </div>
+            </button>
+        </div>
+
+        <div
+          class="border rounded p-4 mb-4"
+          *ngFor="let board of classes; let i = index"
+        >
+          <div class="grid grid-cols-4 gap-6 mt-4">
+            <div>
+              <app-common-dropdown
+                [dropDownValues]="classBoardOptions"
+                [config]="classBoardDropdownconfig"
+                [(ngModel)]="board.board"
+                [ngModelOptions]="{ standalone: true }"
+                [mode]="mode"
+                (valueUpdate)="boardMediumUpdate(i,'board')"
+              ></app-common-dropdown>
+              <small
+                class="form-control-error"
+                *ngIf="submitted && !board.board"
+                >{{'Board is required' | translate}}</small
+              >
+            </div>
+
+            <div>
+              <app-common-dropdown
+                [dropDownValues]="classMediumOptions"
+                [config]="classMediumDropdownconfig"
+                [(ngModel)]="board.medium"
+                [ngModelOptions]="{ standalone: true }"
+                [mode]="mode"
+                (valueUpdate)="boardMediumUpdate(i,'medium')"
+              ></app-common-dropdown>
+              <small
+                class="form-control-error"
+                *ngIf="submitted && !board.medium"
+                >{{'Medium is required' | translate}}</small
+              >
+            </div>
+
+            <div>
+              <app-common-dropdown
+                [dropDownValues]="classOptions"
+                [config]="classMinDropdownconfig"
+                [(ngModel)]="board.start"
+                [ngModelOptions]="{ standalone: true }"
+                (valueUpdate)="classRangeUpdate(i, 'start', $event)"
+                [mode]="mode"
+              ></app-common-dropdown>
+              <small class="form-control-error" *ngIf="submitted && !board.start"
+                >{{'Class min value is required' | translate}}</small
+              >
+            </div>
+
+            <div>
+              <app-common-dropdown
+                [dropDownValues]="classOptions"
+                [config]="classMaxDropdownconfig"
+                [(ngModel)]="board.end"
+                [ngModelOptions]="{ standalone: true }"
+                (valueUpdate)="classRangeUpdate(i, 'end', $event)"
+                [mode]="mode"
+              ></app-common-dropdown>
+              <small class="form-control-error" *ngIf="submitted && !board.end"
+                >Class max value is required</small
+              >
+            </div>
+          </div>
+
+          <ng-container *ngIf="board.classDetails.length">
+            <p class="font-bold mt-4">{{'Class Details' | translate}}</p>
+
+            <table class="w-full mt-2 number-type" aria-label="class List">
+              <tr
+                class="header font-semibold text-center text-content table-header border-b border-shade"
+              >
+                <th class="border px-4 py-2">{{'Standard' | translate}}</th>
+                <th class="border px-4 py-2">{{'Boys' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></th>
+                <th class="border px-4 py-2">{{'Girls' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></th>
+              </tr>
+              <ng-container>
+                <tr *ngFor="let class of board.classDetails; let j = index">
+                  <td class="border px-2 py-2">
+                    <input
+                      *ngIf="mode !== 'view'"
+                      class="form-control"
+                      disabled="true"
+                      type="text"
+                      placeholder="{{'class' | translate}}"
+                      [(ngModel)]="class.standard"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                    <p *ngIf="mode === 'view'">{{ class.standard }}</p>
+                  </td>
+
+                  <td class="border px-2 py-2">
+                    <input
+                      *ngIf="mode !== 'view'"
+                      class="form-control"
+                      type="text"
+                      maxlength="3"
+                      placeholder="{{'No. of boys' | translate}}"
+                      oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+                      [(ngModel)]="class.boysStrength"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="
+                        updateTotalStrength(
+                          class.boysStrength,
+                          class.girlsStrength,
+                          i,
+                          j
+                        )
+                      "
+                    />
+                    <small
+                      class="form-control-error"
+                      *ngIf="submitted && !class.boysStrength"
+                      >{{'No. of boys is required' | translate}}</small
+                    >
+                    <p *ngIf="mode === 'view'">{{ class.boysStrength }}</p>
+                  </td>
+                  <td class="border px-4 py-2">
+                    <input
+                      *ngIf="mode !== 'view'"
+                      class="form-control"
+                      type="text"
+                      maxlength="3"
+                      placeholder="{{'No. of girls' | translate}}"
+                      oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
+                      [(ngModel)]="class.girlsStrength"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="
+                        updateTotalStrength(
+                          class.boysStrength,
+                          class.girlsStrength,
+                          i,
+                          j
+                        )
+                      "
+                    />
+                    <small
+                      class="form-control-error"
+                      *ngIf="submitted && !class.girlsStrength"
+                      >No. of girls is required</small
+                    >
+                    <p *ngIf="mode === 'view'">{{ class.girlsStrength }}</p>
+                  </td>
+                </tr>
+              </ng-container>
+            </table>
+          </ng-container>
+
+          <div class="flex gap-2 mt-4 justify-end" *ngIf="mode !== 'view'">
+            <button
+              class="btn-danger h-9"
+              type="button"
+              *ngIf="i !== 0 && !board?._id"
+              (click)="removeBoard(i)"
+            >
+              <div class="flex content-center">
+                <img src="../../.././../../assets/icons/delete.svg" alt="" />
+                <span class="ml-[6px]">{{'Delete' | translate}}</span>
+              </div>
+            </button>
+            <button
+              class="btn-primary h-9"
+              type="button"
+              *ngIf="i === classes.length - 1"
+              (click)="createBoard()"
+            >
+              <div class="flex content-center">
+                <img src="../../.././../../assets/icons/add.svg" alt="" />
+                <span class="ml-[6px]">{{'Add Board/Class' | translate}}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end mt-9">
+          <button
+            *ngIf="mode === 'view'"
+            class="btn-outline-primary h-9 w-[74px]"
+            routerLink="/admin/school-management"
+            type="button"
+          >
+            {{'Close' | translate}}
+          </button>
+
+          <button
+            class="btn-primary h-9 ml-2"
+            *ngIf="mode === 'view'"
+            (click)="editSchoolDetails()"
+            type="button"
+            [hasPermission]="['admin']"
+          >
+            <div class="flex content-center">
+              <span class="mr-[6px]">{{'Edit' | translate}}</span>
+              <img src="../../../../../assets/icons/edit-light.svg" alt="" />
+            </div>
+          </button>
+
+          <button
+            *ngIf="mode !== 'view'"
+            class="btn-outline-primary h-9 w-[74px]"
+            routerLink="/admin/school-management"
+            type="button"
+          >
+            {{'Cancel' | translate}}
+          </button>
+
+          <button class="btn-primary h-9 ml-2" *ngIf="mode !== 'view'" [hasPermission]="['admin']" >
+            <div class="flex content-center">
+              <span class="mr-[6px]">{{'Save' | translate}}</span>
+              <img src="../../../../../assets/icons/check.svg" alt="" />
+            </div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<app-modal *ngIf="modalService.showBlukUploadDialog">
+  <app-upload-popup
+    [allowedFileTypes]="uploadFileTypes"
+    (fileUploaded)="uploadedFile($event)"
+    (upload)="upload($event)"
+  ></app-upload-popup>
+</app-modal>
+
+
+<app-delete-detail
+  *ngIf="showFacilityDeleteConfirm"
+  [config]="{
+    heading: 'Delete Resource',
+    confirmationText: 'Deleting the resource may affect the teachers who are currently using it.',
+    primaryButtonLabel: 'Delete',
+    primaryButtonType: 'delete'
+  }"
+  (close)="updateFacility($event)"
+></app-delete-detail>

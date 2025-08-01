@@ -1,0 +1,20 @@
+<div class="select-wrapper">
+  <label *ngIf="config.labelTxt" class="form-control-label">{{ config.labelTxt | translate}} <span *ngIf="config.required && mode !== 'view'" class="text-[16px] text-error">*</span></label> 
+
+  <ng-select
+    [items]="dropDownValues"
+    [ngClass]="config.isBackground ? 'with-background' : ''"
+    [style]="{ height: config.height }"
+    bindLabel="{{ config.bindLabel ? config.bindLabel : 'name' }}"
+    bindValue="{{ config.bindValue ? config.bindValue : 'value' }}"
+    [disabled]="config.disabled ? config.disabled : false"
+    [placeholder]="config.placeHolderTxt | translate"
+    [dropdownPosition]="'auto'"
+    [searchable]="config.searchable || false"
+    [clearable]="config.clearableOff ? false : true"
+    [multiple]="false"
+    [(ngModel)]="selectedItem"
+    (ngModelChange)="onChange($event); valueSelected($event)"
+  >
+  </ng-select>
+</div>

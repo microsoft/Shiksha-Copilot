@@ -1,0 +1,97 @@
+<div class="rounded-sm bg-shade-50 p-5">
+    <h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px]">
+        {{'Lesson Plan' | translate}}
+    </h1>
+    <p class="text-content-60 text-sm md:text-base mt-2 pb-4 border-b-[3px] border-shade-80">{{'Info' | translate}}: Lesson Plan Type-5E , {{'Board' | translate}}-{{formvalues.board}} </p>
+
+    <div class=" bg-error-50 text-error text-sm md:text-base p-4 rounded-sm mt-5 font-light grid grid-cols-[auto,1fr] gap-2 items-start">
+        <img class="me-2 align-text-top" src="../../../../../assets/icons/Button_info.svg" alt="">
+        <p class="leading-[18px]">{{'Disclaimer' | translate}}: {{'The content generated in Sikshana copilot is using an AI system and there can be certain instances that the content generated may not be accurate. Please always verify the content before usage' | translate}}.</p>   
+    </div>
+
+    <section class="container mx-auto font-sans mt-5 bg-white">
+        <div class="w-full overflow-hidden rounded-lg">
+            <div class="w-full overflow-x-auto">
+                <table class="w-full text-content" aria-label="lesson-plan-list">
+                    <thead class="bg-white">
+                        <tr class="header font-bold text-left  table-header border-b border-shade">
+                            <th class="text-content px-4 py-5 border text-sm text-nowrap" *ngFor="let header of tableHeaders">
+                                {{header | translate}}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <tr>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{formvalues.board}}
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{formvalues.medium}}
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                Class {{formvalues.class}}
+                            </td>
+                            <td class="px-4 py-6 max-w-[220px] text-sm border text-nowrap">
+                                <span class="topic-chips text-[12px] text-nowrap">{{formvalues.subject}}</span>
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{formvalues.topics}}
+                            </td>
+                            <td class="px-4 py-6 text-sm border text-nowrap">
+                                {{formvalues.subtopics}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="mt-5 bg-primary inline-flex w-full rounded p-3">
+        <img src="../../../../../assets/icons/Info_light.svg" alt="">
+        <span class="text-white ms-2">{{'Select any 1 lesson Plan to Proceed' | translate}}</span>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-5">
+        <ng-container *ngFor="let item of lessonPlanData">
+            <div class="outer_col_1 border border-content-30 text-content rounded my-5 p-6 bg-white ">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-md md:text-xl font-bold text-content-100 leading-[28px] sm:leading-[48px]">
+                        {{item.name}}
+                    </h2>
+                    
+                    <button (click)="chooseLessonPlan(item)"
+                        class="bg-primary rounded px-3 py-2 text-white cursor-pointer hover:bg-primary-100">{{'Choose Lesson Plan' | translate}}</button>
+                </div>
+
+                <app-accordion title="Learning Outcomes" subtitle="Subtitle for learning outcomes"
+                    imgSrc="learning.svg">
+                    <div>
+                        <ul class="space-y-2 text-content pl-3">
+                            <li *ngFor="let learningOutcome of item.learningOutcomes let i = index">
+                                {{ i + 1 }}. {{ learningOutcome }}
+                            </li>
+                        </ul>
+                    </div>
+                </app-accordion>
+
+                <div *ngFor="let subitem of item.instructionSet">
+                    <app-accordion title="{{subitem.type | translate}}" subtitle="Subtitle for {{subitem.type}}"
+                        imgSrc="{{subitem.type}}.svg">
+                        <div *ngFor="let s of subitem.info">
+                            <h2 class="mt-4 mb-3 underline">{{ s.methodOfTeaching }}</h2>
+                            <p [innerHTML]="s.content.main | formatContent"></p>
+                        </div>
+                    </app-accordion>
+                </div>
+
+                <app-accordion title="5E Lesson Plan Documents'"
+                    subtitle="Subtitle for documents" imgSrc="5eLessonPlan.svg">
+                    <div>Additional content for accordion 7...</div>
+                </app-accordion>
+
+            </div>
+        </ng-container>
+
+    </div>
+</div>

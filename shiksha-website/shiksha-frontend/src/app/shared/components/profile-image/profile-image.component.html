@@ -1,0 +1,15 @@
+<div [ngClass]="size">
+  <img
+    *ngIf="profileImage; else defaultImage"
+    [src]="profileImage"
+    alt="profile-pic"
+    class="object-cover w-full h-full rounded-full"
+  />
+  <ng-template #defaultImage>
+    <div
+      class="w-full h-full rounded-full flex justify-center items-center text-white bg-secondary"
+    >
+      <p>{{ firstCharacter }}</p>
+    </div>
+  </ng-template>
+</div>

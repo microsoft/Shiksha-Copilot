@@ -1,0 +1,51 @@
+table,
+th,
+td {
+  @media (min-width:1024px) {
+  border: 1px solid #dcdcdc;
+    
+  }
+}
+
+//   hide the spinner icon of the input field
+// chrome
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+// firefox
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.chip {
+  display: inline-block;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.close-icon {
+  cursor: pointer;
+  margin-left: 5px;
+  font-weight: bold;
+  color: #888;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .user-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .btn-wrapper button {
+    width: 125px;
+  }
+}
+

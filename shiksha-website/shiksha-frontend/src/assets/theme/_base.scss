@@ -1,0 +1,103 @@
+.btn-primary {
+  @apply text-sm py-2 px-3 rounded bg-primary text-white;
+}
+.btn-primary:disabled {
+  @apply bg-primary-80 pointer-events-none cursor-not-allowed text-white;
+}
+.btn-primary:hover:not(:disabled){
+  @apply bg-primary-100;
+}
+
+.btn-primary-outline{
+  @apply border border-primary text-primary cursor-pointer rounded text-sm px-3 py-2
+}
+.btn-primary-outline:disabled{
+  @apply pointer-events-none cursor-not-allowed opacity-50
+}
+
+
+.btn-secondary {
+  @apply bg-secondary text-white font-normal py-2 px-4 rounded;
+}
+
+.btn-secondary:hover {
+  @apply bg-secondary;
+}
+
+.btn-tertiary {
+  @apply bg-tertiary text-white font-normal py-2 px-4 rounded;
+}
+
+.btn-success{
+  @apply bg-success-50 text-success font-normal py-2 px-4 rounded;
+}
+
+
+.btn-tertiary:hover {
+  @apply bg-tertiary-50;
+}
+
+.form-control-label{
+  @apply block text-content text-sm font-bold mb-[6px];
+}
+
+.btn-outline-primary {
+  @apply text-sm py-2 px-3 rounded text-primary border border-primary;
+}
+
+.btn-outline-primary:hover {
+  @apply bg-primary-50;
+}
+
+.form-control{
+  @apply appearance-none border border-content-50 rounded h-11 w-full py-2 px-3 text-content leading-tight focus:outline-none;
+}
+
+.table-form-control{
+  @apply appearance-none border border-content-50 rounded h-9 w-full py-2 px-3 text-content leading-tight focus:outline-none;
+}
+
+.form-control-disabled{
+  @apply appearance-none border rounded w-full py-2 px-3 text-content leading-tight focus:outline-none bg-shade-80;
+}
+
+.form-control-error{
+  @apply text-xs text-error-100
+}
+
+.btn-primary-light {
+  @apply bg-primary opacity-40 text-white font-normal py-2 px-4 rounded;
+}
+
+.success-chip{
+  @apply px-3 py-1 rounded-full text-success bg-success-50
+}
+
+.warning-chip{
+  @apply p-2 rounded-full text-warn bg-warn-50
+}
+
+.topic-chips{
+  @apply p-2 rounded-full text-secondary bg-secondary-50 me-1
+}
+
+.btn-danger {
+  @apply text-sm py-2 px-3 rounded bg-error text-white;
+}
+
+.btn-danger:hover {
+  @apply bg-error-100;
+}
+
+.error-chip{
+  @apply px-3 py-2 rounded-full text-error bg-error-50
+}
+
+.form-text-area{
+  @apply w-full rounded border border-slate-200 px-4 py-2 text-sm text-slate-500 placeholder-transparent outline-none transition-all autofill:bg-white focus:border-primary focus:outline-none  disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400
+}
+
+.list-alpha {
+  @apply list-decimal pl-6; /* Apply default list style */
+  list-style-type: upper-alpha; /* Custom marker type (A, B, C, etc.) */
+}

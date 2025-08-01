@@ -1,0 +1,129 @@
+<div class="p-4 border-b-2 border-shade-80">
+  <div class="flex gap-2">
+    <img
+    src="../../../../../assets/icons/back-arrow.svg"
+    alt=""
+    class="cursor-pointer"
+    (click)="backNavigation()"
+    *ngIf="type === 'index'"
+  />
+  <h1
+  class="text-xl md:text-[30px] leading-[48px] font-bold text-content"
+  #header
+>
+  {{ (type === 'index' ?  "Lesson Chatbot" : "Edu Chatbot") | translate }}
+</h1>
+  </div>
+
+  <p *ngIf="type === 'index'" title="{{'Board' | translate}}-{{chapterDetails?.board}}, {{'Medium' | translate}}-{{chapterDetails?.medium}}, {{'Class' | translate}}-{{chapterDetails?.standard}}, {{'Subject' | translate}}-{{chapterDetails?.subject}}, {{'Chapter' | translate}}-{{chapterDetails?.orderNumber}}. {{chapterDetails?.topics}}" class="hidden md:block text-content-60 text-sm ml-8 text-nowrap overflow-hidden overflow-ellipsis">{{'Board' | translate}}-{{chapterDetails?.board}}, {{'Medium' | translate}}-{{chapterDetails?.medium}}, {{'Class' | translate}}-{{chapterDetails?.standard}}, {{'Subject' | translate}}-{{chapterDetails?.subject}}, {{'Chapter' | translate}}-{{chapterDetails?.orderNumber}}. {{chapterDetails?.topics}}</p>
+  <p *ngIf="type === 'index'" class="md:hidden text-content-60 text-sm ml-8 text-nowrap overflow-hidden overflow-ellipsis">{{chapterDetails?.standard}}. {{chapterDetails?.subject}} {{chapterDetails?.orderNumber}}. {{chapterDetails?.topics}}</p>
+<div class="flex items-center gap-1 py-1 mt-2" *ngIf="type === 'general'">
+  <!-- <img src="../../../../../assets/icons/Info 2.svg" alt="">
+<small>{{ 'You have a daily chat limit of 20 messages per day' | translate }}.</small> -->
+</div>
+</div>
+<section class="chat-wrapper px-4">
+  <div class="chat-container px-2 md:px-36 mb-4 md:mb-2 flex flex-col-reverse">
+    <div class="flex flex-col items-center relative top-[-40%]" *ngIf="messages.length === 0">
+      <img
+        src="../../../../assets/icons/chat-bot-empty.svg"
+        class="w-28 h-28 relative"
+        alt=""
+      />
+      <p class="mt-4 text-content-50 text-center">
+        {{ "Hello! I am here to assist you. Just type your question to get started!" | translate}}
+      </p>
+    </div>
+
+    <ng-container *ngIf="messages.length">
+      <ng-container *ngFor="let message of messages">
+        <div
+          class="chatbot-chat flex gap-2 md:gap-4 justify-start items-end mb-5"
+          *ngIf="message.answer"
+        >
+          <div
+            class="w-7 md:w-10 h-7 md:h-10 bg-secondary rounded-full flex items-center justify-center"
+          >
+            <span class="text-sm md:text-xl font-bold text-white">C</span>
+          </div>
+          <div class="flex gap-2 p-4 bg-primary-40 rounded-lg text-content text-sm max-w-[80%] break-words items-start">
+            <div
+            [innerHTML]="transformText(message.answer)"
+          ></div>
+          <div class="min-w-5 max-w-5">
+          <button  title="{{'Copy to clipboard' | translate}}" (click)="utilityService.copyToClipboard(message.answer)"><img src="../../../../assets/icons/copy-clipboard.svg" alt=""> </button>
+          </div>
+          </div>
+        </div>
+
+        <div
+          class="user-chat flex gap-2 md:gap-4 justify-end items-end mb-9 mt-4"
+          *ngIf="message.question"
+        >
+          <div
+            class="p-4 bg-primary-40 rounded-lg text-content text-sm border border-primary max-w-[80%] break-words"
+            [innerHTML]="transformText(message.question)"
+          >
+        </div>
+        <app-profile-image [profileImage]="this.sidebarService.profileImg()" [size]="'c-md'" ></app-profile-image>
+
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+  <div
+    class="loading-indicator flex items-center gap-1 ml-2 relative top-[-25px] md:top-0 px-0 md:px-36"
+    [ngClass]="{ show: isLoading }"
+  >
+    <div
+      class="bg-secondary rounded-full w-5 h-5 flex items-center justify-center"
+    >
+      <span class="text-[11px] text-white font-bold">C</span>
+    </div>
+    <span class="dot"></span>
+    <span class="dot"></span>
+    <span class="dot"></span>
+  </div>
+  <div class="relative flex flex-col-reverse">
+    <div class="absolute w-full  px-0 md:px-36" [ngClass]="type === 'general' ? 'bottom-[-65px] md:bottom-[-95px]' : 'bottom-[-65px] md:bottom-[-95px]'">
+      <div
+        class="flex items-end gap-2 bg-white border p-2 rounded-lg"
+        [ngClass]="!isLoading ? 'border-primary' : ''"
+      >
+        <textarea
+          type="text"
+          placeholder="{{ 'Send a message' | translate }}"
+          class="chat-input"
+          [(ngModel)]="chatValue"
+          (keydown.enter)="sendMessage(); $event.preventDefault()"
+          #textArea
+          (focus)="scrollToTextarea()"
+          (blur)="scrollToTop()"
+          (input)="adjustHeight(textArea)"
+          [disabled]="isLoading"
+        ></textarea>
+        <button
+          class="btn-primary p-1 rounded-full"
+          type="submit"
+          [disabled]="isLoading || !chatValue"
+          (click)="sendMessage()"
+        >
+          <img src="../../../../assets/icons/send.svg" alt="" />
+        </button>
+      </div>
+      <div class="flex items-center justify-center gap-1 py-1 mt-1" >
+      <small class="text-content-60" >{{'Daily chat limit: 20 messages per day.' | translate }} <span class="underline cursor-pointer text-warn" (click)="modalService.showChatbotSampleDialog = true; showInstructions=true"> Sample Instructions</span> </small>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<app-modal *ngIf="modalService.showChatbotSampleDialog">
+  <app-instructions-popup
+  *ngIf="showInstructions"
+  (showInstructions)="showInstructions = $event"
+  [instructions]="instructions"
+  [isChatbot]="true"
+></app-instructions-popup>
+</app-modal>

@@ -1,0 +1,71 @@
+<div class="p-3">
+	<div class="flex items-center">
+		<img class="w-5 h-5 cursor-pointer" src="../../../../../assets/icons/Vector (3).svg"
+			routerLink="/admin/shikshana-user/list" alt="">
+		<h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px] ml-4">
+			{{'Staff Management' | translate}}
+		</h1>
+	</div>
+	<div class="border text-content rounded my-5 p-6 bg-white" [ngClass]="{'pointer-events-none': mode === 'view'}">
+		<h2 class="text-content text-[30px] font-bold leading-[48px]">{{ (mode === "view" ? "View" : mode === "edit" ?
+			"Edit" : "Add") | translate }} {{'Staff' | translate}}
+		</h2>
+
+		<form [formGroup]="addForm" (ngSubmit)="on_form_submit()">
+			<div class="mt-8">
+				<div class="grid grid-cols-2 gap-4">
+					<div>
+						<label class="form-control-label">{{'Staff Name' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+						<input formControlName="name" type="text" maxlength="255" autocomplete="off"
+							class="form-control h-[44px] border-0 bg-shade-80" placeholder="{{'Enter staff name' | translate}}">
+						
+							<small class="form-control-error" *ngIf="submitted && addForm.get('name')?.errors?.['required']">{{'Staff name is required.' | translate}}</small>
+						
+							<small class="form-control-error" *ngIf="submitted && addForm.get('name')?.errors?.['minlength']">{{'Staff name should be minimum 3 character long.' | translate}}</small>
+						
+					</div>
+					<div>
+						<label class="form-control-label">{{'Mobile Number' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+						<input formControlName="phone" type="text" maxlength="10" oninput="this.value=this.value.replace(/(?![0-9])./gmi,'')" autocomplete="off"
+							class="form-control h-[44px] border-0 bg-shade-80" placeholder="{{'Enter Mobile Number' | translate}}">
+							<small class="form-control-error" *ngIf="submitted && addForm.get('phone')?.errors?.['required']">{{'Mobile Number is required.' | translate}}</small>
+							<small class="form-control-error"
+								*ngIf="submitted && f['phone'].errors?.['minlength']">{{'Phone number required should be 10 digits' | translate}}</small>
+							<small class="form-control-error"
+								*ngIf="submitted && !f['phone'].errors?.['minlength'] && f['phone'].errors?.['pattern']">{{'Invalid phone number' | translate}}</small>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-2 gap-4 mt-8">
+					<div>
+						<label class="form-control-label">{{'Email' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+						<input formControlName="email" type="email" autocomplete="off"
+							class="form-control h-[44px] border-0 bg-shade-80" placeholder="{{'Enter Email' | translate}}">
+							<small class="form-control-error" *ngIf="submitted && addForm.get('email')?.errors?.['required']">{{'Email is required' | translate}}</small>
+							<small class="form-control-error" *ngIf="submitted && addForm.get('email')?.errors?.['email']">{{'Enter valid email' | translate}}.</small>
+					</div>
+					<div class="cursor-pointer">
+						<app-form-dropdown [dropDownControlName]="'role'" [mode]="mode"
+							[dropDownCtrl]="convertToFormControl(f['role'])" [dropDownValues]="userRolesDropdownOptions"
+							[config]="userRoleDropdownconfig" [submitted]="submitted"></app-form-dropdown>
+					</div>
+				</div>
+			</div>
+			<div class="mt-8">
+				<label class="form-control-label">{{'Status of staff' | translate}}</label>
+				<div class="flex items-center space-x-4">
+					<span>{{'Active' | translate}}</span>
+					<ng-toggle formControlName="isDeleted" [color]="toggleconfig.color"></ng-toggle>
+				</div>
+			</div>
+			<div class="buttons mt-8 flex items-center justify-end gap-2" *ngIf="mode !== 'view'">
+				<button type="button" class="w-20 btn-outline-primary"
+					routerLink="/admin/shikshana-user/list">{{'Cancel' | translate}}</button>
+				<button type="submit" [disabled]="addForm.pristine" class="btn-primary w-20 flex items-center justify-center">
+					<span class="mr-1">{{'Save' | translate}}</span>
+					<img src="../../../../../assets/icons/Vector (4).svg" alt="">
+				</button>
+			</div>
+		</form>
+	</div>
+</div>

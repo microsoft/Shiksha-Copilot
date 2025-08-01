@@ -1,0 +1,729 @@
+<div class="inspect-wrapper rounded-sm bg-shade-50 p-5" *ngIf="resourcePlanData">
+  <div class="flex gap-2">
+    <img
+      src="../../../../../assets/icons/back-arrow.svg"
+      alt=""
+      class="cursor-pointer"
+      (click)="backNavigation()"
+    />
+  <h1 class="text-xl md:text-3xl font-bold text-content">
+    {{ "Lesson Resources" | translate }}
+  </h1>
+  </div>
+  <p
+    class="text-content-60 text-sm md:text-base mt-2 pb-4 border-b-[3px] border-shade-80"
+  >
+    {{ "Info" | translate }}: Resource Plan Type-5E ,
+    {{ "Board" | translate }}-{{ formvalues?.board }}
+  </p>
+
+  <div
+    class="bg-error-50 text-error text-sm md:text-base p-4 rounded-sm mt-5 font-light grid grid-cols-[auto,1fr] gap-2 items-start"
+  >
+    <img
+      class="me-2 align-text-top"
+      src="../../../../../assets/icons/Button_info.svg"
+      alt=""
+    />
+    <p class="leading-[18px]">
+      {{ "Disclaimer" | translate }}:
+      {{
+        "The content generated in Shiksha copilot is using an AI system and there can be certain instances that the content generated may not be accurate. Please always verify the content before usage"
+          | translate
+      }}.
+    </p>
+  </div>
+
+  <section class="mt-4">
+    <div class="w-full overflow-hidden rounded-lg">
+      <div class="w-full overflow-x-auto">
+        <table class="w-full text-content" aria-label="lessson-resource-list">
+          <thead class="bg-white">
+            <tr
+              class="header font-bold text-left table-header border-b border-content-30"
+            >
+              <th
+                class="text-content px-4 py-5 border text-sm"
+                *ngFor="let header of tableHeaders"
+              >
+                {{ header | translate }}
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white">
+            <tr>
+              <td class="px-4 py-6 text-sm border text-nowrap">
+                {{ formvalues?.board }}
+              </td>
+              <td class="px-4 py-6 text-sm border text-nowrap">
+                {{ formvalues?.medium }}
+              </td>
+              <td class="px-4 py-6 text-sm border text-nowrap">
+                Class {{ formvalues?.class }}
+              </td>
+              <td class="px-4 py-6 max-w-[220px] text-sm border">
+                <span class="topic-chips text-[12px] text-nowrap">{{
+                  utilityService.getSubjectDisplayName(formvalues?.subjects)
+                }}</span>
+              </td>
+              <td class="px-4 py-6 text-sm border text-nowrap">
+                {{ formvalues?.chapter?.orderNumber}}. {{ formvalues?.chapter?.topics }}
+              </td>
+              <td class="px-4 py-6 w-[450px] text-sm border whitespace-normal">
+                <span class="ms-2 inline-block">{{
+                  formvalues?.subTopics.join(', ')
+                }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="tabs flex items-center justify-between my-4 overflow-auto sticky top-14 py-4 bg-shade-50">
+    <div
+      *ngFor="let tab of resources"
+      class="h-[46px] me-2 p-4 px-8 md:px-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center text-nowrap"
+      [class.active]="selectedTab === tab.section"
+      (click)="selectTab(tab.section)"
+    >
+      <img
+        [src]="
+          selectedTab !== tab.section
+            ? 'assets/icons/' + tab.section + '_p.svg'
+            : 'assets/icons/' + tab.section + '_l.svg'
+        "
+        alt=""
+      />
+      <span class="text-sm ms-2">{{
+        getDisplayMethodOfTeaching(tab.section) | translate
+      }}</span>
+    </div>
+    <div
+      class="h-[46px] me-2 p-4 px-8 md:px-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
+      (click)="selectTab('videos')"
+      [class.active]="selectedTab === 'videos'"
+    >
+      <img
+        [src]="
+          selectedTab !== 'videos'
+            ? 'assets/icons/videos_p.svg'
+            : 'assets/icons/videos_l.svg'
+        "
+        alt=""
+      />
+      <span class="text-sm ms-2">{{ "Videos" | translate }}</span>
+    </div>
+    <div
+      class="h-[46px] p-4 px-8 md:px-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
+      (click)="selectTab('documents')"
+      [class.active]="selectedTab === 'documents'"
+    >
+      <img
+        [src]="
+          selectedTab !== 'documents'
+            ? 'assets/icons/docs_p.svg'
+            : 'assets/icons/docs_l.svg'
+        "
+        alt=""
+      />
+      <span class="text-sm ms-2">{{ "Documents" | translate }}</span>
+    </div>
+  </div>
+
+  <div class="tab-content text-sm">
+    <ng-container *ngFor="let tab of resources">
+      <div *ngIf="selectedTab === tab.section">
+        <div class="border rounded-md bg-white p-6">
+          <div class="h-96 overflow-y-auto border rounded-md bg-white p-4">
+            <p *ngIf="tab.data.length === 0"> {{'No Data Found' | translate}}!</p>
+            <ng-container *ngFor="let data of tab.data">
+              <ng-container *ngIf="data.difficulty">
+                <p class="font-bold mt-4">{{ data.difficulty | uppercase | translate }}</p>
+                <p class="mt-2 mb-4" *ngIf="data.content.length === 0"> {{'No Data Found' | translate}}!</p>
+                <ng-container *ngFor="let content of data.content">
+                  <p class="font-semibold mt-4 text-content-70">
+                    {{ content.type | uppercase | translate }}
+                  </p>
+                  <ng-container *ngIf="content.question">
+                    <p
+                      *ngIf="!tabsEditMode[tab.section]"
+                      class="mb-2 font-semibold"
+                    >
+                      {{ content.title }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="tabsEditMode[tab.section] && content.title"
+                      [(ngModel)]="content.title"
+                    ></textarea>
+                    <p
+                      *ngIf="!tabsEditMode[tab.section]"
+                      class="mb-2 font-semibold"
+                    >
+                      {{ content.question }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="tabsEditMode[tab.section] && content.question"
+                      [(ngModel)]="content.question"
+                    ></textarea>
+                    <p *ngIf="!tabsEditMode[tab.section]">
+                      {{ content.description }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="tabsEditMode[tab.section] && content.description"
+                      [(ngModel)]="content.description"
+                    ></textarea>
+                  </ng-container>
+                  <ng-container *ngIf="content?.questions">
+                    <ng-container
+                      *ngFor="
+                        let questions of content.questions;
+                        let questionIndex = index
+                      "
+                    >
+                      <p class="mt-2" *ngIf="!tabsEditMode[tab.section] &&  questions.question">
+                        {{ questionIndex + 1 }}. {{ questions.question }}
+                      </p>
+                      <textarea
+                        class="mt-2 border p-2 w-full"
+                        *ngIf="tabsEditMode[tab.section] && questions.question"
+                        [(ngModel)]="questions.question"
+                      ></textarea>
+  
+                      <ng-container *ngIf="questions?.options">
+                        <ng-container *ngFor="let option of questions.options;let q= index; trackBy: trackByFn">
+                          <p *ngIf="!tabsEditMode[tab.section]" >{{option}}</p>
+                          <textarea
+                        class="border p-2 w-full"
+                        *ngIf="tabsEditMode[tab.section] && questions.options"
+                        [(ngModel)]="questions.options[q]"
+                      ></textarea>
+                        </ng-container>
+                      </ng-container>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+  
+              <ng-container *ngIf="data.id">
+                <p *ngIf="!tabsEditMode[tab.section]" class="font-semibold mt-4">
+                  {{ data.title }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="tabsEditMode[tab.section] && data.title"
+                  [(ngModel)]="data.title"
+                ></textarea>
+                <p *ngIf="!tabsEditMode[tab.section]">{{ data.preparation }}</p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="tabsEditMode[tab.section] && data.preparation"
+                  [(ngModel)]="data.preparation"
+                ></textarea>
+  
+                <p *ngIf="!tabsEditMode[tab.section]">
+                  {{ data.required_materials }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="tabsEditMode[tab.section] && data.required_materials"
+                  [(ngModel)]="data.required_materials"
+                ></textarea>
+  
+                <p *ngIf="!tabsEditMode[tab.section]">
+                  {{ data.obtaining_materials }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="tabsEditMode[tab.section] && data.obtaining_materials"
+                  [(ngModel)]="data.obtaining_materials"
+                ></textarea>
+  
+                <p *ngIf="!tabsEditMode[tab.section]">{{ data.recap }}</p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="tabsEditMode[tab.section] && data.recap"
+                  [(ngModel)]="data.recap"
+                ></textarea>
+              </ng-container>
+            </ng-container>
+          </div>
+  
+            <div>
+              <div
+                *ngIf="!tabsEditMode[tab.section] && tab.data.length >0 && showEditBtn(tab.data,tab.section)"
+                (click)="toggleEditMode(tab.section)"
+                class="btn-primary flex items-center justify-center cursor-pointer w-24 my-5"
+              >
+                <img src="../../../../../assets/icons/edit_light.svg" alt="" />
+                <span class="ms-1">{{ "Edit" | translate }}</span>
+              </div>
+              <div
+                *ngIf="tabsEditMode[tab.section]"
+                (click)="toggleEditMode(tab.section)"
+                class="btn-primary flex items-center justify-center cursor-pointer w-24 my-5"
+              >
+                <span class="ms-1">{{'Save' | translate}}</span>
+              </div>
+              <h2
+                class="text-xl md:text-[24px] font-bold text-content-100 leading-[48px]"
+              >
+                {{ "Feedback" | translate }}
+              </h2>
+              <div class="mt-3 gap-4 flex text-[14px] flex-col xl:flex-row">
+                <div
+                  class="flex items-start md:items-center"
+                  *ngFor="let feedbackType of feedbackValues"
+                >
+                  <input
+                    type="radio"
+                    [id]="feedbackType.value + tab.section"
+                    [value]="feedbackType.value"
+                    [(ngModel)]="feedbackPerSets[tab.section].feedback"
+                    class="mt-[3px] md:mt-0"
+                    (change)="onFeedbackChange(tab.section, feedbackType.value)"
+                    [disabled]="mode ==='view'"
+                  />
+                  <label [for]="feedbackType.value + tab.section" class="ms-1"
+                    >{{ feedbackType.name | translate }} {{ feedbackType.symbol }}</label
+                  >
+                </div>
+              </div>
+  
+              <div  *ngIf="
+              feedbackPerSets[tab.section].feedback &&
+              feedbackPerSets[tab.section].feedback !==
+                feedbackValues[2].value
+            ">
+                <textarea
+                [(ngModel)]="feedbackPerSets[tab.section].additionalFeedback"
+                [disabled]="mode ==='view'"
+                class="p-2 mt-2 border rounded-sm w-full focus:outline-none"
+                placeholder="{{'Enter Reason' | translate}}"
+                (change)="hasUnsavedChanges=true"
+                rows="3"
+                [ngClass]="!feedbackPerSets[tab.section].additionalFeedback ? 'border-error' : 'border-content-30'"
+              ></textarea>
+              <p class="form-control-error font-semibold" *ngIf="!feedbackPerSets[tab.section].additionalFeedback">{{'Reason required' | translate}}</p> 
+              </div>
+            </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <div *ngIf="selectedTab === 'videos'">
+      <div
+      *ngIf="videoUrls.length === 0"
+      class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white"
+    >
+      <div class="flex justify-center">
+        <p>{{ "No Videos Available" | translate }}!</p>
+      </div>
+      </div>
+      <ng-container *ngIf="videoUrls.length">
+        <h3 class="text-base text-content font-semibold" >{{'Videos' | translate}}</h3>
+        <div class="border border-shade-100 text-content rounded mb-5 p-4 bg-white  overflow-x-auto">
+          <div class="flex gap-4">
+            <div *ngFor="let video of videoUrls" class="min-w-[416px] min-h-[190px]">
+              <div class=" bg-white border">
+                <div class="bg-shade-80 p-3 rounded">
+                  <iframe
+                  [src]="video.link"
+                  width="400"
+                  height="190"
+                  title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                </iframe>
+              </div>
+              <div class="p-2">
+                <p class="text-center text-nowrap overflow-x-auto text-ellipsis">{{video.title}}</p>
+              </div>
+                </div>
+                <div class="min-w-4"></div>
+            </div>
+          </div>
+        </div>
+    </ng-container>
+    </div>
+
+    <div *ngIf="selectedTab === 'documents'">
+      <div
+        class="border border-shade-100 text-content rounded my-5 p-4 md:p-6 bg-white overflow-x-auto"
+      >
+        <div class="flex gap-4">
+          <div
+            class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
+            (click)="downloadDocx()"
+            [ngClass]="{'disable-download':mode !== 'view'}"
+          >
+            <div>
+              <img
+                class="px-10 py-8"
+                src="../../../../../assets/images/docx.svg"
+                alt=""
+              />
+              <div></div>
+            </div>
+            <div class="bg-white p-2 flex items-center gap-2 justify-between">
+            <div class="flex items-center gap-1">
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/docx-file.svg" alt="">
+              </div>
+              <span class="max-w-28 text-nowrap overflow-hidden text-ellipsis">{{utilityService.getSubjectDisplayName(formvalues?.subjects)}}</span>
+            </div>
+
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/download.svg" alt="">
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
+            (click)="generatePresentation()"
+            [ngClass]="{'disable-download':mode !== 'view'}"
+          >
+            <div>
+              <img
+                class="px-10 py-8"
+                src="../../../../../assets/images/ppt.svg"
+                alt=""
+              />
+              <div></div>
+            </div>
+            <div class="bg-white p-2 flex items-center gap-2 justify-between">
+            <div class="flex items-center gap-1">
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/ppt-file.svg" alt="">
+              </div>
+              <span class="max-w-28 text-nowrap overflow-hidden text-ellipsis">{{utilityService.getSubjectDisplayName(formvalues?.subjects)}}</span>
+            </div>
+
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/download.svg" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-warn-50 p-2 mt-4"  *ngIf="mode !== 'view' && additionalResources.length === 0">
+        <div class="flex items-center gap-2">
+          <img src="../../../../../assets/icons/Info 2.svg" alt="">
+        <small>{{ 'Documents will be available for download once the resource plan has been saved.' | translate }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="additionalResources.length > 0">
+    <h2 class="text-lg text-content px-2 py-4" *ngIf="selectedTab !== 'videos'">{{'Additional Resources' | translate}}</h2>
+
+    <div class="tab-content text-sm">
+      <ng-container *ngFor="let tab of additionalResources">
+        <div *ngIf="selectedTab === tab.section">
+          <div class="border rounded-md bg-white p-6">
+          <div class="h-96 overflow-x-auto border rounded-md bg-white p-4">
+      <p *ngIf="tab.data.length === 0"> {{'No Data Found' | translate}}!</p>
+
+            <ng-container *ngFor="let data of tab.data">
+              <ng-container *ngIf="data.difficulty">
+                <p class="font-bold mt-4">{{ data.difficulty | uppercase | translate }}</p>
+              <p class="mt-2 mb-4" *ngIf="data.content.length === 0"> {{'No Data Found' | translate}}!</p>
+
+                <ng-container *ngFor="let content of data.content">
+                  <p class="font-semibold mt-4 text-content-70">
+                    {{ content.type | uppercase | translate }}
+                  </p>
+                  <ng-container *ngIf="content.question">
+                    <p
+                      *ngIf="!additionalTabsEditMode[tab.section]"
+                      class="mb-2 font-semibold"
+                    >
+                      {{ content.title }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="
+                        additionalTabsEditMode[tab.section] && content.title
+                      "
+                      [(ngModel)]="content.title"
+                    ></textarea>
+                    <p
+                      *ngIf="!additionalTabsEditMode[tab.section]"
+                      class="mb-2 font-semibold"
+                    >
+                      {{ content.question }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="
+                        additionalTabsEditMode[tab.section] && content.question
+                      "
+                      [(ngModel)]="content.question"
+                    ></textarea>
+                    <p *ngIf="!additionalTabsEditMode[tab.section]">
+                      {{ content.description }}
+                    </p>
+                    <textarea
+                      class="mt-2 border p-2 w-full"
+                      *ngIf="
+                        additionalTabsEditMode[tab.section] &&
+                        content.description
+                      "
+                      [(ngModel)]="content.description"
+                    ></textarea>
+                  </ng-container>
+                  <ng-container *ngIf="content?.questions">
+                    <ng-container
+                      *ngFor="
+                        let questions of content.questions;
+                        let questionIndex = index
+                      "
+                    >
+                      <p
+                        class="mt-2"
+                        *ngIf="!additionalTabsEditMode[tab.section] && questions.question"
+                      >
+                        {{ questionIndex + 1 }}. {{ questions.question }}
+                      </p>
+                      <textarea
+                        class="mt-2 border p-2 w-full"
+                        *ngIf="
+                          additionalTabsEditMode[tab.section] &&
+                          questions.question
+                        "
+                        [(ngModel)]="questions.question"
+                      ></textarea>
+                      <ng-container *ngIf="questions?.options">
+                        <ng-container *ngFor="let option of questions.options;let q= index; trackBy: trackByFn">
+                          <p *ngIf="!additionalTabsEditMode[tab.section]">{{option}}</p>
+                          <textarea
+                        class="border p-2 w-full"
+                        *ngIf="additionalTabsEditMode[tab.section] && questions.options"
+                        [(ngModel)]="questions.options[q]"
+                      ></textarea>
+                        </ng-container>
+                      </ng-container>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+
+              <ng-container *ngIf="data.id">
+                <p
+                  *ngIf="!additionalTabsEditMode[tab.section]"
+                  class="font-semibold mt-4"
+                >
+                  {{ data.title }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="additionalTabsEditMode[tab.section] && data.title"
+                  [(ngModel)]="data.title"
+                ></textarea>
+                <p *ngIf="!additionalTabsEditMode[tab.section]">
+                  {{ data.preparation }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="
+                    additionalTabsEditMode[tab.section] && data.preparation
+                  "
+                  [(ngModel)]="data.preparation"
+                ></textarea>
+
+                <p *ngIf="!additionalTabsEditMode[tab.section]">
+                  {{ data.required_materials }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="
+                    additionalTabsEditMode[tab.section] &&
+                    data.required_materials
+                  "
+                  [(ngModel)]="data.required_materials"
+                ></textarea>
+
+                <p *ngIf="!additionalTabsEditMode[tab.section]">
+                  {{ data.obtaining_materials }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="
+                    additionalTabsEditMode[tab.section] &&
+                    data.obtaining_materials
+                  "
+                  [(ngModel)]="data.obtaining_materials"
+                ></textarea>
+
+                <p *ngIf="!additionalTabsEditMode[tab.section]">
+                  {{ data.recap }}
+                </p>
+                <textarea
+                  class="border p-2 w-full"
+                  *ngIf="additionalTabsEditMode[tab.section] && data.recap"
+                  [(ngModel)]="data.recap"
+                ></textarea>
+              </ng-container>
+            </ng-container>
+          </div>
+
+            <div>
+              <div
+                *ngIf="!additionalTabsEditMode[tab.section] && tab.data.length >0 && showEditBtn(tab.data,tab.section)"
+                (click)="additionalToggleEditMode(tab.section)"
+                class="btn-primary flex items-center justify-center cursor-pointer w-24 my-5"
+              >
+                <img src="../../../../../assets/icons/edit_light.svg" alt="" />
+                <span class="ms-1">{{ "Edit" | translate }}</span>
+              </div>
+              <div
+                *ngIf="additionalTabsEditMode[tab.section]"
+                (click)="additionalToggleEditMode(tab.section)"
+                class="btn-primary flex items-center justify-center cursor-pointer w-24 my-5"
+              >
+                <span class="ms-1">{{'Save' | translate}}</span>
+              </div>
+            </div>
+        </div>
+      </div>
+      </ng-container>
+
+      <div *ngIf="selectedTab === 'documents'">
+        <div
+          class="border border-shade-100 text-content rounded my-5 p-4 md:p-6 bg-white overflow-x-auto"
+        >
+        <div class="flex gap-4">
+          <div
+            class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
+            (click)="downloadAdditionalDocx()"
+            [ngClass]="{'disable-download':mode !== 'view'}"
+          >
+            <div>
+              <img
+                class="px-10 py-8"
+                src="../../../../../assets/images/docx.svg"
+                alt=""
+              />
+              <div></div>
+            </div>
+            <div class="bg-white p-2 flex items-center gap-2 justify-between">
+            <div class="flex items-center gap-1">
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/docx-file.svg" alt="">
+              </div>
+              <span class="max-w-28 text-nowrap overflow-hidden text-ellipsis">{{utilityService.getSubjectDisplayName(formvalues?.subjects)}}</span>
+            </div>
+
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/download.svg" alt="">
+              </div>
+            </div>
+          </div>
+          <div
+            class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
+            (click)="generateAdditionalResourcePresentation()"
+            [ngClass]="{'disable-download':mode !== 'view'}"
+          >
+            <div>
+              <img
+                class="px-10 py-8"
+                src="../../../../../assets/images/ppt.svg"
+                alt=""
+              />
+              <div></div>
+            </div>
+            <div class="bg-white p-2 flex items-center gap-2 justify-between">
+            <div class="flex items-center gap-1">
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/ppt-file.svg" alt="">
+              </div>
+              <span class="max-w-28 text-nowrap overflow-hidden text-ellipsis">{{utilityService.getSubjectDisplayName(formvalues?.subjects)}}</span>
+            </div>
+
+              <div class="p-1 rounded-lg bg-primary-60">
+                <img src="../../../../../assets/icons/download.svg" alt="">
+              </div>
+            </div>
+          </div>
+        </div>        
+        </div>
+
+        <div class="bg-warn-50 p-2 mt-4" *ngIf="mode !== 'view'">
+          <div class="flex items-center gap-2">
+            <img src="../../../../../assets/icons/Info 2.svg" alt="">
+          <small>{{ 'Documents will be available for download once the resource plan has been saved.' | translate }}</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white"
+  >
+    <h2
+      class="text-xl md:text-[24px] font-bold text-content-100 md:leading-[48px]"
+    >
+      {{ "Lesson Resource Feedback" | translate }}
+    </h2>
+
+    <div class="mt-3 gap-4 flex text-[14px] flex-col xl:flex-row">
+      <div class="flex items-start" *ngFor="let val of resPlanfeedbackValues">
+        <input
+          type="radio"
+          [id]="val.value"
+          [name]="val.value"
+          [value]="val.value"
+          [(ngModel)]="resourcePlanFeedback"
+          required
+          class="mt-[4px]"
+          (change)="resourcePlanFeedbackChanged(val.value)"
+          [disabled]="mode==='view'"
+        />
+        <label [for]="val.value" class="ms-1">{{ val.label | translate }} </label>
+      </div>
+    </div>
+    <p class="form-control-error mt-2" *ngIf="resourceFeedbackError">{{resourceFeedbackError}}</p>
+    <div *ngIf="resourcePlanFeedback && resourcePlanFeedback !==resPlanfeedbackValues[2].value">
+      <textarea [disabled]="mode ==='view'" [(ngModel)]="resourcePlanfeedbackReason"
+      (change)="hasUnsavedChanges=true"
+      class="p-2 mt-2 border rounded-sm w-full border-content-30 focus:outline-none" 
+      placeholder="{{'Enter Reason' | translate}}" rows="3"
+      [ngClass]="!resourcePlanfeedbackReason ? 'border-error' : 'border-content-30'"
+      ></textarea>
+      <p class="form-control-error font-semibold" *ngIf="!resourcePlanfeedbackReason">{{'Reason required' | translate}}</p>  
+     </div> 
+
+     <div class="flex items-center justify-end gap-2 mt-5" *ngIf="mode==='view'">
+      <button (click)="saveEdited()" type="submit" class="btn-primary" [disabled]="!enableEdit"
+      >
+      {{'Save Changes' | translate}}
+   </button>
+      </div>
+   
+
+    <div class="flex items-center justify-end gap-2 mt-5" *ngIf="mode !=='view'">
+      <button
+        (click)="onSave()"
+        class="btn-primary"
+        [disabled]="!enableSave || !resourcePlanFeedback"
+      >
+        {{ "Save Resource Plan" | translate }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<app-delete-detail *ngIf="contentGenService.showDraftConfirmation"
+[config]="{	
+	heading: 'Leave Page?',	
+	confirmationText : mode ==='view' ? 'You have unsaved changes. Do you want to save edited contents before leaving?' : 'You have unsaved changes. Do you want to save them as a draft before leaving?',
+	primaryButtonLabel : mode ==='view' ? 'Save Changes':'Save as Draft',
+	primaryButtonType : 'ok',
+  cancelButtonLabel:'Exit Without Saving'}"
+(close)="confirmDraft($event)"></app-delete-detail>

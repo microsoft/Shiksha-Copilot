@@ -1,0 +1,76 @@
+.otp-container {
+  .my-super-class.my-super-error-class {
+    border: 1px solid var(--error-DEFAULT);
+  }
+}
+
+.my-schedule {
+  // to prevent half of the cell
+  .cal-week-view .cal-event-container:not(.cal-draggable):hover {
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 50;
+    transition: all 0.3s ease;
+  }
+
+  
+
+  .cal-week-view .cal-time-events .cal-day-column {
+    margin-right: 10px;  
+    
+  }
+
+  .cal-week-view .cal-hour-odd {
+    background-color: unset !important;
+  }
+  .cal-week-view .cal-hour {
+    width: calc(100% + 10px);
+  }
+
+  .cal-event-line2 {
+    display: block;
+  }
+  .cal-week-view .cal-ends-within-day .cal-event {
+    text-wrap: wrap !important;
+    line-height: 1.5 !important;
+  }
+
+  .cal-week-view {
+    min-width: 800px;
+  }
+
+  .cal-week-view .cal-day-headers .cal-header span,
+  .cal-week-view .cal-header.cal-weekend span {
+    color: #46a0f1 !important;
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  .cal-week-view .cal-header.cal-today {
+    background-color: var(--primary-80) !important;
+  }
+
+  .cal-week-view .cal-day-headers .cal-header {
+    color: #4b4b4b;
+  }
+
+  .cal-week-view .cal-time-label-column {
+    width: 70px;
+    height: 100%;
+    position: sticky;
+    left: 0;
+    background: #fafafa;
+    z-index: 9;
+    color: #4b4b4b;
+  }
+  .cal-week-view mwl-calendar-week-view-hour-segment,
+  .cal-week-view .cal-hour-segment {
+    display: block;
+  }
+
+  // @media (max-width: 425px) {
+  //   .cal-week-view .cal-time-label-column {
+  //     width: 50px !important;
+  //   }
+  // }
+}

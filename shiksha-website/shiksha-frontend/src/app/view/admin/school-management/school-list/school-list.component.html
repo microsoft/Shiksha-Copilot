@@ -1,0 +1,282 @@
+<div class="school-list-wrapper">
+  <div class="flex content-center">
+    <h1 class="text-[30px] leading-[48px] font-bold text-content">
+      {{'School Management' | translate}}
+    </h1>
+  </div>
+
+  <div class="school-list-container p-4 sm:p-8 bg-white mt-6 border rounded">
+    <div class="flex flex-col sm:flex-row justify-between items-center">
+      <p class="text-content text-[30px] leading-[48px] font-bold">{{'School List' | translate}}</p>
+      <div class="buttons  flex items-center justify-between gap-2">
+        <div>
+          <div class="search-icon min-w-[100px] flex items-center h-9 w-[300px]">
+            <img src="../../../../../assets/icons/Search.svg" alt="" class="mr-2"/>
+            <input
+              type="text"
+              class="appearance-none rounded py-2 px-3 text-content leading-tight focus:outline-none bg-shade-80 h-full w-full"
+              placeholder="{{'Search School Name/DISE Code' | translate}}"
+              [(ngModel)]="searchText"
+              (input)="searchInputChanged($event)"
+            />
+          </div>
+        </div>
+        <div class="action-btn flex gap-2">
+          <button
+          class="btn-outline-primary"
+          (click)="blukUpload()"
+          [hasPermission]="['admin']"
+        >
+          <div class="flex items-center gap-2">
+            <img src="../../.././../../assets/icons/upload.svg" alt="" />
+            <span class="text-nowrap">{{'Bulk Upload' | translate}}</span>
+          </div>
+        </button>
+    
+        <button
+          class="btn-primary"
+          routerLink="/admin/school-management/add"
+          [hasPermission]="['admin']"
+        >
+          <div class="flex items-center gap-2">
+            <img src="../../.././../../assets/icons/add.svg" alt="" />
+            <span class="text-nowrap">{{'Add School' | translate}}</span>
+          </div>
+        </button>
+        <button class="btn-primary" *ngIf="schoolListData" (click)="exportSchoolList()" [disabled]="!schoolListData.length">
+					<div class="flex items-center gap-2">
+					  <img src="../../.././../assets/icons/upload_light.svg" alt="" />
+					  <span class="text-nowrap">{{'Export' | translate}}</span>
+					</div>
+				  </button>
+        </div>
+        
+      </div>
+    </div>
+   
+    
+
+    <div class="mt-7 grid gap-2 grid-cols-1 md:grid-cols-2 lg:flex lg:flex-wrap lg:justify-between mb-12">
+      
+      <div class="min-w-[78px] flex-1 h-9">
+        <app-common-dropdown
+          [dropDownValues]="stateDropdownOptions"
+          [config]="stateDropdownconfig"
+          (valueUpdate)="onFilterChange('state', $event)"
+        ></app-common-dropdown>
+      </div>
+    
+      <div class="min-w-[78px] flex-1 h-9">
+        <app-common-dropdown
+          #zoneDropdown
+          [dropDownValues]="zoneDropdownOptions"
+          [config]="zoneDropdownconfig"
+          (valueUpdate)="onFilterChange('zone', $event)"
+        ></app-common-dropdown>
+      </div>
+    
+      <div class="min-w-[92px] flex-1 h-9">
+        <app-common-dropdown
+          #districtDropdown
+          [dropDownValues]="districtDropdownOptions"
+          [config]="districtDropdownconfig"
+          (valueUpdate)="onFilterChange('district', $event)"
+        ></app-common-dropdown>
+      </div>
+    
+      <div class="min-w-[78px] flex-1 h-9">
+        <app-common-dropdown
+          #blockDropdown
+          [dropDownValues]="blockDropdownOptions"
+          [config]="blockDropdownconfig"
+          (valueUpdate)="onFilterChange('block', $event)"
+        ></app-common-dropdown>
+      </div>
+    
+      <div class="min-w-[82px] flex-1 h-9">
+        <app-common-dropdown
+          #schoolDropdown
+          [dropDownValues]="schoolDropdownOptions"
+          [config]="schoolDropdownconfig"
+          (valueUpdate)="onFilterChange('_id', $event)"
+        ></app-common-dropdown>
+      </div>
+      
+      
+    </div>
+    
+    
+
+    <div class="w-full ">
+      <table class="table-auto w-full border mt-5 rounded-lg" aria-label="school-list">
+        <thead>
+          <tr
+            class="header font-semibold text-left text-content table-header border-b border-shade"
+          >
+            <th
+              class="px-4 py-6 border text-sm"
+              *ngFor="let listHeader of schoolListTableHeaders"
+            >
+              {{ listHeader | translate}}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white">
+          <tr
+            class="text-gray-700"
+            *ngFor="let schoolData of schoolListData; let i = index"
+          >
+            <td class="px-4 py-6 text-sm border">
+              <p>{{ schoolData?.schoolId }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border max-w-[20vw] break-all">
+              <p>{{ schoolData.name }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border">
+              <p>{{ schoolData.district }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border">
+              <p>{{ schoolData.block }}</p>
+            </td>
+            <td class="px-4 py-6 text-sm border">
+              <p>{{ schoolData.zone }}</p>
+            </td>
+            <td class="p-4 text-sm border">
+              <span
+                class="px-3 py-2 rounded-full"
+                [ngClass]="{
+                  'text-green bg-success-50': !schoolData.isDeleted,
+                  'text-error bg-error-50': schoolData.isDeleted
+                }"
+                >{{ !schoolData.isDeleted ? "Active" : "Inactive" }}</span
+              >
+            </td>
+            <td class="px-4 py-6 text-sm border relative">
+              <div class="flex justify-center">
+                <div [class.open]="isOpen" (click)="toggleDropdown(i, $event)">
+                  <button class="py-2 px-4 rounded inline-flex items-center">
+                    <img
+                      class="w-5"
+                      src="../../../../../assets/icons/more_vert.svg"
+                      alt=""
+                    />
+                  </button>
+  
+                  <ul
+                    *ngIf="isOpen[i]"
+                    class="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="options-menu"
+                  >
+                    <li
+                      class="h-10 mt-2 hover:bg-shade-80 cursor-pointer"
+                      (click)="viewSchool(schoolData._id)"
+                    >
+                      <a
+                        class="block px-4 py-2 text-sm text-content"
+                        role="menuitem"
+                      >
+                        <div class="flex items-center">
+                          <img
+                            class="ms-2 me-3"
+                            src="../../../../../assets/icons/Visibility.svg"
+                            alt=""
+                          />
+                          <span>{{'View School' | translate}}</span>
+                        </div>
+                      </a>
+                    </li>
+  
+                    <li
+                      class="h-10 hover:bg-shade-80 cursor-pointer"
+                      (click)="editSchool(schoolData._id)"
+                      [hasPermission]="['admin']"
+                    >
+                      <a
+                        class="block px-4 py-2 text-sm text-content"
+                        role="menuitem"
+                      >
+                        <div class="flex items-center">
+                          <img
+                            class="ms-2 me-3"
+                            src="../../../../../assets/icons/Vector.svg"
+                            alt=""
+                          />
+                          <span>{{'Edit School' | translate}}</span>
+                        </div>
+                      </a>
+                    </li>
+  
+                    <li *ngIf="!schoolData.isDeleted" class="h-10 mb-2 hover:bg-shade-80 cursor-pointer" [hasPermission]="['admin']">
+                      <a
+                        class="block px-4 py-2 text-sm text-content"
+                        role="menuitem"
+                        (click)="openModalForDeleteConfirm(schoolData)"
+                      >
+                        <div class="flex items-center">
+                          <img
+                            class="mx-2"
+                            src="../../../../../assets/icons/Vector (2).svg"
+                            alt=""
+                          />
+                          <span class="text-error">{{'Disable School' | translate}}</span>
+                        </div>
+                      </a>
+                    </li>
+                    <li *ngIf="schoolData.isDeleted" class="h-10 mb-2 hover:bg-shade-80 cursor-pointer">
+                      <a
+                        class="block px-4 py-2 text-sm text-content"
+                        role="menuitem"
+                        (click)="activateSchool(schoolData._id)"
+                      >
+                        <div class="flex items-center">
+                          <img
+                            class="mx-2 w-7"
+                            src="../../../../../assets/icons/switch-on.svg"
+                            alt=""
+                          />
+                          <span class="text-success">{{'Activate School' | translate}}</span>
+                        </div>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!schoolListData || !schoolListData.length">
+            <td colspan="7" class="text-center text-content-60 py-2">{{'No Data Found' | translate}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
+</div>
+
+<app-modal *ngIf="modalService.showDeleteUserDialog">
+  <app-disable-popup
+    [modalHeader]="'Disable School'"
+    [modalSubHeader]="'Are you sure you want to disable this School?'"
+    [tableData]="tableData"
+    [users_of_school]="users_of_school"
+    (sendDetails)="onDisableSchool($event)"
+  ></app-disable-popup>
+</app-modal>
+
+<app-modal *ngIf="modalService.showBlukUploadDialog">
+  <app-upload-popup context="school-management"
+    [allowedFileTypes]="uploadFileTypes"
+    (fileUploaded)="uploadedFile($event)"
+    (upload)="upload($event)"
+  ></app-upload-popup>
+</app-modal>
+
+<app-modal *ngIf="modalService.showUploadErrorDialog">
+  <app-upload-error-popup [modalHeader]="'Upload Error'" [errorUrl]="errorUrl"></app-upload-error-popup>
+</app-modal>
+
+<app-pagination [totalItems]="totalItems" [pageSize]="pageSize" [currentPage]="currentPage"
+(pageChange)="onPageChange($event)">
+</app-pagination>

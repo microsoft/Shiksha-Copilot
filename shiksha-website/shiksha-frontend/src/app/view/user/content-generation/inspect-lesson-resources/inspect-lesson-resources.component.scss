@@ -1,0 +1,22 @@
+.active{
+    background-color:#46A0F1;
+    color: white;
+}
+.inspect-wrapper{
+    .tabs{
+      box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px;
+      z-index: 1;
+    }
+    
+    .disable-download{
+      pointer-events: none; 
+      opacity: 0.5; 
+      filter: grayscale(100%);
+      cursor: not-allowed;
+    } 
+    
+    iframe {
+      width: 392px;
+      height: 174px;
+    }
+  }

@@ -1,0 +1,86 @@
+<div class="flex flex-col mx-4 my-4 gap-y-4">
+  <!-- Buttons  -->
+  <div>
+    <h4 class="text-base">Buttons</h4>
+    <div class="flex gap-4">
+      <button class="btn-primary">Primary</button>
+      <button class="btn-secondary">Secondary</button>
+      <button class="btn-tertiary">Tertiary</button>
+    </div>
+  </div>
+
+  <!-- Input  -->
+  <div class="grid grid-cols-2 gap-6">
+    <div class="mb-4">
+      <h4 class="text-base">Input</h4>
+      <label class="form-control-label" for="username"> Username </label>
+      <input
+        class="form-control"
+        id="username"
+        type="text"
+        placeholder="Username"
+      />
+      <small class="form-control-error">Error text</small>
+    </div>
+  </div>
+
+  <!-- Input disabled  -->
+  <div class="grid grid-cols-2 gap-6">
+    <div class="mb-4">
+      <h4 class="text-base">Disabled Input</h4>
+      <label class="form-control-label" for="username"> Username </label>
+      <input
+        class="form-control-disabled"
+        id="username"
+        type="text"
+        placeholder="Disabled"
+        disabled
+      />
+    </div>
+  </div>
+
+  <button class="btn-primary w-40" (click)="getData()">Get Data</button>
+
+  <p *ngIf="todoData">Todo : {{ todoData?.title }}</p>
+</div>
+
+<div style="display: block;">
+  <canvas baseChart
+  [labels]="doughnutChartLabels"
+  [datasets]="doughnutChartDatasets"
+  [options]="doughnutChartOptions"
+  [legend]="true"
+  [type]="'doughnut'">
+</canvas>
+</div>
+<div style="display: block;">
+  <canvas baseChart
+        [data]="barChartData"
+        [options]="barChartOptions"
+        [plugins]="barChartPlugins"
+        [legend]="barChartLegend"
+        [type]="'bar'">
+</canvas>
+
+</div>
+<div style="display: block;">
+  <canvas baseChart
+  [type]="'pie'"
+  [datasets]="pieChartDatasets"
+  [labels]="pieChartLabels"
+  [options]="pieChartOptions"
+  [plugins]="pieChartPlugins"
+  [legend]="pieChartLegend">
+</canvas>
+
+</div>
+
+<div style="display: block;">
+  <canvas baseChart 
+    [datasets]="lineChartData"
+    [labels]="lineChartLabels"
+    [options]="lineChartOptions"
+    [legend]="lineChartLegend"
+    [plugins]="lineChartPlugins">
+  </canvas>
+</div>
