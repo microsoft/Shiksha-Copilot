@@ -25,27 +25,21 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
     name = "construct_knowledge_graph"
     description = "Construct knowledge graph from extracted chapter concepts"
     input_types = {"chapter_entities", "entity_relationships"}
+    optional_input_types = {"lba_entities"}
     output_types = {"knowledge_graph"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Process the knowledge graph construction step."""
         try:
-            # Validate input
-            concepts_file_path = input_paths.get("chapter_entities")
+            chapter_entities_path = input_paths.get("chapter_entities")
             relationships_file_path = input_paths.get("entity_relationships")
-            if not concepts_file_path or not relationships_file_path:
-                raise ValueError(
-                    "Both 'chapter_concepts' and 'entity_relationships' input paths must be provided"
-                )
-
-            logger.info(
-                "Constructing knowledge graph from: %s and %s",
-                concepts_file_path,
-                relationships_file_path,
-            )
+            lba_entities_path = input_paths.get("lba_entities")
 
             # Load entities and relationships data
-            entities_list = self._load_and_parse_entities(concepts_file_path)
+            entities_list = self._load_and_parse_entities(chapter_entities_path)
+            if lba_entities_path:
+                entities_list.extend(self._load_and_parse_entities(lba_entities_path))
+
             relationships_list = self._load_and_parse_relationships(
                 relationships_file_path
             )
@@ -58,9 +52,7 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
             graph_result = constructor.build_graph(entities_list, relationships_list)
 
             # Save graph data
-            output_path = self._save_graph_data(
-                graph_result, concepts_file_path, output_dir
-            )
+            output_path = self._save_graph_data(graph_result, output_dir)
 
             # Log insights
             self._log_graph_insights(graph_result)
@@ -146,14 +138,9 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
             )
             raise
 
-    def _save_graph_data(
-        self, graph_result: Dict, concepts_file_path: str, output_dir: str
-    ) -> str:
+    def _save_graph_data(self, graph_result: Dict, output_dir: str) -> str:
         """Save graph data to JSON file."""
-        base_filename = os.path.basename(concepts_file_path).replace(
-            "_concepts.json", ""
-        )
-        output_filename = f"{base_filename}_knowledge_graph.json"
+        output_filename = f"knowledge_graph.json"
         output_path = os.path.join(output_dir, output_filename)
 
         with open(output_path, "w", encoding="utf-8") as file:

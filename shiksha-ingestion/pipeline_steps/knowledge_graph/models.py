@@ -405,3 +405,9 @@ class ChapterPageRange(BaseModel):
             raise ValueError(
                 f"end_page ({self.end_page}) must be greater than start_page ({self.start_page})"
             )
+
+
+class ExtractedEntityRelationships(BaseModel):
+    """All relationships extracted between entities in a chapter."""
+
+    relationships: List[EntityRelationship] = Field(description="Entity relationships")

@@ -11,7 +11,8 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
-from . import GraphEntity
+
+from pipeline_steps.knowledge_graph.models import GraphEntity
 
 # Configure logging
 logging.basicConfig(
@@ -85,7 +86,7 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
         "Extracts LBA assessment questions and creates graph entities with content."
     )
     input_types = {"lba_markdown", "lba_page_ranges"}
-    output_types = {"lba_entities", "lba_entity_content"}
+    output_types = {"lba_entities"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Extract questions and create graph entities."""
@@ -121,8 +122,6 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
 
                 # Initialize collections for all entities and content across chapters
                 all_entities = []
-                all_entity_content = []
-                total_questions_processed = 0
 
                 # Process each chapter based on page ranges
                 for chapter_page_range in lpa_page_ranges["page_ranges"]:
@@ -178,19 +177,13 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
                         entity = GraphEntity(
                             id=entity_id,
                             name=entity_id,
-                            type="assessment_question",
+                            type="assessment_lba",
                             content_summary=DEFAULT_SUMMARY,
+                            content=question,
                         )
 
                         # Add entity to collection
-                        all_entities.append()
-
-                        # Create content entry
-                        content_entry = {
-                            **entity.model_dump(),
-                            "content": question,
-                        }
-                        all_entity_content.append(content_entry)
+                        all_entities.append(entity.model_dump())
 
                     total_questions_processed += len(
                         chapter_assessment_questions.questions
@@ -200,15 +193,9 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
                         f"Processed Chapter {chapter_number}: {len(chapter_assessment_questions.questions)} questions"
                     )
 
-                # Save entities in step_1 format
-                entities_output_path = self._save_entities(
-                    all_entities, output_dir, "lba_entities.json"
-                )
-
-                # Save content in step_2 format
-                content_output_path = self._save_entity_content(
-                    all_entity_content, output_dir, "lba_entity_content.json"
-                )
+                    self._save_entities(
+                        all_entities, output_dir, f"{chapter_number}.json"
+                    )
 
                 logger.info(
                     f"Successfully processed {total_questions_processed} questions from {len(lpa_page_ranges['page_ranges'])} chapters"
@@ -224,8 +211,7 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
             return StepResult(
                 status=StepStatus.COMPLETED,
                 output_paths={
-                    "lba_entities": entities_output_path,
-                    "lba_entity_content": content_output_path,
+                    "lba_entities": output_dir,
                 },
             )
 
@@ -242,41 +228,8 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
         """Save entities in step_1 format."""
         output_path = os.path.join(output_dir, filename)
 
-        # Create output structure matching step_1 format
-        output_data = {
-            "entity_graph": {
-                "nodes": entities,
-                "metadata": {
-                    "total_entities": len(entities),
-                    "types": {
-                        "assessment_question": len(
-                            [
-                                e
-                                for e in entities
-                                if e.get("type") == "assessment_question"
-                            ]
-                        )
-                    },
-                },
-            }
-        }
-
         with open(output_path, "w", encoding="utf-8") as json_file:
-            json.dump(output_data, json_file, indent=2, ensure_ascii=False)
+            json.dump(entities, json_file, indent=2, ensure_ascii=False)
 
         logger.info(f"Saved {len(entities)} entities to {output_path}")
-        return output_path
-
-    def _save_entity_content(
-        self, entity_content: List[Dict], output_dir: str, filename: str
-    ) -> str:
-        """Save entity content in step_2 format."""
-        output_path = os.path.join(output_dir, filename)
-
-        with open(output_path, "w", encoding="utf-8") as json_file:
-            json.dump(entity_content, json_file, indent=2, ensure_ascii=False)
-
-        logger.info(
-            f"Saved {len(entity_content)} entity content entries to {output_path}"
-        )
         return output_path

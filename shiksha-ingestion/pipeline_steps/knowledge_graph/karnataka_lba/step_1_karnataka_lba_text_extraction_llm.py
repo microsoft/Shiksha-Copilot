@@ -32,7 +32,7 @@ def azure_openai_credentials():
 class KarnatakaLBATextExtractionLLMStep(BasePipelineStep):
     """Extract text from a PDF file using LLM-based extractor."""
 
-    name = "text_extraction_llm"
+    name = "karnataka_lba_text_extraction_llm"
     description = "Extract text from PDF using LLM-based extractor"
     input_types = {"pdf"}
     output_types = {"lba_markdown"}

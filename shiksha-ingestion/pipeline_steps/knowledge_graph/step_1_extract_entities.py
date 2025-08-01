@@ -156,18 +156,18 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
             markdown_content = self._load_markdown_content(markdown_file_path)
 
             # Extract all headings from the chapter
-            extracted_concepts = self._extract_chapter_entities(
+            extracted_entities = self._extract_chapter_entities(
                 markdown_content, extractor, credentials
             )
 
             # Save results to output file
             output_path = self._save_extracted_entities(
-                extracted_concepts, markdown_file_path, output_dir
+                extracted_entities, markdown_file_path, output_dir
             )
 
             logger.info(
                 "Successfully extracted %d headings from %s, saved to %s",
-                len(extracted_concepts.entities),
+                len(extracted_entities.entities),
                 markdown_file_path,
                 output_path,
             )
@@ -228,25 +228,24 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
 
     def _save_extracted_entities(
         self,
-        extracted_concepts: ExtractedChapterEntities,
+        extracted_entities: ExtractedChapterEntities,
         markdown_file_path: str,
         output_dir: str,
     ) -> str:
         """Save extracted headings to JSON. Returns output file path."""
 
         try:
-            # Generate output filename based on input markdown filename
-            base_filename = os.path.basename(markdown_file_path).replace(".md", "")
-            output_filename = f"{base_filename}_concepts.json"
-            output_path = os.path.join(output_dir, output_filename)
+            output_path = os.path.join(
+                output_dir, os.path.basename(markdown_file_path).replace(".md", ".json")
+            )
 
             # Combine entities with their location contexts
             combined_entities = []
-            if len(extracted_concepts.entities) == len(
-                extracted_concepts.location_contexts
+            if len(extracted_entities.entities) == len(
+                extracted_entities.location_contexts
             ):
                 for entity, location_context in zip(
-                    extracted_concepts.entities, extracted_concepts.location_contexts
+                    extracted_entities.entities, extracted_entities.location_contexts
                 ):
                     # Convert to dict and add location_context
                     entity.location_context = location_context
@@ -254,16 +253,16 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
             else:
                 logger.warning(
                     "Mismatch between number of entities (%d) and location contexts (%d). Using entities without location contexts.",
-                    len(extracted_concepts.entities),
+                    len(extracted_entities.entities),
                     (
-                        len(extracted_concepts.location_contexts)
-                        if hasattr(extracted_concepts, "location_contexts")
+                        len(extracted_entities.location_contexts)
+                        if hasattr(extracted_entities, "location_contexts")
                         else 0
                     ),
                 )
                 # Fallback if lengths don't match - use empty location contexts
                 combined_entities = [
-                    {**entity.model_dump()} for entity in extracted_concepts.entities
+                    {**entity.model_dump()} for entity in extracted_entities.entities
                 ]
 
             # Write extracted entities directly to JSON file (no metadata or wrapper keys)
@@ -276,11 +275,11 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
                 )
 
             logger.info(
-                "Saved %d headings to %s", len(extracted_concepts.entities), output_path
+                "Saved %d Entities to %s", len(extracted_entities.entities), output_path
             )
 
             # Also log the entities for immediate review
-            logger.info("Extracted headings and content blocks:")
+            logger.info("Extracted Entities:")
             for idx, node in enumerate(combined_entities, 1):
                 location_context = node.get("location_context", "")
                 logger.info(
