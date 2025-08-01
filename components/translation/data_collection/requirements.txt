@@ -1,0 +1,10 @@
+pdf2image
+openai
+azure-identity
+pytesseract
+pymupdf
+datasets
+peft
+transformers
+torch
+python-dotenv
