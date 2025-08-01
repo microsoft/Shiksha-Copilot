@@ -6,6 +6,7 @@ This README provides instructions on how to use the inference script in this dir
 
 - Python >=3.9
 - Required Python packages (listed in `requirements.txt`)
+- We recommend using a GPU, which should have at least 20 GBs of RAM. Nvidia's A10 or anything better will work for this model.
 
 ## Usage
 
