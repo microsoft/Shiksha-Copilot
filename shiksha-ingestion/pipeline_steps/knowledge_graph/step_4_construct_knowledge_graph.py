@@ -121,6 +121,10 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
             with open(file_path, "r", encoding="utf-8") as file:
                 relationships_data = json.load(file)
 
+            logger.info(
+                "Loaded relationships: %s", json.dumps(relationships_data, indent=2)
+            )
+
             # Parse each relationship dictionary into EntityRelationship objects
             relationships = [
                 EntityRelationship(**rel_dict) for rel_dict in relationships_data

@@ -35,23 +35,28 @@ class ChapterAssessmentQuestions(BaseModel):
         ...,
         description=dedent(
             """
-            Extract all questions from the provided markdown text.
-            The questions are grouped under common instructions, followed by a numbered list of questions.
+            Extract each question COMPLETELY from the provided markdown text, including any given options, difficulty level, marks, etc.
 
             For each question, output a string in the following format:
-            "<Common instructions of a set of questions>\\n<Question>"
+            "<Common instructions of a set of questions>\\n<Question text including options, difficulty, marks, etc.>"
 
             For example, if the markdown contains:
             Common instructions of a set of questions:
-            1. Question 1
-            2. Question 2
+            1. Question 1 (Easy, 2 marks)
+               a) Option A
+               b) Option B
+            2. Question 2 (Medium, 3 marks)
+               a) Option C
+               b) Option D
 
             The extracted questions should be:
-            "Common instructions of a set of questions:\\nQuestion 1"
-            "Common instructions of a set of questions:\\nQuestion 2"
+            "Common instructions of a set of questions:\\nQuestion 1 (Easy, 2 marks)\\na) Option A\\nb) Option B"
+            "Common instructions of a set of questions:\\nQuestion 2 (Medium, 3 marks)\\na) Option C\\nb) Option D"
 
-            For questions that ONLY make sense together (such as "Match the following" or similar group-based questions), extract all such questions together in one string, preserving their grouping and numbering, in the format:
-            "<Common instructions of a set of questions>\\n1. Question 1\\n2. Question 2"
+            For questions under a "MATCH THE FOLLOWING" heading, club all such questions together in one string, preserving their grouping and numbering, in the format:
+            "<MATCH THE FOLLOWING instructions>\\n1. Question 1 (details)\\n2. Question 2 (details)"
+
+            Do NOT club together any other type of questions; only "MATCH THE FOLLOWING" questions should be grouped.
 
             Return the list of such formatted question strings.
             """
@@ -121,7 +126,7 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
                     raise ValueError(f"Markdown file {markdown_file_path} is empty")
 
                 # Initialize collections for all entities and content across chapters
-                all_entities = []
+                output_paths = []
 
                 # Process each chapter based on page ranges
                 for chapter_page_range in lpa_page_ranges["page_ranges"]:
@@ -166,12 +171,13 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
                         chapter_content, ChapterAssessmentQuestions, **credentials
                     )
 
+                    entities = []
                     # Create graph entities and content for each question
                     for question_idx, question in enumerate(
                         chapter_assessment_questions.questions, 1
                     ):
                         # Create entity ID with global counter
-                        entity_id = f"LBA_{total_questions_processed + question_idx}"
+                        entity_id = f"LBA_{question_idx}"
 
                         # Create GraphEntity
                         entity = GraphEntity(
@@ -183,22 +189,20 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
                         )
 
                         # Add entity to collection
-                        all_entities.append(entity.model_dump())
-
-                    total_questions_processed += len(
-                        chapter_assessment_questions.questions
-                    )
+                        entities.append(entity.model_dump())
 
                     logger.info(
                         f"Processed Chapter {chapter_number}: {len(chapter_assessment_questions.questions)} questions"
                     )
 
-                    self._save_entities(
-                        all_entities, output_dir, f"{chapter_number}.json"
+                    output_paths.append(
+                        self._save_entities(
+                            entities, output_dir, f"{chapter_number}.json"
+                        )
                     )
 
                 logger.info(
-                    f"Successfully processed {total_questions_processed} questions from {len(lpa_page_ranges['page_ranges'])} chapters"
+                    f"Successfully processed questions from {len(lpa_page_ranges['page_ranges'])} chapters"
                 )
 
             except Exception as processing_error:
@@ -211,7 +215,7 @@ class KarnatakaLBAQuestionGraphEntityExtractionStep(BasePipelineStep):
             return StepResult(
                 status=StepStatus.COMPLETED,
                 output_paths={
-                    "lba_entities": output_dir,
+                    "lba_entities": output_paths,
                 },
             )
 

@@ -17,6 +17,7 @@ from pipeline_steps.knowledge_graph.models import (
     EntityRelationship,
     ExtractedEntityRelationships,
     GraphEntity,
+    RELATIONSHIP_TYPES
 )
 
 # Configure logging
@@ -26,17 +27,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
-
-# Relationship types and their descriptions
-RELATIONSHIP_TYPES = [
-    ("prerequisite", "Entity A must be understood before Entity B"),
-    ("builds_upon", "Entity B extends or builds upon concepts from Entity A"),
-    ("demonstrates", "Entity A provides an example or demonstration of Entity B"),
-    ("tests", "Entity A (assessment) tests knowledge of Entity B (concept)"),
-    ("explains", "Entity A provides explanation or theory for Entity B"),
-    ("applies", "Entity A shows practical application of Entity B"),
-    ("related", "General semantic relationship between entities"),
-]
 
 
 def azure_openai_credentials() -> Dict[str, Optional[str]]:
@@ -86,7 +76,7 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             # Validate input parameters
             entity_content_path = input_paths.get("entity_with_content")
             lba_entity_content_path = input_paths.get(
-                "optional_input_types"
+                "lba_entities"
             )  # Optional LBA entity inputs
 
             logger.info(
@@ -112,9 +102,17 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             # Load entity data
             entity_content_data = self._load_json_file(entity_content_path)
             if lba_entity_content_path and os.path.exists(lba_entity_content_path):
-                entity_content_data.extend(
-                    self._load_json_file(lba_entity_content_path)
+                lba_entities = self._load_json_file(lba_entity_content_path)
+                logger.info(
+                    "Loaded Additional %d LBA entities",
+                    len(lba_entities),
                 )
+                entity_content_data.extend(lba_entities)
+
+            logger.info(
+                "Total entities for relationship extraction: %d",
+                len(entity_content_data),
+            )
 
             # Extract relationships
             extracted_relationships = self._extract_relationships(
@@ -155,7 +153,6 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
     def _extract_relationships(
         self,
         entity_content_data: List[GraphEntity],
-        chapter_concepts_data: Dict,
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
     ) -> ExtractedEntityRelationships:
@@ -426,17 +423,9 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             output_path = os.path.join(output_dir, output_filename)
 
             # Convert to dict format
-            output_data = {
-                "relationships": [
-                    rel.dict() for rel in extracted_relationships.relationships
-                ],
-                "metadata": {
-                    "total_relationships": len(extracted_relationships.relationships),
-                    "relationship_types": self._analyze_relationship_types(
-                        extracted_relationships.relationships
-                    ),
-                },
-            }
+            output_data = [
+                rel.model_dump() for rel in extracted_relationships.relationships
+            ]
 
             # Write extracted relationships to JSON file
             with open(output_path, "w", encoding="utf-8") as json_file:

@@ -12,7 +12,7 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
-from .models import GraphEntity
+from .models import GraphEntity, EntityType
 
 # Configure logging
 logging.basicConfig(
@@ -26,9 +26,35 @@ load_dotenv(".env")
 class ExtractedChapterEntities(BaseModel):
     """Headings and subheadings extracted from a textbook chapter."""
 
-    entities: List[GraphEntity] = Field(
+    entities: List[GraphEntity] = Field(description="Will be set dynamically")
+
+    location_contexts: List[str] = Field(
         description=dedent(
             """
+            For each entity in the 'entities' list, provide a corresponding location context string.
+            
+            Each location context should include:
+            1. Details of the position of the entity relative to surrounding ones (e.g., parent section, previous/next headings)
+            2. The span of text that belongs to this entity (with reference to preceding and following entities or page markers)
+            3. Clear boundaries showing where this entity's content begins and ends
+            
+            IMPORTANT: The order must match exactly with the entities list, so the first location context corresponds to the first entity, and so on.
+            """
+        )
+    )
+
+    @classmethod
+    def create_with_dynamic_description(cls):
+        """Create the model with dynamically generated entity types description."""
+        entity_types_description = "\n".join(
+            [
+                f'               - "{entity_type.value}": {cls._get_entity_type_description(entity_type)}'
+                for entity_type in EntityType
+            ]
+        )
+
+        description = dedent(
+            f"""
             Extract ALL headings, subheadings, and unmarked content blocks (like introductions) from the chapter that will become graph nodes, EXCEPT for the main chapter title.
             Include both explicit structural elements (headings) and implicit content blocks that may not have formal headings.
 
@@ -42,12 +68,7 @@ class ExtractedChapterEntities(BaseModel):
             1. id: Short, descriptive identifier based on the heading (e.g., "section_4_1_magnetic_materials", "activity_4_1")
             2. name: EXACT heading text as it appears in the chapter
             3. type: Type of heading:
-               - "section": Major numbered sections (e.g., "4.1 Magnetic and Non-magnetic Materials")
-               - "subsection": Subsections within major sections
-               - "activity": Activity headings (e.g., "Activity 4.1: Let us explore")
-               - "assessment": Assessment section headings (e.g., "Let us enhance our learning")
-               - "introduction": Chapter introductions or content blocks that don't have formal headings
-               - "content_block": Other significant content without formal headings
+{entity_types_description}
             4. content_summary: Detailed 2-3 line summary describing the specific content, concepts, activities, and information under this heading
 
             HEADING EXTRACTION GUIDELINES:
@@ -76,9 +97,28 @@ class ExtractedChapterEntities(BaseModel):
             followed by a number should be completely ignored and NOT included in the output.
 
             The content under each heading will be extracted separately in the next step.
-            """
+        """
         )
-    )
+
+        # Create a new model with the dynamic description
+        class DynamicExtractedChapterEntities(cls):
+            entities: List[GraphEntity] = Field(description=description)
+
+        return DynamicExtractedChapterEntities
+
+    @staticmethod
+    def _get_entity_type_description(entity_type: EntityType) -> str:
+        """Get human-readable description for each entity type."""
+        descriptions = {
+            EntityType.SECTION: 'Major numbered sections (e.g., "4.1 Magnetic and Non-magnetic Materials")',
+            EntityType.SUBSECTION: "Subsections within major sections",
+            EntityType.ACTIVITY: 'Activity headings (e.g., "Activity 4.1: Let us explore")',
+            EntityType.ASSESSMENT: 'Assessment section headings (e.g., "Let us enhance our learning")',
+            EntityType.ASSESSMENT_LBA: "Learning by Assessment content",
+            EntityType.INTRODUCTION: "Chapter introductions or content blocks that don't have formal headings",
+            EntityType.CONTENT_BLOCK: "Other significant content without formal headings",
+        }
+        return descriptions.get(entity_type, "Unknown entity type")
 
     location_contexts: List[str] = Field(
         description=dedent(
@@ -204,10 +244,11 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
                 "Analyzing chapter content to extract headings and subheadings..."
             )
 
+            # Use the dynamic model with properly formatted entity types
+            DynamicModel = ExtractedChapterEntities.create_with_dynamic_description()
+
             # Extract entities using the metadata extractor with enhanced prompt
-            entities = extractor.extract(
-                markdown_content, ExtractedChapterEntities, **credentials
-            )
+            entities = extractor.extract(markdown_content, DynamicModel, **credentials)
 
             logger.info("Successfully extracted %d headings", len(entities.entities))
 
