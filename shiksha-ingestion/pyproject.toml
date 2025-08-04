@@ -21,6 +21,7 @@ matplotlib = "^3.7.0"
 plotly = "^5.17.0"
 dash = "^2.14.0"
 pydantic = "^2.5.0"
+py2neo = "^2021.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"

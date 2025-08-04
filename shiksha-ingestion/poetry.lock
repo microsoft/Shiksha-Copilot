@@ -1922,6 +1922,22 @@ files = [
 ]
 
 [[package]]
+name = "interchange"
+version = "2021.0.4"
+description = "Data types and interchange formats"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "interchange-2021.0.4-py2.py3-none-any.whl", hash = "sha256:3a791b4df765c7136c318e53c388380ac5b003767808876c4fb4fef393917768"},
+    {file = "interchange-2021.0.4.tar.gz", hash = "sha256:6791d1b34621e990035fe75d808523172340d80ade1b50412226820184199550"},
+]
+
+[package.dependencies]
+pytz = "*"
+six = "*"
+
+[[package]]
 name = "ipykernel"
 version = "6.30.0"
 description = "IPython Kernel for Jupyter"
@@ -3149,6 +3165,18 @@ files = [
 ]
 
 [[package]]
+name = "monotonic"
+version = "1.6"
+description = "An implementation of time.monotonic() for Python 2 & < 3.3"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "monotonic-1.6-py2.py3-none-any.whl", hash = "sha256:68687e19a14f11f26d140dd5c86f3dba4bf5df58003000ed467e0e2a69bca96c"},
+    {file = "monotonic-1.6.tar.gz", hash = "sha256:3a55207bcfed53ddd5c5bae174524062935efed17792e9de2ad0205ce9ad63f7"},
+]
+
+[[package]]
 name = "msal"
 version = "1.32.3"
 description = "The Microsoft Authentication Library (MSAL) for Python library enables your app to access the Microsoft Cloud by supporting authentication of users with Microsoft Azure Active Directory accounts (AAD) and Microsoft Accounts (MSA) using industry standard OAuth2 and OpenID Connect."
@@ -3843,6 +3871,21 @@ recommended = ["holoviews (>=1.18.0)", "jupyterlab", "matplotlib", "pillow", "pl
 tests = ["psutil", "pytest", "pytest-asyncio", "pytest-rerunfailures", "pytest-xdist"]
 
 [[package]]
+name = "pansi"
+version = "2024.11.0"
+description = "Text mode rendering library"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "pansi-2024.11.0-py2.py3-none-any.whl", hash = "sha256:79275348a03e022d4482d0bbd9fe7fae7741eb2de84dbe560631d48a9fa522e5"},
+    {file = "pansi-2024.11.0.tar.gz", hash = "sha256:018186294f012ae48e207d9446b1bd22b0f2ebb2de60a6c4fb079abfacdf4a37"},
+]
+
+[package.dependencies]
+pillow = "*"
+
+[[package]]
 name = "param"
 version = "2.2.1"
 description = "Make your Python code clearer and more reliable by declaring Parameters."
@@ -4280,6 +4323,28 @@ files = [
 tests = ["pytest"]
 
 [[package]]
+name = "py2neo"
+version = "2021.2.4"
+description = "Python client library and toolkit for Neo4j"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "py2neo-2021.2.4-py2.py3-none-any.whl", hash = "sha256:2ddbe818354a6fa16d47dfd0fe5cb0287fa42ff109e87aa7b3e43636060d85a1"},
+    {file = "py2neo-2021.2.4.tar.gz", hash = "sha256:4b2737fcd9fd8d82b57e856de4eda005281c9cf0741c989e5252678f0503f77e"},
+]
+
+[package.dependencies]
+certifi = "*"
+interchange = ">=2021.0.4,<2021.1.0"
+monotonic = "*"
+packaging = "*"
+pansi = ">=2020.7.3"
+pygments = ">=2.0.0"
+six = ">=1.15.0"
+urllib3 = "*"
+
+[[package]]
 name = "pycodestyle"
 version = "2.11.1"
 description = "Python style guide checker"
@@ -4477,7 +4542,7 @@ version = "2.19.2"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.8"
-groups = ["graph-viz"]
+groups = ["main", "graph-viz"]
 files = [
     {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
     {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
@@ -6246,4 +6311,4 @@ interactive = []
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "7f1774d542d9b43a3832c265a92805b68ae677299a4d1f37b0028a21534421ee"
+content-hash = "f9688f66f5be7293f21dfc87ad5a8d1d743bc35f706dad03f914cf108d7febb6"
