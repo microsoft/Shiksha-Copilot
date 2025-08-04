@@ -36,6 +36,7 @@ class GraphEntity(BaseModel):
     """Graph node entity for content and assessment items."""
 
     id: str = Field(description="Unique identifier for the entity")
+    chapter_id: str = Field("", description="Chapter ID this entity belongs to")
     name: str = Field(
         description="The entity name or text (e.g., heading text, question text)"
     )

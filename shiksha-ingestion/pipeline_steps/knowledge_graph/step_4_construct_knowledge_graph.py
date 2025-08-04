@@ -24,14 +24,14 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
 
     name = "construct_knowledge_graph"
     description = "Construct knowledge graph from extracted chapter concepts"
-    input_types = {"chapter_entities", "entity_relationships"}
+    input_types = {"entity_with_content", "entity_relationships"}
     optional_input_types = {"lba_entities"}
     output_types = {"knowledge_graph"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Process the knowledge graph construction step."""
         try:
-            chapter_entities_path = input_paths.get("chapter_entities")
+            chapter_entities_path = input_paths.get("entity_with_content")
             relationships_file_path = input_paths.get("entity_relationships")
             lba_entities_path = input_paths.get("lba_entities")
 
@@ -39,6 +39,10 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
             entities_list = self._load_and_parse_entities(chapter_entities_path)
             if lba_entities_path:
                 entities_list.extend(self._load_and_parse_entities(lba_entities_path))
+
+            # Add chapter ID to each entity
+            for entity in entities_list:
+                entity.chapter_id = self.config.get("chapter_id", "<NONE>")
 
             relationships_list = self._load_and_parse_relationships(
                 relationships_file_path
