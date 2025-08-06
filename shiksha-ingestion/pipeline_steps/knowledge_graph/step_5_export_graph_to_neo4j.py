@@ -38,91 +38,22 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
         self.neo4j_uri = neo4j_config["neo4j_uri"]
         self.neo4j_user = neo4j_config["neo4j_user"]
         self.neo4j_password = neo4j_config["neo4j_password"]
-        self.relationship_type = neo4j_config["relationship_type"]
-        self.node_label = neo4j_config["node_label"]
+        self.default_relationship_type = "RELATED"
+        self.default_node_label = "KnowledgeEntity"
 
         # Export configuration
-        self.clear_database = neo4j_config["clear_database"]
-        self.batch_size = neo4j_config["batch_size"]
+        clear_db = neo4j_config["clear_database"]
+        self.clear_database = clear_db and clear_db.lower() == "true" if isinstance(clear_db, str) else bool(clear_db)
+        self.batch_size = 100  # Fixed batch size since we process all nodes at once anyway
 
     def _get_neo4j_config(self) -> Dict[str, Any]:
-        """Get Neo4j configuration from environment variables and config."""
+        """Get Neo4j configuration from environment variables, defaulting to None."""
         return {
-            "neo4j_uri": self._get_config_value(
-                "NEO4J_URI", "neo4j_uri", "bolt://localhost:7687"
-            ),
-            "neo4j_user": self._get_config_value("NEO4J_USER", "neo4j_user", "neo4j"),
-            "neo4j_password": self._get_config_value(
-                "NEO4J_PASSWORD", "neo4j_password", "password"
-            ),
-            "relationship_type": self._get_config_value(
-                "NEO4J_RELATIONSHIP_TYPE", "relationship_type", "RELATED"
-            ),
-            "node_label": self._get_config_value(
-                "NEO4J_NODE_LABEL", "node_label", "KnowledgeEntity"
-            ),
-            "clear_database": self._get_config_bool_value(
-                "NEO4J_CLEAR_DATABASE", "clear_database", False
-            ),
-            "batch_size": self._get_config_int_value(
-                "NEO4J_BATCH_SIZE", "batch_size", 100
-            ),
+            "neo4j_uri": os.getenv("NEO4J_URI"),
+            "neo4j_user": os.getenv("NEO4J_USER"),
+            "neo4j_password": os.getenv("NEO4J_PASSWORD"),
+            "clear_database": os.getenv("NEO4J_CLEAR_DATABASE"),
         }
-
-    def _get_config_value(self, env_var: str, config_key: str, default: str) -> str:
-        """Get configuration value from environment variable, config, or default."""
-        # Priority: environment variable > config > default
-        env_value = os.getenv(env_var)
-        if env_value:
-            return env_value
-
-        if self.config and config_key in self.config:
-            return self.config[config_key]
-
-        return default
-
-    def _get_config_bool_value(
-        self, env_var: str, config_key: str, default: bool
-    ) -> bool:
-        """Get boolean configuration value from environment variable, config, or default."""
-        # Priority: environment variable > config > default
-        env_value = os.getenv(env_var)
-        if env_value:
-            return env_value.lower() in ("true", "1", "yes", "on")
-
-        if self.config and config_key in self.config:
-            return bool(self.config[config_key])
-
-        return default
-
-    def _get_config_int_value(self, env_var: str, config_key: str, default: int) -> int:
-        """Get integer configuration value from environment variable, config, or default."""
-        # Priority: environment variable > config > default
-        env_value = os.getenv(env_var)
-        if env_value:
-            try:
-                return int(env_value)
-            except ValueError:
-                logger.warning(
-                    "Invalid integer value for %s: %s, using default: %d",
-                    env_var,
-                    env_value,
-                    default,
-                )
-                return default
-
-        if self.config and config_key in self.config:
-            try:
-                return int(self.config[config_key])
-            except (ValueError, TypeError):
-                logger.warning(
-                    "Invalid integer value for %s in config, using default: %d",
-                    config_key,
-                    default,
-                )
-                return default
-
-        return default
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Process the Neo4j export step."""
@@ -180,61 +111,13 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
     def _convert_to_networkx(self, graph_data: Dict[str, Any]) -> nx.DiGraph:
         """Convert the loaded graph data to NetworkX format."""
         try:
-            # Check if it's already in NetworkX node-link format
-            if "graph_data" in graph_data and "nodes" in graph_data["graph_data"]:
-                # Use the nested graph_data structure
-                nx_data = graph_data["graph_data"]
-                return nx.node_link_graph(nx_data, directed=True)
-            elif "nodes" in graph_data and "links" in graph_data:
-                # Direct node-link format
-                return nx.node_link_graph(graph_data, directed=True)
-            else:
-                # Try to construct from entities and relationships
-                nx_graph = nx.DiGraph()
-
-                # Add nodes from entities
-                if "entities" in graph_data:
-                    entities = graph_data["entities"]
-                    if isinstance(entities, dict):
-                        # Entities as dictionary
-                        for entity_id, entity_data in entities.items():
-                            if isinstance(entity_data, dict):
-                                nx_graph.add_node(entity_id, **entity_data)
-                            else:
-                                nx_graph.add_node(entity_id, data=str(entity_data))
-                    elif isinstance(entities, list):
-                        # Entities as list
-                        for entity in entities:
-                            if isinstance(entity, dict) and "id" in entity:
-                                entity_id = entity["id"]
-                                entity_attrs = {
-                                    k: v for k, v in entity.items() if k != "id"
-                                }
-                                nx_graph.add_node(entity_id, **entity_attrs)
-
-                # Add edges from relationships
-                if "relationships" in graph_data:
-                    relationships = graph_data["relationships"]
-                    for rel in relationships:
-                        if isinstance(rel, dict):
-                            source = rel.get("source_entity_id", rel.get("source"))
-                            target = rel.get("target_entity_id", rel.get("target"))
-                            if source and target:
-                                rel_attrs = {
-                                    k: v
-                                    for k, v in rel.items()
-                                    if k
-                                    not in [
-                                        "source_entity_id",
-                                        "target_entity_id",
-                                        "source",
-                                        "target",
-                                    ]
-                                }
-                                nx_graph.add_edge(source, target, **rel_attrs)
-
-                return nx_graph
-
+            # Extract the networkx_data.directed from the graph structure
+            networkx_directed_data = graph_data["graph_data"]["networkx_data"]["directed"]
+            return nx.node_link_graph(networkx_directed_data, directed=True)
+        
+        except KeyError as e:
+            logger.error("Required graph data structure not found: %s", str(e))
+            raise ValueError(f"Invalid graph data format. Missing required key: {e}")
         except Exception as e:
             logger.error("Failed to convert graph data to NetworkX: %s", str(e))
             raise
@@ -273,8 +156,8 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
         }
 
         try:
-            # Create nodes in batches
-            nodes_batch = []
+            # Create all nodes in a single batch
+            all_nodes = []
             for node_id, attrs in nx_graph.nodes(data=True):
                 try:
                     # Prepare node properties - start with basic required fields
@@ -294,22 +177,22 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
                     if chapter_id:
                         props["chapter_id"] = chapter_id
 
-                    nodes_batch.append(props)
-
-                    # Process batch when it reaches batch_size
-                    if len(nodes_batch) >= self.batch_size:
-                        self._process_nodes_batch(neo4j_graph, nodes_batch)
-                        export_stats["nodes_created"] += len(nodes_batch)
-                        nodes_batch = []
+                    # Get node label from entity type, fallback to default
+                    entity_type = attrs.get("type", self.default_node_label)
+                    node_label = str(entity_type).title() if entity_type else self.default_node_label
+                    
+                    # Add node label to properties for processing
+                    props["_node_label"] = node_label
+                    all_nodes.append(props)
 
                 except Exception as e:
                     logger.error("Error processing node %s: %s", node_id, str(e))
                     export_stats["errors"] += 1
 
-            # Process remaining nodes
-            if nodes_batch:
-                self._process_nodes_batch(neo4j_graph, nodes_batch)
-                export_stats["nodes_created"] += len(nodes_batch)
+            # Process all nodes in a single batch
+            if all_nodes:
+                self._process_all_nodes_batch(neo4j_graph, all_nodes)
+                export_stats["nodes_created"] = len(all_nodes)
 
             # Create relationships in batches
             relationships_batch = []
@@ -325,8 +208,8 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
                             else:
                                 rel_props[key] = str(value)
 
-                    # Add relationship type
-                    rel_type = attrs.get("relationship_type", self.relationship_type)
+                    # Add relationship type - use the actual relationship_type from the edge
+                    rel_type = attrs.get("relationship_type", attrs.get("relation_type", self.default_relationship_type))
 
                     relationships_batch.append(
                         {
@@ -368,64 +251,62 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
             logger.error("Failed to export graph to Neo4j: %s", str(e))
             raise
 
-    def _process_nodes_batch(self, neo4j_graph: Graph, nodes_batch: List[Dict]) -> None:
-        """Process a batch of nodes using MERGE operation."""
+    def _process_all_nodes_batch(self, neo4j_graph: Graph, all_nodes: List[Dict]) -> None:
+        """
+        Process all nodes in a single batch without APOC by dynamically
+        injecting labels and properties via Python.
+        """
+        tx = neo4j_graph.begin()
         try:
-            # Build Cypher query for batch node creation/merge
-            cypher_query = f"""
-            UNWIND $nodes AS node
-            MERGE (n:{self.node_label} {{id: node.id}})
-            SET n += node
-            """
+            for node in all_nodes:
+                # Extract and remove the dynamic label
+                label = node.pop("_node_label", self.default_node_label)
+                node_id = node["id"]
+                # Remove id from props so we don't set it twice
+                props = {k: v for k, v in node.items() if k != "id"}
 
-            neo4j_graph.run(cypher_query, nodes=nodes_batch)
-            logger.debug("Processed batch of %d nodes", len(nodes_batch))
-
+                # MERGE on id, then SET all other properties
+                cypher = f"""
+                    MERGE (n:`{label}` {{id: $id}})
+                    SET n += $props
+                """
+                tx.run(cypher, id=node_id, props=props)
+            tx.commit()
+            logger.debug("Processed batch of %d nodes without APOC", len(all_nodes))
         except Exception as e:
-            logger.error("Error processing nodes batch: %s", str(e))
+            tx.rollback()
+            logger.error("Error processing nodes batch without APOC: %s", e)
             raise
 
     def _process_relationships_batch(
         self, neo4j_graph: Graph, relationships_batch: List[Dict]
     ) -> None:
-        """Process a batch of relationships."""
+        """
+        Process a batch of relationships without APOC by matching on node IDs
+        and merging relationships with dynamic types.
+        """
+        tx = neo4j_graph.begin()
         try:
-            # Build Cypher query for batch relationship creation
-            cypher_query = f"""
-            UNWIND $relationships AS rel
-            MATCH (source:{self.node_label} {{id: rel.source_id}})
-            MATCH (target:{self.node_label} {{id: rel.target_id}})
-            CALL apoc.create.relationship(source, rel.type, rel.properties, target) YIELD rel as created_rel
-            RETURN count(created_rel)
-            """
+            for rel in relationships_batch:
+                rel_type = rel.get("type", self.default_relationship_type)
+                src_id = rel["source_id"]
+                tgt_id = rel["target_id"]
+                props = rel.get("properties", {})
 
-            # Fallback query if APOC is not available
-            fallback_query = f"""
-            UNWIND $relationships AS rel
-            MATCH (source:{self.node_label} {{id: rel.source_id}})
-            MATCH (target:{self.node_label} {{id: rel.target_id}})
-            CREATE (source)-[r:{self.relationship_type}]->(target)
-            SET r += rel.properties
-            """
-
-            try:
-                # Try with dynamic relationship type first (requires APOC)
-                neo4j_graph.run(cypher_query, relationships=relationships_batch)
-            except Exception:
-                # Fall back to static relationship type
-                logger.warning(
-                    "APOC not available, using static relationship type: %s",
-                    self.relationship_type,
-                )
-                neo4j_graph.run(fallback_query, relationships=relationships_batch)
-
-            logger.debug(
-                "Processed batch of %d relationships", len(relationships_batch)
-            )
-
+                # MATCH source/target by id, MERGE relationship, then SET props
+                cypher = f"""
+                    MATCH (a {{id: $src_id}}), (b {{id: $tgt_id}})
+                    MERGE (a)-[r:`{rel_type}`]->(b)
+                    SET r += $props
+                """
+                tx.run(cypher, src_id=src_id, tgt_id=tgt_id, props=props)
+            tx.commit()
+            logger.debug("Processed batch of %d relationships without APOC", len(relationships_batch))
         except Exception as e:
-            logger.error("Error processing relationships batch: %s", str(e))
+            tx.rollback()
+            logger.error("Error processing relationships batch without APOC: %s", e)
             raise
+
 
     def _save_export_status(self, export_stats: Dict[str, int], output_dir: str) -> str:
         """Save export status and statistics to file."""
@@ -434,13 +315,14 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
                 "export_timestamp": str(__import__("datetime").datetime.now()),
                 "neo4j_uri": self.neo4j_uri,
                 "neo4j_user": self.neo4j_user,
-                "node_label": self.node_label,
-                "relationship_type": self.relationship_type,
+                "default_node_label": self.default_node_label,
+                "default_relationship_type": self.default_relationship_type,
                 "chapter_id": self.config.get("chapter_id"),
                 "export_statistics": export_stats,
                 "configuration": {
                     "clear_database": self.clear_database,
                     "batch_size": self.batch_size,
+                    "note": "Node labels are determined dynamically from entity types, fallback to default_node_label",
                 },
             }
 
@@ -455,48 +337,3 @@ class ExportGraphToNeo4jStep(BasePipelineStep):
         except Exception as e:
             logger.error("Failed to save export status: %s", str(e))
             raise
-
-
-def main():
-    """Example usage of the Neo4j export step."""
-    # Configuration can now come from environment variables:
-    # NEO4J_URI=bolt://localhost:7687
-    # NEO4J_USER=neo4j
-    # NEO4J_PASSWORD=your_password
-    # NEO4J_NODE_LABEL=KnowledgeEntity
-    # NEO4J_RELATIONSHIP_TYPE=RELATED
-    # NEO4J_CLEAR_DATABASE=false
-    # NEO4J_BATCH_SIZE=100
-
-    # Optional config override (environment variables take precedence)
-    config = {
-        "chapter_id": "test_chapter",
-        # These will be overridden by environment variables if set
-        "neo4j_uri": "bolt://localhost:7687",
-        "neo4j_user": "neo4j",
-        "neo4j_password": "password",
-        "clear_database": False,
-        "batch_size": 50,
-    }
-
-    # Create the step
-    export_step = ExportGraphToNeo4jStep(config)
-
-    # Sample input paths
-    input_paths = {"knowledge_graph": "path/to/knowledge_graph.json"}
-
-    output_dir = "output/neo4j_export"
-
-    # Process the export
-    result = export_step.process(input_paths, output_dir)
-
-    if result.status == StepStatus.COMPLETED:
-        print("Neo4j export completed successfully!")
-        print(f"Export status: {result.output_paths}")
-        print(f"Statistics: {result.metadata}")
-    else:
-        print(f"Neo4j export failed: {result.error}")
-
-
-if __name__ == "__main__":
-    main()

@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from typing import Dict, List
+import uuid
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
 from pipeline_steps.knowledge_graph.models import (
@@ -46,6 +47,11 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
 
             relationships_list = self._load_and_parse_relationships(
                 relationships_file_path
+            )
+
+            # Replace entity IDs with UUIDs and update relationships
+            entities_list, relationships_list = self._replace_entity_ids_with_uuids(
+                entities_list, relationships_list
             )
 
             # Create output directory
@@ -178,3 +184,51 @@ class ConstructKnowledgeGraphStep(BasePipelineStep):
             logger.info("Recommendations:")
             for rec in insights["recommendations"]:
                 logger.info("  - %s", rec)
+
+    def _replace_entity_ids_with_uuids(
+        self, entities_list: List[GraphEntity], relationships_list: List[EntityRelationship]
+    ) -> tuple[List[GraphEntity], List[EntityRelationship]]:
+        """
+        Replace entity IDs with UUIDs and update corresponding references in relationships.
+        
+        Args:
+            entities_list: List of GraphEntity objects with original IDs
+            relationships_list: List of EntityRelationship objects referencing entity IDs
+            
+        Returns:
+            Tuple of (updated_entities_list, updated_relationships_list) with UUID-based IDs
+        """
+        # Create mapping from old IDs to new UUIDs
+        id_mapping = {}
+        for entity in entities_list:
+            old_id = entity.id
+            new_id = str(uuid.uuid4())
+            id_mapping[old_id] = new_id
+            entity.id = new_id
+        
+        logger.info("Created UUID mapping for %d entities", len(id_mapping))
+        
+        # Update relationship references
+        updated_relationships = []
+        for relationship in relationships_list:
+            # Create a new relationship with updated IDs
+            old_source = relationship.source_entity_id
+            old_target = relationship.target_entity_id
+            
+            # Only update relationship if both entities exist in our mapping
+            if old_source in id_mapping and old_target in id_mapping:
+                new_relationship = EntityRelationship(
+                    source_entity_id=id_mapping[old_source],
+                    target_entity_id=id_mapping[old_target],
+                    relationship_type=relationship.relationship_type,
+                    description=relationship.description,
+                    confidence=relationship.confidence
+                )
+                updated_relationships.append(new_relationship)
+            else:
+                logger.warning(
+                    "Skipping relationship %s -> %s: entities not found in mapping",
+                    old_source, old_target
+                )
+        
+        return entities_list, updated_relationships

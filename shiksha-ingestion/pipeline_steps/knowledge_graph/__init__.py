@@ -13,6 +13,7 @@ from .step_3_extract_entity_relationships import (
     ExtractedEntityRelationships,
 )
 from .step_4_construct_knowledge_graph import ConstructKnowledgeGraphStep
+from .step_5_export_graph_to_neo4j import ExportGraphToNeo4jStep
 from .models import (
     GraphEntity,
     EntityRelationship,
@@ -30,6 +31,7 @@ __all__ = [
     "ExtractEntityRelationshipsStep",
     "ExtractedEntityRelationships",
     "ConstructKnowledgeGraphStep",
+    "ExportGraphToNeo4jStep",
     "GraphVisualizer",
     "GraphEntity",
     "EntityRelationship",

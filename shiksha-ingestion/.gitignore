@@ -1,2 +1,3 @@
 pipeline_output/
 **/__pycache__/
+neo4j/config.env
