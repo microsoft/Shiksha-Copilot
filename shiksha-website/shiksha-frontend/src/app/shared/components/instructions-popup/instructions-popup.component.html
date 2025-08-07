@@ -1,0 +1,24 @@
+<div class="z-100">
+  <div class="flex items-center gap-1 mb-2">
+    <img
+    class="w-5 h-5 cursor-pointer"
+    src="../../../../../assets/icons/back-arrow.svg"
+    (click)="closeModal()"
+    alt=""
+  />
+    <h1 class="font-bold text-[20px] text-content">Sample Instructions</h1>
+   
+  </div>
+
+  <div class="h-[75vh] px-3 overflow-y-auto instruction-container">
+    <div *ngFor="let instruction of instructions" class="my-4">
+      <p class="text-sm my-1 font-bold capitalize">{{ instruction.type }}</p>
+      <div class="p-2 bg-white rounded-md border text-sm block" [innerHTML]="instruction.description">
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons mt-4 flex items-center justify-end gap-2">
+    <button class="btn-outline-primary" (click)="closeModal()">Back</button>
+  </div>
+</div>

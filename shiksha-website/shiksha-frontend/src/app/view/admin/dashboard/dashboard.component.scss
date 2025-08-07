@@ -1,0 +1,26 @@
+p {
+	font-size: inherit;
+}
+
+.flex30 {
+	flex: 0 0 30%;
+}
+
+.canvas-container {
+	width: 100%;
+	max-width: 100%;
+	position: relative;
+	height: auto;
+
+	canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.chartWrapper {
+		position: relative;
+		overflow-x: auto;		
+	}
+
+}

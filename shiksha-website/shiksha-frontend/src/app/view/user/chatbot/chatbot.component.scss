@@ -1,0 +1,99 @@
+.chat-wrapper {
+  height: calc(100vh - 240px);
+  // @media (max-width : 768px) {
+  //   height: calc(100vh - 54px);
+  // }
+
+  .chat-container {
+    height: calc(100vh - 316px);
+    @media (max-width : 768px) {
+    height: calc(100vh - 260px);
+    }
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--primary-40);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--primary-80);
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-DEFAULT);
+    }
+  }
+  .chat-input {
+    height: 36px;
+    max-height: 150px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-size: 16px;
+    resize: none;
+    width: 100%;
+    padding: 5px;
+
+    &:focus {
+      border: none;
+      outline: none;
+    }
+    &:disabled {
+      background: none;
+    }
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--primary-40);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--primary-80);
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-DEFAULT);
+    }
+  }
+
+  .loading-indicator {
+    visibility: hidden;
+    .dot {
+      width: 8px;
+      height: 8px;
+      background-color: #333;
+      border-radius: 50%;
+      animation: dotFlashing 1.5s infinite ease-in-out;
+
+      &:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+    }
+  }
+
+  .loading-indicator.show {
+    visibility: visible;
+  }
+
+  @keyframes dotFlashing {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

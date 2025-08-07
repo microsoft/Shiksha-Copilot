@@ -1,0 +1,83 @@
+<div class="w-screen h-screen px-4 lg:px-0 bg-white">
+	<div class="flex w-full h-full  items-center sign-in-container ">
+		<div class="right lg:w-1/2 h-full hidden lg:flex flex-col items-center justify-evenly sign_in">
+			<div class="get_started">
+				<h1 class="font-bold text-[40px] text-white leading-[1.5]">Shiksha copilot</h1>
+				<p class="text-white font-medium text-lg leading-[1.5] mb-4">Empowering Educators with GenAI.</p>
+			</div>
+			<p class="text-white text-lg text-center w-[75%]">Shiksha copilot is a research project being implemented by Sikshana Foundation in technical collaboration with Microsoft Research, India</p>
+
+		</div>
+		<div class="left w-full lg:w-1/2 h-full flex flex-col">
+			<div class="flex items-center justify-between py-4 pl-2 md:pl-4 pr-4 md:pr-8">
+				<img class="ms-logo" src="../../../assets/images/Microsoft_Logo.png" alt="">
+				<img class="s-logo" src="../../../assets/images/SikshanaLogo.jpg" alt="">
+			</div>
+			<div class="flex justify-center mt-16">
+				<img src="../../../assets/images/logo.svg" alt="" class="logo">
+			</div>
+			<div class="login-container w-full flex flex-col items-center relative mt-6">
+				<div class="login-card border-2 border-shade-50 text-center bg-white shadow-md rounded-2xl p-12 md:w-2/3">
+					<h1 class="md:text-3xl text-xl font-semibold header-text text-content">Welcome</h1>
+					<p class="text-base text-shade">Please enter the phone number to continue</p>
+					<form class="mt-8">
+						<div class="mb-2 ">
+							<label for="email" class="block mb-2 text-sm font-medium text-[#424955] text-left ">Phone Number</label>
+							
+								<div class="relative">
+									<span class="absolute left-0 h-full w-10 leading-[40px] text-sm bg-shade-100 rounded-l-lg">+91</span>
+									<input type="text" id="mNumber" oninput="this.value=this.value.replace(/(?![0-9])./gmi,'')"
+								class="bg-gray-100  text-gray-900 text-sm rounded-lg   block  p-2.5 outline-none w-full pl-12"
+								placeholder="Enter Phone Number" [(ngModel)]="phoneNumber" name="userMobileNumber" (keydown.enter)="onVerifyPhoneNumber()"
+								(keypress)="checkLimit($event)" (input)="clearErrorMsg()" autocomplete="off" #phone/> 
+								</div>
+							
+							<p *ngIf="numberErrorMsg" class="text-error text-left">{{numberErrorMsg}}</p>
+						</div>
+
+						<div class="flex items-center gap-1 mb-4">
+							<input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe">
+							<span class="text-sm text-[#424955]">Remember Me</span>
+						</div>
+
+						<button class="btn-primary w-full shadow-lg" (click)="onVerifyPhoneNumber()" >Continue <img src="../../../assets/icons/Arrow right.svg" alt="move next" class="inline-block"> </button>
+						<p class="mt-2 text-end text-sm text-primary cursor-pointer" routerLink="/faq">FAQ</p>
+					</form>
+
+					<a *ngIf="service?.loggedInUserType === applicationUsersType.TEACHER" href="https://youtu.be/qsGd7vCfceo" target="_blank" class="relative top-3 text-sm text-content">Need help with registration? &nbsp;<span class="text-primary">Watch our video guide.</span> </a>
+
+				</div>
+
+			</div>
+		</div>
+		
+	</div>
+</div>
+
+
+
+<!-- pop up modal  -->
+<div class="pop-up-container"  [ngClass]="modalStatus? 'visible-modal':'hidden-modal'" >
+	<div class="backdrop"></div>
+	<form>
+	<div class="modal" >
+		<div class="close-btn p-1 hover:bg-shade-50 w-9 h-9 absolute top-3 md:top-6 right-6 cursor-pointer rounded-full" (click)="closeModal()">
+			<img src="../../../assets/icons/remove.svg" alt="close-modal"  class="w-full h-full  hover:bg-shade-50" >
+		</div>
+		<div class="otp-container flex flex-col justify-center gap-4 md:gap-6 items-center relative ">
+			<h2 class="md:text-3xl text-lg text-content font-semibold">Enter PIN</h2>
+			<p class=" text-[#323842] font-normal text-sm" *ngIf="otpTriggered">Please type the PIN we sent you into your phone.</p>
+			<div>
+			<ng-otp-input  (onInputChange)="handeOtpChange($event)" [config]="otpInputConfig" #ngotp [ngClass]="{'error':invalidOtp}"></ng-otp-input>
+			</div>
+			<button class="btn-success font-normal text-sm md:text-lg  text-center w-full" (click)="onVerifyOTP()" [disabled]="otpValue.length!=4"> Verify</button>
+			<ng-container *ngIf="otpTriggered">
+				<a class="text-success underline cursor-pointer md:text-lg text-sm" (click)="onResendOTP()">Resend PIN</a>
+				<!-- <p class="timer" *ngIf="!showResendOTP">{{otpTimer | timeformat }}</p> -->
+			</ng-container>
+			<a class="text-success underline cursor-pointer md:text-lg text-sm" *ngIf="!otpTriggered" (click)="forgotPin()" >Forgot PIN</a>
+			<p class="text-content font-normal text-sm text-center">Having trouble accessing application? <br>Contact Sikshana Representative</p>
+		</div>
+	</div>
+</form>
+</div>

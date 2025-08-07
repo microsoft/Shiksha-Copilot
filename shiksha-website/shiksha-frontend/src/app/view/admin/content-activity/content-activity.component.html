@@ -1,0 +1,93 @@
+<div>
+    <div class="flex items-center justify-between">
+        <h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px]">
+            Content Activity
+        </h1>
+        <button class="btn-primary" *ngIf="listData" (click)="exportContentActivities()" [disabled]="!listData.length">
+            <div class="flex items-center gap-2">
+              <img src="../../.././../assets/icons/upload_light.svg" alt="" />
+              <span class="text-nowrap">Export</span>
+            </div>
+          </button>
+    </div>
+    
+    <div class="border text-content rounded my-5 p-6 bg-white">
+        <div class="flex justify-between items-center">
+            <h2 class="text-content text-[30px] font-bold leading-[48px]"> Content History </h2>
+            <div class="w-[300px]">
+                <div class="search-icon min-w-[100px] flex items-center h-9 ">
+                    <img src="../../../../../assets/icons/Search.svg" alt="" class="mr-2" />
+                    <input [(ngModel)]="searchText" (input)="searchInputChanged($event)"
+                        class="appearance-none rounded pl-10 py-2 px-3 text-content leading-tight focus:outline-none bg-shade-80 w-full md:w-[390px] h-9"
+                        type="text" placeholder="Search">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex md:gap-1 my-8 ">
+            <div class="w-full  cursor-pointer md:flex-1">
+                <app-common-dropdown [dropDownValues]="stateDropdownOptions" #stateDropdown
+                    (valueUpdate)="onFilterChange('state', $event)"
+                    [config]="stateDropdownconfig"></app-common-dropdown>
+            </div>
+
+            <div class="w-full  cursor-pointer md:flex-1">
+                <app-common-dropdown [dropDownValues]="zoneDropdownOptions" #zoneDropdown
+                    (valueUpdate)="onFilterChange('zone', $event)" [config]="zoneDropdownconfig"></app-common-dropdown>
+            </div>
+
+            <div class="w-full  cursor-pointer md:flex-1">
+                <app-common-dropdown [dropDownValues]="districtDropdownOptions" #districtDropdown
+                    (valueUpdate)="onFilterChange('district', $event)"
+                    [config]="districtDropdownconfig"></app-common-dropdown>
+            </div>
+
+            <div class="w-full  cursor-pointer md:flex-1">
+                <app-common-dropdown [dropDownValues]="blockDropdownOptions" #blockDropdown
+                    (valueUpdate)="onFilterChange('block', $event)"
+                    [config]="blockDropdownconfig"></app-common-dropdown>
+            </div>
+
+            <div class="w-[25vw]  cursor-pointer md:flex-1">
+                <app-common-dropdown [dropDownValues]="schoolDropdownOptions" #schoolDropdown
+                    (valueUpdate)="onFilterChange('_id', $event)" [config]="schoolDropdownconfig"></app-common-dropdown>
+            </div>
+
+        </div>
+
+
+
+        <div class="w-full ">
+            <table class="table-auto w-full border mt-5 rounded-lg text-content" aria-label="User list">
+                <thead>
+                    <tr class="bg-primary-60 rounded-lg border-b">
+                        <th class="text-left p-4 rounded border-r text-sm text-content"
+                            *ngFor="let header of table_headers">{{ header }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngIf="!listData || listData.length === 0">
+                        <td colspan="6" class="text-center text-content-60 py-2">No items found</td>
+                    </tr>
+                    <tr class="border" *ngFor="let item of listData">
+                        <td class="p-4 border">{{item?.userName | titlecase}}</td>
+                        <td class="p-4 border"><a class="text-primary" [routerLink]="['lesson-plan',item?.genContentId]" [class.disableLink]="item?.teacherLessonPlanStatus!=='completed'">{{item?.genContent | titlecase}}</a></td>
+                        <td class="p-4 border"><a class="text-primary" [routerLink]="['lesson-plan',item?.contentId]">{{item?.content | titlecase}}</a></td>
+                        <td class="p-4 border text-sm" >
+                            <span [ngClass]="{
+                                'success-chip': item?.teacherLessonPlanStatus === 'completed',
+                                'warning-chip': item?.teacherLessonPlanStatus !== 'completed',
+                                'error-chip': item?.teacherLessonPlanStatus === 'failed'}">
+                                {{item?.teacherLessonPlanStatus | titlecase}}</span>
+                        </td>
+                        <td class="p-4 border-r whitespace-nowrap ">{{item?.updatedAt | date:'d/M/yy, h:mm a'}}</td>                        
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <app-pagination [totalItems]="totalItems" [pageSize]="pageSize" [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)">
+    </app-pagination>
+    <!-- </div> -->

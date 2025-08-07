@@ -1,0 +1,24 @@
+<div class="pagination" *ngIf="totalItems > 0">
+	<div class="flex items-center justify-between border-gray-200 bg-white px-4 py-3">
+		<div class="flex flex-1 items-center justify-end">	
+			<p class="text-content-50 me-5">Showing {{ getDisplayRange()}} of total {{totalItems}} records</p>	
+			<div>
+				<nav class="isolate inline-flex space-x-1 rounded-md shadow-sm" aria-label="Pagination">
+					<button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+						class="relative inline-flex items-center rounded px-2 py-2 text-content-50 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+						<img src="../../../../../assets/icons/Chevron left large.svg" alt="">
+					</button>
+					<button *ngFor="let page of getPageNumbers()" (click)="onPageChange(page)"
+						[class.active]="page === currentPage"
+						class="rounded border relative inline-flex items-center {{ page === currentPage ? 'bg-primary text-white' : 'text-content-50' }} px-4 py-2 text-sm font-semibold focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+						{{ page === -1 ? '...' : page }}
+					</button>
+					<button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage * pageSize >= totalItems"
+						class="rounded relative inline-flex items-center px-2 py-2 text-content-50 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+						<img src="../../../../../assets/icons/Chevron right large.svg" alt="">
+					</button>
+				</nav>
+			</div>
+		</div>
+	</div>
+</div>

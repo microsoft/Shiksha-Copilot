@@ -1,0 +1,39 @@
+
+.btn-container{
+	margin-bottom:.9lh ;
+}
+.scheduleArray .form-control-error{
+	height: 1lh;
+}
+
+.backdrop{
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: rgba($color: #f2f2f2, $alpha: 0.5);
+	inset: 0;
+	z-index: 999;
+	.form-wrapper::-webkit-scrollbar{
+		width: 4px;
+	}
+	.form-wrapper::-webkit-scrollbar-track{
+		background-color: transparent;
+	}
+	.form-wrapper::-webkit-scrollbar-thumb{
+		border-radius: 30px;
+		background-color: var(--primary-DEFAULT);
+	}
+	
+}
+.form-content{
+	width: min(650px,90%);
+}
+
+@media screen and (max-width : 768px){
+	.form-content{
+		top: 50% !important;
+		left: 50% !important;
+		transform: translate(-50%,-50%) !important;
+	}
+}
+

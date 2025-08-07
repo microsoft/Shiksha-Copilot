@@ -1,0 +1,512 @@
+<section class="profile-wrapper p-8 bg-white rounded">
+  <h1 class="text-xl md:text-[30px] leading-[48px] font-bold text-content">
+    {{ "Setup Your Profile" | translate }}
+  </h1>
+  <h6 class="text-content-50 mt-1 text-sm leading-[48px] tracking-tight">
+    {{ "Profile photo" | translate }}
+  </h6>
+  <form class="flex flex-col gap-4" [formGroup]="userPorfileForm">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="dp-setup flex gap-6">
+        <app-profile-image [profileImage]="this.sidebarService.profileImg()" [size]="'lg'" ></app-profile-image>
+        <div class="upload-container">
+          <h5 class="text-sm font-normal text-content leading-[22px]">
+            {{ "Upload your photo" | translate }}
+          </h5>
+          <h6 class="text-xs font-normal text-shade leading-[20px] mb-4">
+            {{ "Your photo should be in PNG, JPG or JPEG format" | translate }}.
+          </h6>
+          <div class="btn-wrapper">
+            <button
+              type="button"
+              (click)="image_upload.click()"
+              class="relative text-white border  focus:outline-none font-medium rounded text-sm px-5 py-2 text-center  btn-primary"
+            >
+              <input
+                #image_upload
+                class="hidden h-0 w-0 absolute text-sm text-gray-900  rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                id="file_input"
+                type="file"
+                accept="image/*"
+                (change)="onImageSelect(image_upload)"
+              />
+              <img src="../../../../assets/images/gallery.svg" alt="" class="inline-block mb-1">
+              <span class="ml-2">{{(this.sidebarService.profileImg() ? 'Change Image' : 'Choose Image') | translate}}</span>
+            </button>
+            <button
+              *ngIf="this.sidebarService.profileImg()"
+              type="button"
+              class=" font-normal rounded-lg text-sm ml-4 text-primary"
+              (click)="showDeleteProfileImageConfirm = true"
+            >
+              {{ "Remove" | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="lang-setup flex sm:justify-end">
+        <div
+          class="form-groups w-full xl:w-1/2 ml-auto sm:ml-0 md:place-self-end"
+        >
+          <label
+            for="lang"
+            class="text-content text-sm leading-[22px] font-bold"
+            >{{ "Language" | translate }}</label
+          >
+          <app-language-switcher
+            [preferedLanguage]="loggedInUser?.preferredLanguage"
+            (languageChange)="languageChanged($event)"
+          ></app-language-switcher>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 md:mb-4 md:grid-cols-4">
+      <div>
+        <label for="first_name" class="block mb-1 form-control-label">{{
+          "Name" | translate
+        }}</label>
+        <input
+          type="text"
+          id="first_name"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter your name' | translate }}"
+          required
+          readonly
+          [value]="userData?.name"
+        />
+      </div>
+      <div>
+        <label for="last_name" class="block mb-1 form-control-label">{{
+          "Phone" | translate
+        }}</label>
+        <input
+          type="text"
+          id="last_name"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter your phone number' | translate }}"
+          required
+          readonly
+          [value]="userData?.phone"
+        />
+      </div>
+      <div class="md:col-span-2">
+        <label for="company" class="block mb-1 form-control-label">{{
+          "School/Organization" | translate
+        }}</label>
+        <input
+          type="text"
+          id="company"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          required
+          readonly
+          [value]="userData?.school?.name"
+        />
+      </div>
+    </div>
+
+    <div class="grid gap-6 md:mb-4 md:grid-cols-4">
+      <div>
+        <label for="company" class="block mb-1 form-control-label"
+          >{{ "State" | translate }}
+        </label>
+        <input
+          type="text"
+          id="company"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter your cluster' | translate }}"
+          readonly
+          required
+          [value]="userData?.state"
+        />
+      </div>
+      <div>
+        <label for="first_name" class="block mb-1 form-control-label">{{
+          "Zone" | translate
+        }}</label>
+        <input
+          type="text"
+          id="first_name"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter your zone' | translate }}"
+          readonly
+          required
+          [value]="userData?.zone"
+        />
+      </div>
+      <div>
+        <label for="last_name" class="block mb-1 form-control-label">{{
+          "District" | translate
+        }}</label>
+        <input
+          type="text"
+          id="last_name"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter your district' | translate }}"
+          readonly
+          required
+          [value]="userData?.district"
+        />
+      </div>
+      <div>
+        <label for="company" class="block mb-1 form-control-label">{{
+          "Taluk" | translate
+        }}</label>
+        <input
+          type="text"
+          id="company"
+          class="bg-shade-80 text-content text-sm rounded-lg block w-full p-2.5 outline-none"
+          placeholder="{{ 'Enter Taluk' | translate }}"
+          readonly
+          required
+          [value]="userData?.block"
+        />
+      </div>
+    </div>
+
+    <div class="relative">
+      <h2 class="font-bold text-lg leading-7 mb-2 mt-2 lg:hidden">
+        {{ "Class Details" | translate }}
+      </h2>
+      <div
+        class="rounded-lg bg-[#E5EDF67D] text-sm md:text-[16px] p-2 mt-5 mb-2 text-content-100 lg:grid grid-cols-[auto,1fr] gap-2 items-start hidden">
+        <img class="me-1 w-5" src="../../../../../assets/icons/lesson-info.svg" alt="">        
+        <small class="text-primary">{{'In the table below, please ensure that there is at least one class data and that all fields are filled.' | translate}}</small>
+      </div>
+      <table
+      class="table-auto w-full text-content rounded-lg"
+        aria-label="school-profile-list"
+      >
+        <thead class="text-xs text-content uppercase bg-[#edf6fe] hidden lg:table-header-group">
+          <tr >
+            <th
+              class="px-6 py-3"
+              *ngFor="let header of schoolTableHeader; let i = index"
+            >
+              {{ header | translate }}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody formArrayName="classes">
+          <tr
+            [formGroupName]="i"
+            *ngFor="
+              let class of getFormArray('classes').controls;
+              let i = index
+            "
+            class="flex flex-col border rounded lg:rounded-none lg:border-none p-4 lg:p-0 mt-4 lg:mt-0 lg:table-row"
+          >
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Board" | translate
+              }} <span class="text-[16px] text-error">*</span></label>
+              <app-form-dropdown
+                [dropDownControlName]="'board'"
+                [dropDownCtrl]="convertToFormControl(class.get('board'))"
+                [dropDownValues]="boardDropdownOptions"
+                [config]="boardTypeDropdownconfig"
+                [submitted]="submitted"
+                (valueChange)="setMediumSubjectDropdown(i, $event,'add')"
+              ></app-form-dropdown>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Medium" | translate
+              }} <span class="text-[16px] text-error">*</span></label>
+              <app-form-dropdown
+                [dropDownControlName]="'medium'"
+                [dropDownCtrl]="convertToFormControl(class.get('medium'))"
+                [dropDownValues]="mediumDropdownOptions[i]"
+                [config]="mediumTypeDropdownconfig"
+                [submitted]="submitted"
+                (valueChange)="setClassDropdown(i, $event)"
+              ></app-form-dropdown>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Class" | translate
+              }} <span class="text-[16px] text-error">*</span></label>
+              <app-form-dropdown
+                [dropDownControlName]="'class'"
+                [dropDownCtrl]="convertToFormControl(class.get('class'))"
+                [dropDownValues]="classDropdownOptions[i]"
+                [config]="classTypeDropdownconfig"
+                [submitted]="submitted"
+                (valueChange)="setStrength(i, $event)"
+              ></app-form-dropdown>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Subject" | translate
+              }} <span class="text-[16px] text-error">*</span></label>
+              <app-form-dropdown
+                [dropDownControlName]="'subject'"
+                [dropDownCtrl]="convertToFormControl(class.get('subject'))"
+                [dropDownValues]="subjectDropdownOptions[i]"
+                [config]="subjectTypeDropdownconfig"
+                [submitted]="submitted"
+                (valueChange)="subjectMapper(i, $event)"
+              ></app-form-dropdown>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Boys Strength" | translate
+              }}</label>
+              <p>{{ class.get("boysStrength")?.value || "-" }}</p>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <label for="board" class="lg:hidden mb-1 form-control-label">{{
+                "Girls Strength" | translate
+              }}</label>
+              <p>{{ class.get("girlsStrength")?.value || "-" }}</p>
+            </td>
+            <td class="px-1 py-1 lg:px-4 lg:py-4">
+              <div class="flex lg:w-24 gap-2 justify-end lg:justify-start">                
+                <button
+                  type="button"
+                  *ngIf="i !== 0"
+                  class="text-white btn-danger btn-danger:hover flex items-center lg:block gap-1  place-self-end font-medium rounded-lg text-sm"
+                  (click)="openConfirmPopupforDeleteClass(i)"
+                >
+                  <img
+                    src="../../.././../../assets/icons/delete.svg"
+                    alt="trash"
+                    class="inline-block"
+                  />
+                  <span class="lg:hidden">{{'Delete' | translate}}</span>
+                </button>
+                <button
+                *ngIf="i === getFormArray('classes').controls.length-1"
+                  type="button"
+                  class="text-white btn-primary btn-primary:hover flex lg:block items-center gap-1 place-self-end font-medium rounded-lg text-sm"
+                  (click)="addNewclasses('add')"
+                >
+                  <img
+                    src="../../../../assets/icons/plus.svg"
+                    alt="plus"
+                    class="inline-block"
+                  />
+                  <span class="lg:hidden">{{'Add' | translate}}</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="resource-block mt-4">
+      <h2 class="font-bold text-lg leading-7 mb-4 text-content">
+        {{ "Resources" | translate }}
+      </h2>
+
+
+      <div class="mt-7">
+        <ng-container formArrayName="facilities">
+              <div
+                class="text-content grid md:grid-cols-12 gap-4 border p-4 mb-4 rounded"
+                *ngFor="let resource of facilities.controls; let i = index"
+              >
+                <ng-container [formGroupName]="i">
+                  <div class="py-2 md:py-4 text-sm  content-start md:col-span-5">
+                    <ng-container>
+                      <div>
+                        <app-form-dropdown
+                          [dropDownControlName]="'type'"
+                          [dropDownCtrl]="
+                            convertToFormControl(resource.get('type'))
+                          "
+                          [dropDownValues]="resourceTypeDropdownOptions"
+                          [config]="
+                            resource.get('typeChipSet')?.value
+                              ? resourceTypeDropdownconfig
+                              : resourceTypeDarkDropdownconfig
+                          "
+                          [submitted]="submitted"
+                          (valueChange)="setResourceDetailsValues(i, $event)"
+                        ></app-form-dropdown>
+                      </div>
+
+                      <input
+                        *ngIf="!resource.get('typeChipSet')?.value"
+                        class="form-control h-9 mt-4"
+                        type="text"
+                        placeholder="{{ 'Enter resource type' | translate }}"
+                        autocomplete="off"
+                        formControlName="otherType"
+                      />
+
+                      <p
+                        class="form-control-error"
+                        *ngIf="!resource.get('typeChipSet')?.value && submitted && resource.get('otherType')?.errors?.['required']"
+                      >
+                        {{ 'Resource type required' | translate }}
+                      </p>
+                    </ng-container>
+                  </div>
+                  <div class="py-2 md:py-4 text-sm  content-start md:col-span-5">
+                    <div >
+                      <label for="Resource Details" class="block  form-control-label " *ngIf="resource.get('detailsChipSet')?.value">{{
+                        "Resource Details" | translate
+                      }}</label>
+                      <div [hidden]="!resource.get('detailsChipSet')?.value">
+                        <app-form-dropdown
+                          [dropDownControlName]="'details'"
+                          [dropDownCtrl]="
+                            convertToFormControl(resource.get('details'))
+                          "
+                          [dropDownValues]="resourceDetailsDropdownOptions[i]"
+                          [config]="resourceDetailsDropdownconfig"
+                          [submitted]="submitted"
+                        ></app-form-dropdown>
+                      </div>
+
+                      <div *ngIf="!resource.get('detailsChipSet')?.value">
+                        <div class="flex gap-2">
+                          <div class="w-full">
+                            <label
+                          class="form-control-label"
+                        >
+                        {{ 'Resource Details' | translate }}
+                        </label>
+                          <input
+                            class="form-control h-9"
+                            type="text"
+                            placeholder="{{ 'Enter resource details' | translate}}"
+                            autocomplete="off"
+                            [(ngModel)]="resourceOtherValue[i]"
+                            [ngModelOptions]="{ standalone: true }"
+                            (keydown.enter)="
+                              $event.preventDefault();
+                              $event.stopPropagation();
+                              addOtherResource(resource, i, $event)
+                            "
+                          />
+                          </div>
+                          <button
+                            class="btn-primary h-9 mt-[26px]"
+                            (click)="addOtherResource(resource, i, $event)"
+                            type="button"
+                          >
+                            <div class="flex content-center">
+                              <img
+                                src="../../.././../../assets/icons/add.svg"
+                                alt=""
+                              />
+                            </div>
+                          </button>
+                        </div>
+                        <p
+                          class="form-control-error"
+                          *ngIf="!resource.get('detailsChipSet')?.value && submitted && resource.get('details')?.errors?.['required']"
+                        >
+                          {{ 'Resource details required' | translate }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="selected-items mt-2" >
+                      <ng-container
+                        *ngFor="
+                          let item of resource.get('details')?.value;
+                          let i = index
+                        "
+                      >
+                        <span class="chip"
+                          >{{ item }}
+                          <span
+                            class="close-icon"
+                            (click)="removeItem(resource, i)"
+                            >×</span
+                          >
+                        </span>
+                        
+                      </ng-container>
+                    </div>
+                  </div>
+                  <div
+                    class="py-2 md:py-4 text-sm  md:mt-[30px] md:col-span-2"
+                  >
+                    <div
+                      class="flex gap-2"
+                      [ngClass]="i === 0 ? 'justify-end md:justify-center' : 'justify-end md:justify-start'"
+                    >                      
+                      <button
+                        class="btn-danger h-9"
+                        (click)="openConfirmPopupforDeleteResource(i)"
+                        *ngIf="i !== 0"
+                        type="button"
+                      >
+                        <div class="flex content-center">
+                          <img
+                            src="../../.././../../assets/icons/delete.svg"
+                            alt=""
+                          />
+                          <span class="ml-[6px]">{{ 'Delete' | translate }}</span>
+                        </div>
+                      </button>
+                      <button
+                        class="btn-primary h-9"
+                        (click)="addResource()"
+                        type="button"
+                        *ngIf="i === facilities.controls.length - 1"
+                      >
+                        <div class="flex content-center">
+                          <img
+                            src="../../.././../../assets/icons/add.svg"
+                            alt=""
+                          />
+                          <span class="ml-[6px]">{{ 'Add' | translate }}</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </ng-container>
+              </div>
+        </ng-container>
+      </div>
+
+
+
+
+      <hr class="mb-8" />
+
+      <div class="w-full text-right">
+        <button
+          type="button"
+          class="text-white btn-primary btn-primary:hover place-self-end font-medium rounded-lg text-sm px-5 py-2.5 me-2 ml-auto"
+          (click)="onSave()"
+        >
+          {{ "Save profile" | translate }}
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<app-delete-detail *ngIf="showDeleteClassDetailsConfirm" 
+[config]="{
+	heading : 'Delete Class Details',
+	confirmationText : 'Are you sure you want to delete this class details?',
+	primaryButtonLabel : 'Delete',
+	primaryButtonType : 'delete'
+}" 
+(close)="closeDeleteClass($event)"></app-delete-detail>
+
+<app-delete-detail *ngIf="showDeleteResourceConfirm" 
+[config]="{
+	heading : 'Delete Resource',
+	confirmationText : 'Are you sure you want to delete this resource?',
+	primaryButtonLabel : 'Delete',
+	primaryButtonType : 'delete'
+}" 
+(close)="closeDeleteResource($event)"></app-delete-detail>
+
+<app-delete-detail *ngIf="showDeleteProfileImageConfirm" 
+[config]="{
+	heading : 'Remove Profile Image',
+	confirmationText : 'Are you sure you want to remove profile image?',
+	primaryButtonLabel : 'Remove',
+	primaryButtonType : 'delete'
+}" 
+(close)="closeDeleteProfileImage($event)"></app-delete-detail>

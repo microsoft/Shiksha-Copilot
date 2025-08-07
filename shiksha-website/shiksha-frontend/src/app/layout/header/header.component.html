@@ -1,0 +1,78 @@
+<header
+  class="fixed z-30 top-0 left-0 md:left-[270px] right-0 header shadow-md py-2 px-4 md:px-8 flex justify-between lg:justify-end items-center"
+>
+  <button class="p-2 rounded-md lg:hidden" (click)="openSidebar()">
+    <svg
+      class="w-5 h-5 text-content-80"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 17 14"
+    >
+      <path
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M1 1h15M1 7h15M1 13h15"
+      />
+    </svg>
+  </button>
+  <div class="relative">
+    <app-profile-image
+      [profileImage]="sidebarService.profileImg()"
+      [size]="'md'"
+      (click)="toggleMenu()"
+      class="cursor-pointer"
+    ></app-profile-image>
+    <div
+      *ngIf="isMenuOpen"
+      class="absolute right-0 mt-2 w-60 bg-white rounded shadow-lg p-4"
+    >
+      <div class="flex items-center gap-4 bg-[#EDF6FE] mb-2 p-4 rounded-xl">
+        <app-profile-image
+          [profileImage]="this.sidebarService.profileImg()"
+          [size]="'md'"
+        ></app-profile-image>
+        <div>
+          <p
+            class="text-content text-sm font-semibold overflow-hidden whitespace-nowrap text-ellipsis w-[120px]"
+          >
+            {{ utilityService.loggedInUserData?.name | titlecase }}
+          </p>
+          <p
+            class="text-content text-xs font-light overflow-hidden whitespace-nowrap text-ellipsis w-[120px]"
+          >
+            {{
+              utilityService.loggedInUserData?.school?.name ||
+                (utilityService.loggedInUserData?.role.join(" | ") | titlecase)
+            }}
+          </p>
+        </div>
+      </div>
+      <hr>
+      <div
+        class="flex items-center p-3 gap-2 mt-2 hover:bg-[#EDF6FE] rounded-lg cursor-pointer"
+        (click)="openModalForLogoutConfirm()"
+      >
+        <img
+          class="menu-icon w-5"
+          src="../../../assets/icons/logout.svg"
+          alt=""
+        />
+        <p class="text-sm text-shade">{{ 'Logout' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<app-delete-detail
+  *ngIf="showLogoutConfirm"
+  [config]="{
+    heading: 'Confirm',
+    confirmationText: 'Do you want to logout?',
+    primaryButtonLabel: 'Logout',
+    primaryButtonType: 'logout'
+  }"
+  (close)="closeModal($event)"
+></app-delete-detail>

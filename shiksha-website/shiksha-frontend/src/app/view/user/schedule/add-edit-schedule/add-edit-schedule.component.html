@@ -1,0 +1,127 @@
+<div class="backdrop  ">
+	<div class="form-content  bg-white fixed  shadow-2xl rounded " #pop_ele>
+		
+		<div class="header flex justify-between items-center px-4 py-3">
+			<h1 class="text-base font-bold leading-[26px] text-content" > {{(mode === 'view' ? "View Details" : mode === "edit" ? "Edit Details" : "Add Details")  | translate }}       </h1>
+			<div class=" bg-shade-50 rounded-full text-center p-1 cursor-pointer" (click)="closePopUP()">
+				<img src="../../../../../assets/icons/E remove.svg" alt="">
+			</div>
+		</div>
+		<hr class="border">
+		<div >
+			<form class="body-container " [formGroup]="scheduleForm" (ngSubmit)="onSave()" >
+				<div  class="p-4">
+					<div class="form-wrapper max-h-[530px] overflow-y-auto flex flex-col gap-2">						
+						<div class="grid gap-2  md:grid-cols-2">
+							<div class="min-w-[250px] ">
+								<app-form-dropdown [config]="boardDropDownConfig" [dropDownControlName]="'board'" [dropDownValues]="boardDropdownValue" [mode]="mode"
+								[dropDownCtrl]="convertToFormControl(f['board'])" (valueChange)="setMediumDropdownArray($event)" [submitted]="submitted" ></app-form-dropdown>
+							</div>
+								<div class="min-w-[250px] ">
+								<app-form-dropdown [config]="mediumDropDownConfig" [dropDownControlName]="'medium'" [dropDownValues]="mediumDropdownValue" [mode]="mode"
+								[dropDownCtrl]="convertToFormControl(f['medium'])"(valueChange)="setClassDropdownValue($event)" [submitted]="submitted" ></app-form-dropdown>
+							</div>
+						</div>
+
+						<div class="grid gap-2 md:grid-cols-2">
+							<div class="min-w-[250px] ">
+								<app-form-dropdown [config]="classNameDropDownConfig" [dropDownValues]="classDropDownValues" [submitted]="submitted" [mode]="mode"
+									[dropDownControlName]="'className'" [dropDownCtrl]="convertToFormControl(f['className'])" (valueChange)="setSubjectValue($event)"></app-form-dropdown>
+							</div>
+							<div class="min-w-[250px] ">
+								<app-form-dropdown [config]="subjectDropDownConfig" [dropDownValues]="subjectDropdownValue" [submitted]="submitted" [mode]="mode"
+									[dropDownControlName]="'subject'" [dropDownCtrl]="convertToFormControl(f['subject'])" (valueChange)="setChapterValues($event)"></app-form-dropdown>
+							</div>
+						</div>
+
+						<div class="grid gap-2 md:grid-cols-2">
+							<div class="min-w-[250px]">
+								<app-form-dropdown [config]="chapterDropDownConfig" [dropDownControlName]="'chapter'" [dropDownValues]="chapterDropdownValue" [mode]="mode"
+									[dropDownCtrl]="convertToFormControl(f['chapter'])" (valueChange)="setSubTopicValue($event)" [submitted]="submitted"></app-form-dropdown>
+							</div>
+							<div class="min-w-[250px]">
+								<app-form-dropdown [config]="subTopicDropDownConfig" [dropDownControlName]="'subTopic'" [dropDownValues]="subTopicDropDownValue" [mode]="mode"
+								[dropDownCtrl]="convertToFormControl(f['subTopic'])" (valueChange)="setLessonPlan($event)" [submitted]="submitted"></app-form-dropdown>
+							</div>
+						</div>
+						<!-- <div>
+							<label for="lesson-name" class="block mb-1  font-bold text-gray-900 form-control-label ">{{"Lesson Plan" | translate}}</label>
+							<input type="text" id="lesson-name" class="bg-shade-80  text-gray-900 text-sm rounded-lg   block w-full p-2.5 "
+								placeholder="Lesson Name" required formControlName="lessonPlan" readonly/>
+						</div> -->
+
+				
+						<div>
+							 <app-form-dropdown [config]="lessonDropDownConfig" [dropDownControlName]="'lessonPlan'" [dropDownValues]="lessonPlanDropDownValue" [mode]="mode"
+								[dropDownCtrl]="convertToFormControl(f['lessonPlan'])" [submitted]="submitted" (valueChange)="getLessonId($event)"></app-form-dropdown> 
+						</div> 
+			
+						<button class="btn-primary  flex items-center justify-center px-4 self-start" type="button" *ngIf="mode === 'add'" routerLink="/user/content-generation">
+							<span class="ms-1 me-1">{{"Add Lesson Plan" | translate}}</span>
+							<img src="../../../../../assets/icons/E add.svg" alt="">
+						</button>
+						<div class="scheduleArray" formArrayName="schedule">
+							<div class="grid md:gap-2 mb-2 md:grid-cols-12 items-start"
+								*ngFor="let controls of getScheduleControls().controls; let i=index" [formGroupName]="i">
+								<div class="md:col-span-4 ">
+									<label for="datepicker" class="block mb-2 form-control-label">{{"Date" | translate}}<span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+									<input id="datepicker" type="date" placeholder="Select Date"
+										class="focus:outline-none bg-shade-80 text-gray-900 text-sm rounded  block w-full p-2.5 " required
+										formControlName="date" [readOnly]="mode === 'view'" [min]='currentDate | date:"yyyy-MM-dd"'/>
+									<p class="form-control-error">
+										{{(getDateError(controls)) | translate}}  
+									</p>
+								</div>
+								<div class=" md:col-span-3">
+									<label for="timepicker1" class="block mb-2 form-control-label">{{"Start Time" | translate}}<span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+									<input type="time" id="timepicker1" placeholder="Select Start Time"
+										class="bg-shade-80 focus:outline-none  text-gray-900 text-sm rounded   block w-full p-2.5 " required
+										formControlName="fromTime" [readOnly]="mode === 'view'"  min="07:00" max="17:00"/>
+										<p class="form-control-error min-h-[20px]" >
+											{{(getStartTimeError(controls)) | translate}}
+										</p>
+								</div>	
+								<div class=" md:col-span-3">
+									<label for="timepicker2" class="block mb-2 form-control-label">{{"End Time" | translate}}<span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+									<input type="time" id="timepicker2" placeholder="Select End Time"
+										class="bg-shade-80 focus:outline-none  text-gray-900 text-sm rounded block w-full p-2.5 " required
+										formControlName="toTime" [readOnly]="mode === 'view'" min="07:00" max="17:00"/>
+										<p class="form-control-error">
+											{{(getEndTimeError(controls)) | translate}}
+										</p>
+										
+								</div>
+								<div class="btn-container flex md:col-span-2 gap-2 self-end " *ngIf="mode !== 'view'">
+									<button class="btn-danger flex items-center justify-center   h-[42px]" (click)="deleteScheduleInfo(i)"
+										*ngIf="i!==0">
+										<img src="../../../../../assets/icons/delete.svg" alt="">
+									</button>
+									<button class="btn-primary  flex items-center justify-center   h-[42px]" (click)="addNewScheduleInfo()"
+										*ngIf="i===getScheduleControls().length-1">
+										<img src="../../../../../assets/icons/E add.svg" alt="">
+									</button>
+			
+								</div>
+							</div>
+			
+						</div>
+					</div>
+				</div>
+				<hr class="border" *ngIf="mode !== 'view'">
+				<div>
+					<div class="footer-container px-4 py-3 " *ngIf="mode !== 'view'">
+						<div class="buttons flex items-center justify-end gap-2">
+							<button type="button" class="w-20 btn-outline-primary" (click)="closePopUP()">{{"Cancel" | translate}}</button>
+							<button  type="submit" class="btn-primary w-20 flex items-center justify-center" >
+								<span class="mr-1">{{(mode === 'edit' ? "Update" : "Save")  | translate}}</span>
+								<img src="../../../../../assets/icons/Vector (4).svg" alt="">
+							</button>
+						</div>
+				</div>
+				</div>
+			</form>
+		</div>
+
+
+	</div>
+</div>

@@ -1,0 +1,27 @@
+.dashboard-wrapper {
+  .dashboard-landing-card {
+    background-image: url("../../../../assets/images/dashboard-card.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 10px;
+    overflow: hidden;
+    background-position: right;
+  }
+  .icon {
+    height: 52px;
+    width: 52px;
+    border-radius: 50%;
+  }
+  .canvas-container {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .canvas-container canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}

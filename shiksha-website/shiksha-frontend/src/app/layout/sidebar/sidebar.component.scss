@@ -1,0 +1,31 @@
+.mobile-header{
+  box-shadow: 0px 8px 12px -4px rgba(0, 0, 0, 0.08);
+}
+.sidebar {
+  transition: all 0.5s ease;
+}
+
+  .logo{
+    width: min(200px,65%);
+  }
+
+@media screen and (width<1023px) {
+  .sidebar-backdrop {
+    transition: opacity 0.2s ease-in-out;
+    &.show {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(242, 242, 242, 0.5);
+    }
+    .sidebar {
+      transition: transform 0.2s ease-in-out;
+      &.show {
+        transform: translateX(0);
+      }
+      // hide sidebar
+      &.hide {
+        transform: translateX(-100%);
+      }
+    }
+  }
+}

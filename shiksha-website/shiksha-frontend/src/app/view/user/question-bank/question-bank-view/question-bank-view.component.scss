@@ -1,0 +1,17 @@
+.question-bank-container{
+    &::-webkit-scrollbar {
+        width: 4px;
+      }
+    
+      &::-webkit-scrollbar-track {
+        background: var(--primary-40);
+      }
+    
+      &::-webkit-scrollbar-thumb {
+        background: var(--primary-DEFAULT);
+      }
+    
+      &::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-DEFAULT);
+      }
+}

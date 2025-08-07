@@ -1,0 +1,43 @@
+<div class="help-container p-8 bg-white">
+  <div>
+    <h1
+      class="text-xl md:text-3xl font-bold text-content main-heading leading-[48px]"
+    >
+      Explore Our Video Guides
+    </h1>
+    <p>
+      Step-by-step videos to guide you through Shiksha copilot features and
+      functionalities.
+    </p>
+  </div>
+
+  <div>
+    <h3 class="text-base font-bold mt-8 text-content">Videos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+      <div *ngFor="let video of videos">
+        <div class="bg-white border rounded">
+          <div class="bg-shade-80 p-3 rounded">
+            <iframe
+              [src]="video.link"
+              width="100%"
+              height="200"
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            >
+            </iframe>
+          </div>
+          <div class="p-2">
+            <p
+              class="text-center text-nowrap overflow-x-auto text-ellipsis font-semibold"
+            >
+              {{ video.title }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

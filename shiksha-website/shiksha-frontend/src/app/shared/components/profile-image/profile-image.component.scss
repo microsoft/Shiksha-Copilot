@@ -1,0 +1,27 @@
+.lg {
+  width: 100px;
+  height: 100px;
+  font-size: 64px;
+}
+.md {
+  width: 42px;
+  height: 42px;
+  font-size: 24px;
+}
+.c-md {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  @media (max-width:756px) {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}
+.sm {
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+}

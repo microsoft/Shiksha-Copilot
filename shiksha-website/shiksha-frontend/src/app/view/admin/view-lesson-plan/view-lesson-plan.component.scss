@@ -1,0 +1,17 @@
+.active {
+    background-color: #46A0F1;
+    color: white;
+}
+
+.editable-content[contenteditable="true"] {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.inspect-wrapper {
+    .tabs {
+        box-shadow: rgba(33, 35, 38, 0.1) 0px 10px 10px -10px;
+
+    }
+}

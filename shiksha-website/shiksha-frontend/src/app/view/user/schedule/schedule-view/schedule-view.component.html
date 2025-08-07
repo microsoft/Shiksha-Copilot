@@ -1,0 +1,142 @@
+<section class="schedule-wrapper bg-white p-8" #scrollableElement>
+	<div class="schedule-content">
+		<div class="header flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+		<h1 class=" md:text-[30px] md:leading-[48px] font-bold text-content text-xl">
+			{{"My Schedules" | translate}}
+		</h1>
+
+		<div class="self-center">
+			<button class="rounded-r-none border border-primary min-w-36" [ngClass]="teacherSchedule ? 'btn-primary' : 'btn-primary-outline'" (click)="scheduleTypeChange(true)">{{"My Schedules" | translate}}</button>
+			<button class="rounded-l-none border border-primary min-w-36" [ngClass]="!teacherSchedule ? 'btn-primary' : 'btn-primary-outline'" (click)="scheduleTypeChange(false)">{{"Others' Schedules" | translate}}</button>
+		</div>
+	</div>
+
+	<div class=" border p-4 md:p-8 mt-2 relative">
+		<div *ngIf="showPopUp">
+			<app-add-edit-schedule [cordinate]="cordinate" (close)="onClosePopUp($event)" [formData]="selectedEvent" [cellData]="cellData" [mode]="mode"></app-add-edit-schedule>
+		</div>
+		
+		<div class="flex justify-between items-center flex-wrap gap-4">
+			<div class="min-w-fit">
+				<h3 class="font-normal md:text-2xl text-lg md:leading-9 text-content-100">{{ viewDate | date:'MMMM YYYY'}}</h3>
+			</div>
+
+			<div class="btn-group flex gap-4 items-center ml-auto min-w-fit">
+				<button class="bg-shade-80 p-1 md:py-1 md:px-4 rounded text-sm md:text-lg text-primary" mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate"
+					(viewDateChange)="closeOpenMonthViewDay()">
+					<img src="../../../../../assets/icons/Chevron left large.svg" alt="" class="inline-block mb-[2px]"> <span class="hidden md:inline text-base">{{"Previous Week" | translate}}</span>
+				</button>
+				<div class="mb-0">
+					<h3 class="mb-0 text-xs md:text-base text-content" >{{ viewDate | calendarDate:(view + 'ViewTitle'):'en':1 }}</h3>
+				</div>
+				<button class="bg-shade-80 p-1 md:py-1 md:px-4 rounded text-primary text-sm md:text-lg" mwlCalendarNextView [view]="view" [(viewDate)]="viewDate" 
+					(viewDateChange)="closeOpenMonthViewDay()">
+					<span class="hidden md:inline text-base">{{"Next week" | translate}}</span><img src="../../../../../assets/icons/Chevron right large.svg" alt="" class="inline-block">
+				</button>
+			</div>
+
+		</div>
+
+
+		<br />
+
+		
+		<div [ngSwitch]="view" class="week overflow-auto my-schedule">
+			
+			<mwl-calendar-week-view *ngSwitchCase="CalendarView.Week" [viewDate]="viewDate" [events]="events" 
+			[weekStartsOn]="1"
+				[refresh]="refresh"  [eventTemplate]="customCellTemplate" (hourSegmentClicked)="onEmptySlotClicked($event,tooltip_modal)" 
+				 
+				 #calender_ele  [hourSegmentHeight]="100" [dayStartHour]="7" 
+				[dayEndHour]="18" [hourSegments]="1" (beforeViewRender)="beforeViewRender($event)" (eventTimesChanged)="eventTimesChanged($event)">
+				
+				
+			</mwl-calendar-week-view>
+			
+		</div>
+		
+
+		
+			<ng-template #customCellTemplate let-weekEvents="weekEvent" let-locale="locale" let-eventClicked="eventClicked" >
+				<div class="bg-primary-100 text-xs rounded p-2 h-full  min-h-[80px] text-ellipsis overflow-hidden whitespace-nowrap schedule-view" [ngClass]="weekEvents.event.meta.events.multi ? 'multiSchedule':''"  [style.color]="weekEvents.event.color.primary" [style.backgroundColor]="weekEvents.event.color.secondary" [style.border]="'1px solid '+ weekEvents.event.color.primary" 	(click)="handleCustomClick($event,{event: weekEvents,
+					sourceEvent: $event.currentTarget},tooltip_modal)" >
+					<!-- <p class="font-bold "  >{{weekEvents.event.start | date:'hh:mm a'}}  </p> -->
+					<div class="font-bold  text-left mb-1 flex items-center gap-1" >
+						<img src="../../../../../assets/icons/user-icon.svg" alt="" width="10" height="10" class="w-[20px] h-[20px] rounded-full">
+						<span class="overflow-hidden whitespace-nowrap text-ellipsis">{{weekEvents.event.meta.events.teacher.name}}</span>
+					</div>
+					<span  class="overflow-hidden text-ellipsis whitespace-nowrap ">{{weekEvents.event.meta.class}} &nbsp;</span>
+					<span class="overflow-hidden text-ellipsis whitespace-nowrap ">{{weekEvents.event.meta.subject}} &nbsp;</span>
+					<p class="overflow-hidden text-ellipsis whitespace-nowrap " >{{weekEvents.event.meta.events.topic}} &nbsp;</p>
+	
+	
+				</div>
+			</ng-template>
+		
+
+
+		<br /><br /><br />
+
+
+	</div>
+
+	</div>
+</section>
+
+<!-- tooltipView -->
+
+<div class="flex justify-center tooltip fixed z-[100]" #tooltip_modal id="dialogue">
+	
+			
+			<ul 
+					class=" mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+					role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+					<li class="h-10  hover:bg-shade-80 cursor-pointer lesson-plan" (click)="navigateLessonPlan(tooltip_modal)" [ngClass]="viewOnly?'viewOnly':''" 
+							>
+							<a class="block px-4 py-2 text-sm text-content" role="menuitem" >
+									<div class="flex items-center">
+											<img class="mx-2" src="../../../../../assets/icons/lesson-plan-black.svg" alt="" />
+											<span>{{"View Lesson Plan" | translate}}</span>
+									</div>
+							</a>
+					</li>
+					<li class="h-10  hover:bg-shade-80 cursor-pointer" (click)="viewSchedule(tooltip_modal)"
+							>
+							<a class="block px-4 py-2 text-sm text-content" role="menuitem" >
+									<div class="flex items-center">
+											<img class="mx-2" src="../../../../../assets/icons/Visibility.svg" alt="" />
+											<span>{{"View Details" | translate}}</span>
+									</div>
+							</a>
+					</li>
+
+					<li class="h-10 hover:bg-shade-80 cursor-pointer edit" (click)="editSchedule(tooltip_modal)" [ngClass]="viewOnly?'viewOnly':''" 
+							>
+							<a class="block px-4 py-2 text-sm text-content" role="menuitem" >
+									<div class="flex items-center">
+											<img class="mx-2" src="../../../../../assets/icons/Vector.svg" alt="" />
+											<span>{{"Edit Details" | translate}}</span>
+									</div>
+							</a>
+					</li>
+
+					<li class="h-10  hover:bg-shade-80 cursor-pointer delete" [ngClass]="viewOnly?'viewOnly':''" >
+							<a class="block px-4 py-2 text-sm text-content" role="menuitem"
+									(click)="openModalForDeleteConfirm(tooltip_modal)">
+									<div class="flex items-center">
+											<img class="mx-2" src="../../../../../assets/icons/trash.svg" alt="" />
+											<span class="text-error">{{"Delete" | translate }}</span>
+									</div>
+							</a>
+					</li>
+			</ul>
+</div>   
+
+<app-delete-detail *ngIf="showDelete" 
+[config]="{
+	heading : 'Delete Schedule',
+	confirmationText : 'Are you sure you want to delete this Schedule?',
+	primaryButtonLabel : 'Delete',
+	primaryButtonType : 'delete'
+}" 
+(close)="closeDelete($event)"></app-delete-detail>

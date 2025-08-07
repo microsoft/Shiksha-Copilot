@@ -1,0 +1,53 @@
+.base-table {
+  table,
+  th,
+  td {
+    @media (min-width: 1024px) {
+      border: 1px solid #dcdcdc;
+    }
+  }
+}
+
+.error-table {
+  table,
+  th,
+  td {
+    @media (min-width: 1024px) {
+      border: 1px solid var(--warn-80) !important;
+    }
+  }
+}
+
+.marks-base-table {
+  table,
+  th,
+  td {
+    border: 1px solid #dcdcdc;
+  }
+}
+
+.marks-error-table {
+  table,
+  th,
+  td {
+    border: 1px solid var(--warn-80) !important;
+  }
+}
+
+.configuration-container {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--primary-40);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-DEFAULT);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-DEFAULT);
+  }
+}

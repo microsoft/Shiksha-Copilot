@@ -1,0 +1,68 @@
+<div class="select-wrapper" [formGroup]="formGroupTemp">
+  <label
+    class="form-control-label"
+    for="email-address"
+    *ngIf="config.hideLabel ? false : true"
+  >
+    {{ config.fieldName | translate }}
+    <span *ngIf="config.required && mode !== 'view'" class="text-[16px] text-error">*</span> 
+  </label>
+  <span
+    *ngIf="config.multi && dropDownCtrl?.value?.length > 0"
+    class="area-label"
+    [ngClass]="config.hideLabel ? 'top-[9px]' : 'top-[39px]'"
+  >
+    {{ config.placeHolderTxt | translate }}
+  </span>
+  <ng-select
+    [items]="dropDownValues"
+    [ngClass]="config.isBackground ? 'with-background' : ''"
+    [style]="{ height: config.height }"
+    [placeholder]="config.placeHolderTxt | translate"
+    bindLabel="{{ config.bindLable ? config.bindLable : 'name' }}"
+    bindValue="{{ config.bindValue ? config.bindValue : 'value' }}"
+    [dropdownPosition]="'auto'"
+    [searchable]="config.searchable || false"
+    [clearable]="config.clearableOff ? false : true"
+    [multiple]="config.multi ? true : false"
+    [formControl]="dropDownCtrl"
+    (change)="valueSelected($event)"
+    [closeOnSelect]="config.openOnSelect ? false : true"
+  >
+  <ng-template ng-option-tmp let-item="item" let-search="searchTerm" *ngIf="config.multi && config.selectAllOption">
+    <div class="flex items-center gap-2">
+      <input type="checkbox" [checked]="dropDownCtrl.value?.includes(config.selectAllValue ? item[config.selectAllValue] : item)">
+      <span class="whitespace-nowrap overflow-x-hidden text-ellipsis">{{ config.selectAllValue ? item[config.selectAllValue] : item }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template ng-header-tmp *ngIf="config.multi && config.selectAllOption && dropDownValues.length">
+      <label class="flex items-center gap-2">
+      <input type="checkbox" (change)="toggleSelectAll($event)" [checked]="isSelectAll()" />
+        Select All
+      </label>
+  </ng-template>
+  </ng-select>
+  <small
+    class="form-control-error"
+    *ngIf="submitted && dropDownCtrl.errors?.['required']"
+    >{{ config.fieldName | translate }} {{'is required' | translate}}</small
+  >
+
+  <ng-container *ngIf="config.hideChips ? false : true && config.multi">
+    <div class="mt-2 flex-wrap">
+      <ng-container *ngFor="let item of dropDownCtrl?.value; let i = index">
+        <span class="chip">
+          <span *ngIf="config?.chipValueType === 'titlecase'">{{
+            item | titlecase
+          }}</span>
+          <span *ngIf="config?.chipValueType === 'uppercase'">{{
+            item | uppercase
+          }}</span>
+          <span *ngIf="!config?.chipValueType">{{ item | titlecase }}</span>
+          <span *ngIf="config?.chipClearableOff ? false: true" class="close-icon" (click)="removeItem(i)">×</span>
+        </span>
+      </ng-container>
+    </div>
+  </ng-container>
+</div>

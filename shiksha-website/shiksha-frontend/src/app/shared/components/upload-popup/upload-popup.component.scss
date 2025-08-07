@@ -1,0 +1,10 @@
+.upload-wrapper{
+    ::ng-deep .ngx-file-drop__drop-zone{
+        border-radius: 10px;
+        height: 200px;
+        border: 1px dashed var(--primary-100);
+    }
+    ::ng-deep .ngx-file-drop__content{
+        height: 200px;
+    }
+}
