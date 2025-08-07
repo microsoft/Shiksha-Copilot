@@ -26,6 +26,9 @@ Please find additional details in [Shiksha-Copilot User FAQ](Transparency_FAQ_Sh
   - LLM Task Queue
   - Retrieval-Augmented Generation (RAG) Wrapper
   - Translation Model Training and Evaluation Toolkit
+- **Full-Stack Web Application:** Complete [frontend](shiksha-website/shiksha-frontend/) and [backend](shiksha-website/shiksha-backend/) implementation for seamless user experience and robust server-side processing.
+- **RESTful API Services:** Comprehensive [API layer](shiksha-api/) with app services and durable functions for scalable lesson plan generation and content management.
+- **Automated Content Ingestion:** Intelligent [ingestion system](shiksha-ingestion/) for processing educational content from various textbook formats and curriculum standards.
 
 ## Intended Use
 - Empower educators across different regions and teaching contexts to create personalized, effective, and inclusive learning experiences.
