@@ -118,7 +118,7 @@ class ExtractEntityContentStep(BasePipelineStep):
         "Extract comprehensive entity content from textbook chapters using Azure OpenAI"
     )
     input_types = {"chapter_entities", "markdown"}
-    output_types = {"entity_content"}
+    output_types = {"entity_with_content"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Extract entity content from chapter using Azure OpenAI."""
@@ -177,7 +177,7 @@ class ExtractEntityContentStep(BasePipelineStep):
 
             return StepResult(
                 status=StepStatus.COMPLETED,
-                output_paths={"entity_content": output_path},
+                output_paths={"entity_with_content": output_path},
             )
 
         except Exception as e:
@@ -230,7 +230,7 @@ class ExtractEntityContentStep(BasePipelineStep):
         markdown_content: str,
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
-    ) -> List[Dict[str, str]]:
+    ) -> List[GraphEntity]:
         """Extract content for each entity using Azure OpenAI."""
         # Store original field description for restoration
         original_content_description = ExtractedEntityContent.model_fields[
@@ -313,7 +313,7 @@ class ExtractEntityContentStep(BasePipelineStep):
                     )
 
                 entity.content = entity_content.content if entity_content else ""
-                extracted_contents.append(entity.model_dump())
+                extracted_contents.append(entity)
 
                 logger.debug(
                     "Successfully extracted content for entity: %s (length: %d chars)",
@@ -332,7 +332,7 @@ class ExtractEntityContentStep(BasePipelineStep):
 
     def _save_extracted_contents(
         self,
-        extracted_contents: List[Dict[str, str]],
+        extracted_contents: List[GraphEntity],
         markdown_file_path: str,
         output_dir: str,
     ) -> str:
@@ -347,32 +347,11 @@ class ExtractEntityContentStep(BasePipelineStep):
             # Write extracted contents to JSON file
             with open(output_path, "w", encoding="utf-8") as json_file:
                 json.dump(
-                    extracted_contents,
+                    [graph_entity.model_dump() for graph_entity in extracted_contents],
                     json_file,
                     indent=2,
                     ensure_ascii=False,
                 )
-
-            # Log comprehensive statistics
-            total_entities = len(extracted_contents)
-            total_content_length = sum(
-                len(content["content"]) for content in extracted_contents
-            )
-            entity_types = {}
-
-            for content in extracted_contents:
-                entity_type = content.get("entity_type", "unknown")
-                entity_types[entity_type] = entity_types.get(entity_type, 0) + 1
-
-            logger.info("Content extraction summary:")
-            logger.info("  Total entities: %d", total_entities)
-            logger.info("  Total content length: %d characters", total_content_length)
-            logger.info("  Entity type distribution: %s", entity_types)
-            logger.info(
-                "  Average content per entity: %.1f characters",
-                total_content_length / total_entities if total_entities > 0 else 0,
-            )
-
             logger.debug("Saved extracted contents to %s", output_path)
             return output_path
 

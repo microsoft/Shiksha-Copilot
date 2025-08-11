@@ -6,22 +6,41 @@ from typing import Dict, List, Tuple
 from pydantic import BaseModel
 import networkx as nx
 import logging
+from enum import Enum
+
+RELATIONSHIP_TYPES = [
+    ("prerequisite", "Entity A must be understood before Entity B"),
+    ("builds_upon", "Entity B extends or builds upon concepts from Entity A"),
+    ("demonstrates", "Entity A provides an example or demonstration of Entity B"),
+    ("tests", "Entity A (assessment) tests knowledge of Entity B (concept)"),
+    ("explains", "Entity A provides explanation or theory for Entity B"),
+    ("applies", "Entity A shows practical application of Entity B"),
+    ("related", "General semantic relationship between entities"),
+    ("related_question", "Entity A is a question related to Entity B"),
+]
+
+
+class EntityType(str, Enum):
+    """Enumeration of supported entity types in the knowledge graph."""
+
+    SECTION = "section"
+    SUBSECTION = "subsection"
+    ACTIVITY = "activity"
+    ASSESSMENT = "assessment"
+    ASSESSMENT_LBA = "assessment_lba"
+    INTRODUCTION = "introduction"
+    CONTENT_BLOCK = "content_block"
 
 
 class GraphEntity(BaseModel):
     """Graph node entity for content and assessment items."""
 
     id: str = Field(description="Unique identifier for the entity")
+    chapter_id: str = Field("", description="Chapter ID this entity belongs to")
     name: str = Field(
         description="The entity name or text (e.g., heading text, question text)"
     )
-    type: str = Field(
-        description=(
-            "Type of entity. Common types include: "
-            "'section', 'subsection', 'activity', 'assessment', 'introduction', "
-            "'content_block', 'assessment_question', 'question_group', 'chapter_assessment'"
-        )
-    )
+    type: EntityType = Field(description=("Type of entity."))
     content: str = Field(
         default="",
         description=(
@@ -87,9 +106,22 @@ class GraphMetrics(BaseModel):
 class KnowledgeGraphConstructor:
     """Constructs and analyzes knowledge graphs."""
 
-    def __init__(self):
+    def __init__(
+        self, prevent_loops: bool = True, connect_isolated_entities: bool = True
+    ):
+        """
+        Initialize the KnowledgeGraphConstructor.
+
+        Args:
+            prevent_loops (bool): If True, filters out relationships that would create cycles in the graph.
+                                Default is True to maintain acyclic structure for educational content.
+            connect_isolated_entities (bool): If True, automatically connects isolated entities to the
+                                            most connected entity in the graph. Default is True.
+        """
         self.graph = nx.DiGraph()
         self.logger = logging.getLogger(__name__)
+        self.prevent_loops = prevent_loops
+        self.connect_isolated_entities = connect_isolated_entities
 
     def build_graph(
         self,
@@ -112,6 +144,9 @@ class KnowledgeGraphConstructor:
                 self._add_relationships_from_data(relationships_data)
             else:
                 self._add_relationships_to_graph(entity_nodes)
+
+            # Connect isolated entities to the most connected entity
+            self._connect_isolated_entities()
 
             # Analyze and export
             metrics = self._analyze_graph()
@@ -141,11 +176,33 @@ class KnowledgeGraphConstructor:
                 entity.type,
             )
 
+    def _would_create_cycle(self, source_id: str, target_id: str) -> bool:
+        """
+        Check if adding an edge from source_id to target_id would create a cycle.
+
+        Args:
+            source_id (str): Source node ID
+            target_id (str): Target node ID
+
+        Returns:
+            bool: True if adding the edge would create a cycle, False otherwise
+        """
+        if not self.prevent_loops:
+            return False
+
+        # If there's already a path from target to source, adding source->target would create a cycle
+        try:
+            return nx.has_path(self.graph, target_id, source_id)
+        except nx.NodeNotFound:
+            # One of the nodes doesn't exist in the graph yet
+            return False
+
     def _add_relationships_from_data(
         self, relationships_data: List[EntityRelationship]
     ):
         """Add edges from relationship data."""
         relationships = relationships_data
+        filtered_count = 0
 
         for rel in relationships:
             source_id = rel.source_entity_id
@@ -153,13 +210,32 @@ class KnowledgeGraphConstructor:
             rel_type = rel.relationship_type
 
             if self.graph.has_node(source_id) and self.graph.has_node(target_id):
+                # Check if adding this edge would create a cycle
+                if self._would_create_cycle(source_id, target_id):
+                    filtered_count += 1
+                    self.logger.debug(
+                        "Filtered relationship %s -> %s (%s) to prevent cycle",
+                        source_id,
+                        target_id,
+                        rel_type,
+                    )
+                    continue
+
                 rel_dict = rel.model_dump()
                 self.graph.add_edge(
                     source_id, target_id, relation_type=rel_type, **rel_dict
                 )
 
+        if filtered_count > 0 and self.prevent_loops:
+            self.logger.info(
+                "Filtered %d relationships to prevent cycles in the graph",
+                filtered_count,
+            )
+
     def _add_relationships_to_graph(self, entity_nodes: List[GraphEntity]):
         """Add edges based on entity relationships (fallback)."""
+        filtered_count = 0
+
         for entity in entity_nodes:
             source_id = entity.id
             entity_dict = entity.model_dump()
@@ -167,6 +243,16 @@ class KnowledgeGraphConstructor:
             # Add prerequisite relationships
             for prereq_id in entity_dict.get("prerequisite_entities", []):
                 if self.graph.has_node(prereq_id):
+                    # Check if adding this edge would create a cycle
+                    if self._would_create_cycle(prereq_id, source_id):
+                        filtered_count += 1
+                        self.logger.debug(
+                            "Filtered prerequisite relationship %s -> %s to prevent cycle",
+                            prereq_id,
+                            source_id,
+                        )
+                        continue
+
                     self.graph.add_edge(
                         prereq_id, source_id, relation_type="prerequisite"
                     )
@@ -174,7 +260,84 @@ class KnowledgeGraphConstructor:
             # Add related entity relationships
             for related_id in entity_dict.get("related_entities", []):
                 if self.graph.has_node(related_id):
+                    # Check if adding this edge would create a cycle
+                    if self._would_create_cycle(source_id, related_id):
+                        filtered_count += 1
+                        self.logger.debug(
+                            "Filtered related relationship %s -> %s to prevent cycle",
+                            source_id,
+                            related_id,
+                        )
+                        continue
+
                     self.graph.add_edge(source_id, related_id, relation_type="related")
+
+        if filtered_count > 0 and self.prevent_loops:
+            self.logger.info(
+                "Filtered %d entity relationships to prevent cycles in the graph",
+                filtered_count,
+            )
+
+    def _connect_isolated_entities(self):
+        """Connect isolated entities to the most connected entity."""
+        if not self.connect_isolated_entities:
+            return
+
+        try:
+            # Get isolated entities (entities with no connections)
+            isolated_entities = [
+                node for node, degree in self.graph.degree() if degree == 0
+            ]
+
+            if not isolated_entities:
+                self.logger.debug("No isolated entities found")
+                return
+
+            # Find the most connected entity (excluding isolated entities)
+            connected_entities = [
+                (node, degree) for node, degree in self.graph.degree() if degree > 0
+            ]
+
+            if not connected_entities:
+                self.logger.debug(
+                    "No connected entities found to link isolated entities to"
+                )
+                return
+
+            # Get the most connected entity
+            most_connected_entity = max(connected_entities, key=lambda x: x[1])[0]
+
+            # Connect each isolated entity to the most connected entity
+            connections_added = 0
+            for isolated_entity in isolated_entities:
+                # Check if this would create a cycle (though it shouldn't for isolated entities)
+                if not self._would_create_cycle(isolated_entity, most_connected_entity):
+                    self.graph.add_edge(
+                        isolated_entity,
+                        most_connected_entity,
+                        relation_type="related",
+                        relationship_type="related",
+                        description=f"Auto-connected isolated entity to most connected entity",
+                        confidence=0.5,  # Lower confidence for auto-generated relationships
+                        source_entity_id=isolated_entity,
+                        target_entity_id=most_connected_entity,
+                    )
+                    connections_added += 1
+                    self.logger.debug(
+                        "Connected isolated entity %s to most connected entity %s",
+                        isolated_entity,
+                        most_connected_entity,
+                    )
+
+            if connections_added > 0:
+                self.logger.info(
+                    "Connected %d isolated entities to the most connected entity (%s)",
+                    connections_added,
+                    most_connected_entity,
+                )
+
+        except Exception as e:
+            self.logger.warning("Error connecting isolated entities: %s", str(e))
 
     def _analyze_graph(self) -> GraphMetrics:
         """Analyze graph and generate insights."""
@@ -198,7 +361,7 @@ class KnowledgeGraphConstructor:
             degree_centrality = nx.degree_centrality(undirected_graph)
             most_connected = sorted(
                 [
-                    (node, degree * (total_nodes - 1))
+                    (node, int(degree * (total_nodes - 1)))
                     for node, degree in degree_centrality.items()
                 ],
                 key=lambda x: x[1],
@@ -405,3 +568,9 @@ class ChapterPageRange(BaseModel):
             raise ValueError(
                 f"end_page ({self.end_page}) must be greater than start_page ({self.start_page})"
             )
+
+
+class ExtractedEntityRelationships(BaseModel):
+    """All relationships extracted between entities in a chapter."""
+
+    relationships: List[EntityRelationship] = Field(description="Entity relationships")

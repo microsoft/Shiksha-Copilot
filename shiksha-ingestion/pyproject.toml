@@ -10,20 +10,60 @@ package-mode = false
 python = "~3.11"
 pytest = "^7.0.0"
 python-dotenv = "^1.0.0"
+pandas = "^2.3.1"
+requests = "^2.32.4"
+tqdm = "^4.67.1"
+openpyxl = "^3.1.5"
+azure-storage-blob = "^12.26.0"
+# Knowledge Graph and Visualization Dependencies
+networkx = "^3.0"
+matplotlib = "^3.7.0"
+plotly = "^5.17.0"
+dash = "^2.14.0"
+pydantic = "^2.5.0"
+py2neo = "^2021.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
 black = "^23.1"
 flake8 = "^6.0"
 
+[tool.poetry.group.graph-viz.dependencies]
+# Interactive web-based visualizations
+bokeh = "^3.3.0"
+holoviews = "^1.18.0"
+datashader = "^0.16.0"
+# Static high-quality plots
+seaborn = "^0.13.0"
+# Jupyter notebook support
+ipywidgets = "^8.1.0"
+jupyter = "^1.0.0"
+
+[tool.poetry.group.advanced-analysis.dependencies]
+# Advanced graph algorithms and analysis
+scipy = "^1.11.0"
+scikit-learn = "^1.3.0"
+# Community detection
+python-louvain = "^0.16"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.poetry.dependencies.vellm-textbook-ingestion-mineru]
-path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/ingestion-pipeline-mineru"
+[tool.poetry.dependencies.ingestion-pipeline]
+path = "/home/kchourasia/ShikshaOSSNew/Shiksha-Copilot/components/ingestion-pipeline"
 develop = true
 
 [tool.poetry.dependencies.vellm-rag-wrapper]
-path = "/home/kavyansh/ShikshaOSS/Shiksha-Copilot/components/rag-wrapper"
+path = "/home/kchourasia/ShikshaOSSNew/Shiksha-Copilot/components/rag-wrapper"
 develop = true
+
+[tool.poetry.extras]
+# Core graph functionality (included by default)
+graph = ["networkx", "matplotlib", "plotly", "pydantic"]
+# Interactive visualizations
+interactive = ["bokeh", "holoviews", "datashader", "ipywidgets", "jupyter"]
+# Advanced graph analysis
+analysis = ["scipy", "scikit-learn", "python-louvain"]
+# Complete package with all features
+all = ["bokeh", "holoviews", "datashader", "ipywidgets", "jupyter", "scipy", "scikit-learn", "python-louvain"]

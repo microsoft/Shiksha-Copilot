@@ -32,14 +32,14 @@ def azure_openai_credentials():
 class KarnatakaLBATextExtractionLLMStep(BasePipelineStep):
     """Extract text from a PDF file using LLM-based extractor."""
 
-    name = "text_extraction_llm"
+    name = "karnataka_lba_text_extraction_llm"
     description = "Extract text from PDF using LLM-based extractor"
-    input_types = {"pdf"}
+    input_types = {"subject_lba_pdf"}
     output_types = {"lba_markdown"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Process the step - extract text from PDF using LLM-based extractor."""
-        pdf_path = input_paths["pdf"]
+        pdf_path = input_paths["subject_lba_pdf"]
         output_filename = os.path.basename(pdf_path).replace(".pdf", ".md")
         output_path = os.path.join(output_dir, output_filename)
 

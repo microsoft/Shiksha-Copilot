@@ -15,6 +15,7 @@ from .knowledge_graph import (
     ExtractEntityContentStep,
     ExtractEntityRelationshipsStep,
     ConstructKnowledgeGraphStep,
+    ExportGraphToNeo4jStep
 )
 from .step_6_subtopic_extraction_rule_based_cleaning import SubtopicCleaningStep
 from .step_7_subtopic_wise_lo_extraction import SubtopicWiseLOExtractionStep
@@ -34,6 +35,7 @@ __all__ = [
     "ExtractEntityContentStep",
     "ExtractEntityRelationshipsStep",
     "ConstructKnowledgeGraphStep",
+    "ExportGraphToNeo4jStep",
     "SubtopicCleaningStep",
     "SubtopicWiseLOExtractionStep",
     "CreateIndexStep",

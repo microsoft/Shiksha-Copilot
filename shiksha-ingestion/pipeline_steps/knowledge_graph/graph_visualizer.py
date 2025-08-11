@@ -18,6 +18,8 @@ import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
 import pandas as pd
 
+from .models import EntityType, RELATIONSHIP_TYPES
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,20 +34,61 @@ class GraphVisualizer:
             graph_data: Dictionary containing graph nodes, edges, and metadata
         """
         self.graph_data = graph_data
+        # Color mapping based on EntityType enum from models.py
         self.color_map = {
-            "concept": "#4CAF50",
-            "activity": "#2196F3",
-            "assessment": "#FF9800",
-            "section": "#9C27B0",
-            "example": "#00BCD4",
-            "definition": "#795548",
-            "application": "#F44336",
+            EntityType.SECTION: "#9C27B0",  # Purple
+            EntityType.SUBSECTION: "#673AB7",  # Deep Purple
+            EntityType.ACTIVITY: "#2196F3",  # Blue
+            EntityType.ASSESSMENT: "#FF9800",  # Orange
+            EntityType.ASSESSMENT_LBA: "#F44336",  # Red
+            EntityType.INTRODUCTION: "#4CAF50",  # Green
+            EntityType.CONTENT_BLOCK: "#795548",  # Brown
         }
+
+        # Relationship color mapping based on RELATIONSHIP_TYPES from models.py
+        self.relationship_colors = {}
+        for i, (rel_type, description) in enumerate(RELATIONSHIP_TYPES):
+            colors = [
+                "#FF5722",
+                "#009688",
+                "#E91E63",
+                "#673AB7",
+                "#3F51B5",
+                "#FFC107",
+                "#607D8B",
+                "#FF6F00",
+            ]
+            self.relationship_colors[rel_type] = colors[i % len(colors)]
 
     def create_interactive_html(
         self, output_path: str, title: str = "Chapter Knowledge Graph"
     ):
         """Create an interactive HTML visualization using D3.js."""
+
+        # Generate node type legend items
+        node_legend_items = ""
+        for entity_type in EntityType:
+            color = self.color_map.get(entity_type, "#999")
+            display_name = entity_type.value.replace("_", " ").title()
+            node_legend_items += f"""
+        <div class="legend-item">
+            <span class="legend-color" style="background: {color};"></span>
+            <span>{display_name}</span>
+        </div>"""
+
+        # Generate relationship type legend items
+        relationship_legend_items = ""
+        for rel_type, description in RELATIONSHIP_TYPES:
+            color = self.relationship_colors.get(rel_type, "#999")
+            display_name = rel_type.replace("_", " ").title()
+            relationship_legend_items += f"""
+        <div class="legend-item">
+            <svg height="2" width="20">
+                <line x1="0" y1="1" x2="20" y2="1" stroke="{color}" stroke-width="2"></line>
+            </svg>
+            <span>{display_name}</span>
+            <span class="legend-description" style="font-size: 10px; color: #666; margin-left: 5px;">({description})</span>
+        </div>"""
 
         html_template = """
 <!DOCTYPE html>
@@ -116,6 +159,37 @@ class GraphVisualizer:
             marker-end: url(#arrowhead-demonstrates);
         }}
         
+        .link.explains {{
+            stroke: #673AB7;
+            stroke-width: 1.2px;
+        }}
+        
+        .link.explains.directed {{
+            marker-end: url(#arrowhead-explains);
+        }}
+        
+        .link.applies {{
+            stroke: #3F51B5;
+            stroke-width: 1.2px;
+        }}
+        
+        .link.applies.directed {{
+            marker-end: url(#arrowhead-applies);
+        }}
+        
+        .link.tests {{
+            stroke: #FFC107;
+            stroke-width: 1.2px;
+        }}
+        
+        .link.tests.directed {{
+            marker-end: url(#arrowhead-tests);
+        }}
+        
+        .link.related.directed {{
+            marker-end: url(#arrowhead-related);
+        }}
+        
         .node-label {{
             font-size: 12px;
             text-anchor: middle;
@@ -141,6 +215,16 @@ class GraphVisualizer:
             display: inline-block;
             margin-right: 15px;
             margin-bottom: 5px;
+            max-width: 300px;
+        }}
+        
+        .legend-description {{
+            font-size: 10px;
+            color: #666;
+            margin-left: 5px;
+            font-style: italic;
+            display: block;
+            margin-top: 2px;
         }}
         
         .legend-color {{
@@ -181,8 +265,6 @@ class GraphVisualizer:
         <button class="control-button" onclick="fitToScreen()">Fit to Screen</button>
         <button class="control-button" onclick="toggleNodeLabels()">Toggle Labels</button>
         <button class="control-button" onclick="toggleArrows()">Toggle Arrows</button>
-        <button class="control-button" onclick="toggleDirectedConnections()">Toggle Directed</button>
-        <button class="control-button" onclick="toggleUndirectedConnections()">Toggle Undirected</button>
         <button class="control-button" onclick="reduceNodeSize()">Smaller Nodes</button>
         <button class="control-button" onclick="increaseNodeSize()">Larger Nodes</button>
     </div>
@@ -192,79 +274,9 @@ class GraphVisualizer:
     </div>
     
     <div class="legend">
-        <h3>Node Types:</h3>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #4CAF50;"></span>
-            <span>Concept</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #2196F3;"></span>
-            <span>Activity</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #FF9800;"></span>
-            <span>Assessment</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #9C27B0;"></span>
-            <span>Section</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #00BCD4;"></span>
-            <span>Example</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #795548;"></span>
-            <span>Definition</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-color" style="background: #F44336;"></span>
-            <span>Application</span>
-        </div>
+        <h3>Node Types:</h3>{node_legend_items}
         
-        <h3>Relationship Types:</h3>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#FF5722" stroke-width="2"></line>
-            </svg>
-            <span>Prerequisite</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#009688" stroke-width="2"></line>
-            </svg>
-            <span>Builds Upon</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#E91E63" stroke-width="2"></line>
-            </svg>
-            <span>Demonstrates</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#673AB7" stroke-width="2"></line>
-            </svg>
-            <span>Explains</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#3F51B5" stroke-width="2"></line>
-            </svg>
-            <span>Applies</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#FFC107" stroke-width="2"></line>
-            </svg>
-            <span>Tests</span>
-        </div>
-        <div class="legend-item">
-            <svg height="2" width="20">
-                <line x1="0" y1="1" x2="20" y2="1" stroke="#607D8B" stroke-width="1"></line>
-            </svg>
-            <span>Related</span>
-        </div>
+        <h3>Relationship Types:</h3>{relationship_legend_items}
     </div>
     
     <div class="tooltip" style="opacity: 0;"></div>
@@ -326,18 +338,67 @@ class GraphVisualizer:
             .append("path")
             .attr("d", "M0,-5L10,0L0,5")
             .attr("fill", "#E91E63");
+            
+        // Explains relationship marker
+        defs.append("marker")
+            .attr("id", "arrowhead-explains")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#673AB7");
+            
+        // Applies relationship marker
+        defs.append("marker")
+            .attr("id", "arrowhead-applies")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#3F51B5");
+            
+        // Tests relationship marker
+        defs.append("marker")
+            .attr("id", "arrowhead-tests")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#FFC107");
+            
+        // Related relationship marker
+        defs.append("marker")
+            .attr("id", "arrowhead-related")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 15)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#607D8B");
         
         const colorMap = {color_map};
         
         // Global variables for visualization settings
         let nodeScaleFactor = 2.5;  // Default node size scaling factor
         let showArrows = true;      // Default to show arrows
-        let showDirectedConnections = true;    // Default to show directed connections
-        let showUndirectedConnections = true;  // Default to show undirected connections
         
-        // Define which relationship types are directed vs undirected
-        const directedRelationships = ["prerequisite", "builds_upon", "demonstrates", "explains", "applies", "tests"];
-        const undirectedRelationships = ["related"];
+        // All relationship types are now directed
+        const directedRelationships = ["prerequisite", "builds_upon", "demonstrates", "explains", "applies", "tests", "related"];
         
         // Create simulation with more appropriate spacing
         const simulation = d3.forceSimulation(graphData.nodes)
@@ -353,10 +414,8 @@ class GraphVisualizer:
             .data(graphData.edges)
             .join("line")
             .attr("class", d => {{
-                const isDirected = directedRelationships.includes(d.type);
-                const directionClass = isDirected ? "directed-link" : "undirected-link";
                 const arrowClass = showArrows ? "directed" : "";
-                return `link ${{d.type}} ${{directionClass}} ${{arrowClass}}`;
+                return `link ${{d.type}} directed-link ${{arrowClass}}`;
             }})
             .attr("stroke-width", function(d) {{
                 if (d.type === "prerequisite") return 2;
@@ -504,24 +563,6 @@ class GraphVisualizer:
             }}
         }}
         
-        function toggleDirectedConnections() {{
-            showDirectedConnections = !showDirectedConnections;
-            if (showDirectedConnections) {{
-                link.filter(".directed-link").style("opacity", 1);
-            }} else {{
-                link.filter(".directed-link").style("opacity", 0);
-            }}
-        }}
-        
-        function toggleUndirectedConnections() {{
-            showUndirectedConnections = !showUndirectedConnections;
-            if (showUndirectedConnections) {{
-                link.filter(".undirected-link").style("opacity", 1);
-            }} else {{
-                link.filter(".undirected-link").style("opacity", 0);
-            }}
-        }}
-        
         function reduceNodeSize() {{
             nodeScaleFactor = Math.max(1, nodeScaleFactor - 0.5);
             node.attr("r", d => Math.max(5, d.size * nodeScaleFactor));
@@ -553,6 +594,8 @@ class GraphVisualizer:
             file.write(
                 html_template.format(
                     title=title,
+                    node_legend_items=node_legend_items,
+                    relationship_legend_items=relationship_legend_items,
                     graph_data=json.dumps(self.graph_data["graph_data"]),
                     color_map=json.dumps(self.color_map),
                 )
@@ -700,7 +743,15 @@ class GraphVisualizer:
             (explains_edges, "#673AB7", 1.2, 0.6, True, 8, "arc3,rad=0.05"),  # explains
             (applies_edges, "#3F51B5", 1.2, 0.6, True, 8, "arc3,rad=0"),  # applies
             (tests_edges, "#FFC107", 1.2, 0.6, True, 8, "arc3,rad=0"),  # tests
-            (related_edges, "#607D8B", 1.0, 0.4, False, 0, None),  # related
+            (
+                related_edges,
+                "#607D8B",
+                1.0,
+                0.4,
+                True,
+                8,
+                "arc3,rad=0",
+            ),  # related - now directed
         ]
 
         # Draw all edge types with their specific styles
@@ -732,27 +783,29 @@ class GraphVisualizer:
         }
         nx.draw_networkx_labels(G, pos, labels, font_size=8)
 
-        # Create legend for node types
-        node_legend_elements = [
-            mpatches.Patch(color=color, label=node_type.capitalize())
-            for node_type, color in self.color_map.items()
-            if node_type in node_types
-        ]
+        # Create legend for node types - use proper display names
+        node_legend_elements = []
+        for node_type, color in self.color_map.items():
+            if node_type in node_types:
+                # Create proper display name
+                if isinstance(node_type, EntityType):
+                    display_name = node_type.value.replace("_", " ").title()
+                else:
+                    display_name = str(node_type).replace("_", " ").title()
+                node_legend_elements.append(
+                    mpatches.Patch(color=color, label=display_name)
+                )
 
-        # Create legend for relationship types
-        relationship_colors = {
-            "Prerequisite": "#FF5722",
-            "Builds Upon": "#009688",
-            "Demonstrates": "#E91E63",
-            "Explains": "#673AB7",
-            "Applies": "#3F51B5",
-            "Tests": "#FFC107",
-            "Related": "#607D8B",
-        }
+        # Create legend for relationship types - use dynamic colors from models.py
+        relationship_colors_for_legend = {}
+        for rel_type, description in RELATIONSHIP_TYPES:
+            color = self.relationship_colors.get(rel_type, "#999")
+            display_name = rel_type.replace("_", " ").title()
+            relationship_colors_for_legend[display_name] = color
 
         edge_legend_elements = [
             mlines.Line2D([0], [0], color=color, lw=2, label=rel_type)
-            for rel_type, color in relationship_colors.items()
+            for rel_type, color in relationship_colors_for_legend.items()
         ]
 
         # Add both node and edge legends

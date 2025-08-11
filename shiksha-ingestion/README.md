@@ -15,11 +15,13 @@ The ingestion pipeline consists of 8 distinct steps that transform raw PDF textb
 7. **Subtopic-Wise Learning Outcomes Extraction** - Generates learning outcomes for individual subtopics
 8. **Create Index** - Creates searchable indexes for chapter content to enable efficient retrieval
 
+**Additional Knowledge Graph Module:** The pipeline also includes a specialized knowledge graph module that can construct educational knowledge graphs from textbook content, identifying entities, their relationships, and learning pathways. This module consists of 4 additional steps for entity extraction, content mapping, relationship identification, and graph construction.
+
 ## Project Structure
 
 ```
 shiksha-ingestion/
-├── pipeline_runner.py              # Main pipeline execution script
+├── pipeline_runner.py              # Sample pipeline execution script
 ├── pyproject.toml                  # Project dependencies and configuration
 ├── pipeline_steps/                 # Individual pipeline step implementations
 │   ├── __init__.py
@@ -32,7 +34,20 @@ shiksha-ingestion/
 │   ├── step_5_subtopic_chapter_level_los_extraction.py
 │   ├── step_6_subtopic_extraction_rule_based_cleaning.py
 │   ├── step_7_subtopic_wise_lo_extraction.py
-│   └── step_8_create_indexes.py
+│   ├── step_8_create_indexes.py
+│   └── knowledge_graph/            # Knowledge graph pipeline steps
+│       ├── __init__.py
+│       ├── models.py               # Data models for entities and relationships
+│       ├── step_1_extract_entities.py      # Entity extraction from chapters
+│       ├── step_2_extract_entity_content.py # Content extraction for entities
+│       ├── step_3_extract_entity_relationships.py # Relationship identification
+│       ├── step_4_construct_knowledge_graph.py    # Graph construction
+│       ├── graph_visualizer.py     # Graph visualization utilities
+│       └── karnataka_lba/          # Karnataka Learning-Based Assessment module
+│           ├── __init__.py
+│           ├── step_1_karnataka_lba_text_extraction_llm.py     # LBA text extraction
+│           ├── step_2_karnataka_lba_chapter_wise_page_range.py # Chapter page ranges
+│           └── step_3_karnataka_lba_question_graph_entity_extraction.py # Question entities
 └── README.md                       # This file
 ```
 
@@ -202,6 +217,224 @@ shiksha-ingestion/
   - Supports efficient semantic search and retrieval
   - Integrates with RAG wrapper for question answering
 
+## Knowledge Graph Module
+
+The knowledge graph module (`pipeline_steps/knowledge_graph/`) provides specialized steps for constructing educational knowledge graphs from textbook content. These steps create structured representations of concepts, their relationships, and learning pathways.
+
+### Knowledge Graph Pipeline Steps
+
+#### Step 1: Entity Extraction
+**File:** `step_1_extract_entities.py`
+**Class:** `ExtractChapterEntitiesStep`
+
+- **Purpose:** Extracts structural entities (headings, sections, activities) from textbook chapters
+- **Input:** Cleaned markdown file
+- **Output:** JSON file with extracted entities
+- **Features:**
+  - Identifies all headings and subheadings (excluding main chapter title)
+  - Extracts content blocks without formal headings (introductions, transitions)
+  - Categorizes entities by type (section, subsection, activity, assessment, introduction, content_block)
+  - Creates unique identifiers and summaries for each entity
+  - Maintains complete chapter coverage - no content is left unmapped
+
+#### Step 2: Entity Content Extraction
+**File:** `step_2_extract_entity_content.py`
+**Class:** `ExtractEntityContentStep`
+
+- **Purpose:** Extracts complete content for each identified entity
+- **Input:** Cleaned markdown file + entity list from Step 1
+- **Output:** JSON file with entity content mappings
+- **Features:**
+  - Extracts all content under each entity heading
+  - Preserves original markdown formatting
+  - Includes tables, figures, lists, and supplementary content
+  - Maintains content boundaries between entities
+  - Ensures completeness - no content is omitted
+
+#### Step 3: Entity Relationship Extraction
+**File:** `step_3_extract_entity_relationships.py`
+**Class:** `ExtractEntityRelationshipsStep`
+
+- **Purpose:** Identifies semantic and structural relationships between entities
+- **Input:** Entities with content from Step 2
+- **Output:** JSON file with relationship mappings
+- **Features:**
+  - Supports multiple relationship types:
+    - `prerequisite`: Entity A must be understood before Entity B
+    - `builds_upon`: Entity B extends concepts from Entity A
+    - `demonstrates`: Entity A provides examples of Entity B
+    - `tests`: Entity A (assessment) tests knowledge of Entity B
+    - `explains`: Entity A provides theory for Entity B
+    - `applies`: Entity A shows practical application of Entity B
+    - `related`: General semantic relationship
+  - Provides confidence scores for each relationship
+  - Uses Azure OpenAI for intelligent relationship detection
+
+#### Step 4: Knowledge Graph Construction
+**File:** `step_4_construct_knowledge_graph.py`
+**Class:** `ConstructKnowledgeGraphStep`
+
+- **Purpose:** Builds final knowledge graph structure from entities and relationships
+- **Input:** Entities from Step 1 + Relationships from Step 3
+- **Output:** Complete knowledge graph with metrics and insights
+- **Features:**
+  - Creates NetworkX-based graph structure
+  - Generates graph metrics (node count, edge count, connectivity statistics)
+  - Validates graph integrity and completeness
+  - Produces exportable graph formats
+  - Provides educational pathway analysis
+
+### Graph Visualization (`graph_visualizer.py`)
+
+**GraphVisualizer Class:**
+- **Interactive HTML Visualizations:** D3.js-based interactive graphs
+- **Static Export Formats:** PNG, SVG, PDF visualizations
+- **Educational Dashboards:** Learning pathway visualizations
+- **Customizable Styling:** Node colors, relationship types, layouts
+- **Export Capabilities:** Multiple output formats for different use cases
+
+### Knowledge Graph Output Structure
+
+After successful knowledge graph construction:
+
+```
+knowledge_graph_output/
+├── entities.json                    # Extracted entities with content
+├── relationships.json               # Entity relationships with confidence scores
+├── knowledge_graph.json            # Complete graph structure
+├── graph_metrics.json              # Graph analysis and metrics
+└── visualizations/
+    ├── interactive_graph.html       # Interactive D3.js visualization
+    ├── static_graph.png            # Static graph image
+    └── learning_pathways.html       # Educational pathway visualization
+```
+
+### Integration with Main Pipeline
+
+The knowledge graph module can be integrated into the main pipeline by adding the knowledge graph steps to the pipeline configuration:
+
+```python
+"steps": [
+    # ... existing steps
+    {
+        "name": "extract_chapter_entities",
+        "enabled": True,
+    },
+    {
+        "name": "extract_entity_content", 
+        "enabled": True,
+    },
+    {
+        "name": "extract_entity_relationships",
+        "enabled": True,
+    },
+    {
+        "name": "construct_knowledge_graph",
+        "enabled": True,
+    },
+]
+```
+
+### Karnataka LBA (Learning-Based Assessment) Module
+
+The Karnataka LBA module (`pipeline_steps/knowledge_graph/karnataka_lba/`) provides specialized steps for processing Karnataka state Learning-Based Assessment textbooks and question papers. This module focuses on extracting assessment questions and creating knowledge graphs specific to the Karnataka education system.
+
+#### Karnataka LBA Pipeline Steps
+
+##### Step 1: Karnataka LBA Text Extraction
+**File:** `step_1_karnataka_lba_text_extraction_llm.py`
+**Class:** `KarnatakaLBATextExtractionLLMStep`
+
+- **Purpose:** Extracts text from Karnataka LBA PDF files using Azure OpenAI LLM
+- **Input:** PDF file containing Karnataka LBA content
+- **Output:** Markdown file with extracted text
+- **Features:**
+  - Specialized for Karnataka LBA document format
+  - Uses Azure OpenAI vision capabilities for accurate text extraction
+  - Optimized for assessment question extraction
+  - Preserves question structure and formatting
+
+##### Step 2: Karnataka LBA Chapter Page Range Extraction
+**File:** `step_2_karnataka_lba_chapter_wise_page_range.py`
+**Class:** `KarnatakaLBAPageRangeExtractionStep`
+
+- **Purpose:** Identifies page ranges for each chapter's assessment questions
+- **Input:** Markdown file from Step 1
+- **Output:** JSON file with chapter page ranges
+- **Features:**
+  - Extracts chapter numbers and titles
+  - Identifies page ranges containing actual assessment questions
+  - Excludes non-question content (learning outcomes, distributions)
+  - Uses intelligent page boundary detection
+  - Validates page range consistency
+
+##### Step 3: Karnataka LBA Question Entity Extraction
+**File:** `step_3_karnataka_lba_question_graph_entity_extraction.py`
+**Class:** `KarnatakaLBAQuestionExtractionStep`
+
+- **Purpose:** Extracts individual assessment questions as graph entities
+- **Input:** Markdown content + chapter page ranges
+- **Output:** JSON file with question entities
+- **Features:**
+  - Extracts individual questions with common instructions
+  - Preserves question groupings for related questions
+  - Creates graph entities for each question or question group
+  - Maintains question context and formatting
+  - Supports various question types (MCQ, descriptive, match-the-following)
+
+#### Karnataka LBA Output Structure
+
+After successful Karnataka LBA processing:
+
+```
+karnataka_lba_output/
+├── lba_text_extraction/
+│   └── lba_textbook.md             # Extracted markdown content
+├── chapter_page_ranges/
+│   └── chapter_ranges.json         # Chapter page range mappings
+├── question_entities/
+│   └── question_graph_entities.json # Assessment question entities
+└── lba_knowledge_graph/
+    ├── lba_entities.json           # Complete LBA entity graph
+    ├── lba_relationships.json      # Question-concept relationships
+    └── lba_visualizations/
+        └── assessment_graph.html   # Assessment knowledge graph
+```
+
+#### Integration with Knowledge Graph Pipeline
+
+The Karnataka LBA module can be integrated with the main knowledge graph pipeline to create comprehensive educational knowledge graphs that include both content entities and assessment entities:
+
+```python
+"steps": [
+    # Main content processing
+    {
+        "name": "extract_chapter_entities",
+        "enabled": True,
+    },
+    # Karnataka LBA processing
+    {
+        "name": "karnataka_lba_text_extraction_llm",
+        "enabled": True,
+    },
+    {
+        "name": "karnataka_lba_chapter_page_range_extraction",
+        "enabled": True,
+    },
+    {
+        "name": "karnataka_lba_question_graph_entity_extraction",
+        "enabled": True,
+    },
+    # Combined graph construction
+    {
+        "name": "construct_knowledge_graph",
+        "enabled": True,
+    },
+]
+```
+
+This integration allows for creating unified knowledge graphs that connect textbook content with assessment questions, enabling more comprehensive educational analysis and question-answering capabilities.
+
 ## Pipeline Runner
 
 ### Description
@@ -323,11 +556,25 @@ pipeline_output/20231201_143022/
 │   └── chapter_1_cleaned_metadata.json
 ├── subtopic_wise_lo_extraction/
 │   └── chapter_1_subtopic_los.json
-└── create_index/
-    └── grade/
-        └── subject/
-            └── chapter_number/
-                └── [index files]
+├── create_index/
+│   └── grade/
+│       └── subject/
+│           └── chapter_number/
+│               └── [index files]
+└── knowledge_graph/                # Knowledge graph outputs (if enabled)
+    ├── entities.json
+    ├── relationships.json
+    ├── knowledge_graph.json
+    ├── graph_metrics.json
+    ├── visualizations/
+    │   ├── interactive_graph.html
+    │   ├── static_graph.png
+    │   └── learning_pathways.html
+    └── karnataka_lba/              # Karnataka LBA outputs (if enabled)
+        ├── lba_text_extraction/
+        ├── chapter_page_ranges/
+        ├── question_entities/
+        └── lba_knowledge_graph/
 ```
 
 ## Dependencies

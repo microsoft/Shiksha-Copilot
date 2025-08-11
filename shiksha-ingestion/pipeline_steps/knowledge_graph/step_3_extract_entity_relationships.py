@@ -13,7 +13,12 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
-from pipeline_steps.knowledge_graph.models import EntityRelationship
+from pipeline_steps.knowledge_graph.models import (
+    EntityRelationship,
+    ExtractedEntityRelationships,
+    GraphEntity,
+    RELATIONSHIP_TYPES
+)
 
 # Configure logging
 logging.basicConfig(
@@ -22,53 +27,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
-
-
-class ExtractedEntityRelationships(BaseModel):
-    """All relationships extracted between entities in a chapter."""
-
-    relationships: List[EntityRelationship] = Field(
-        description=dedent(
-            """
-            List of extracted relationships between entities in this chapter.
-
-            Each item is an EntityRelationship object with the following attributes:
-            - source_entity_id: ID of the source entity
-            - target_entity_id: ID of the target entity
-            - relationship_type: Type of relationship ('prerequisite', 'builds_upon', 'demonstrates', 'tests', 'explains', 'applies', 'related')
-            - description: Brief description of how the entities are related
-            - confidence: Confidence score (0.0-1.0) for this relationship
-
-            Extract relationships between entities in this chapter. For each pair of related entities, identify:
-
-            RELATIONSHIP TYPES:
-            - "prerequisite": Entity A must be understood before Entity B
-            - "builds_upon": Entity B extends or builds upon concepts from Entity A
-            - "demonstrates": Entity A provides an example or demonstration of Entity B
-            - "tests": Entity A (assessment) tests knowledge of Entity B (concept)
-            - "explains": Entity A provides explanation or theory for Entity B
-            - "applies": Entity A shows practical application of Entity B
-            - "related": General semantic relationship between entities
-
-            RELATIONSHIP IDENTIFICATION GUIDELINES:
-            1. Look for explicit connections in the chapter text
-            2. Identify logical prerequisite sequences (basic concepts before advanced)
-            3. Connect activities to the concepts they demonstrate
-            4. Link assessments to the concepts they test
-            5. Connect examples to the principles they illustrate
-            6. Identify cross-references and dependencies
-
-            CONFIDENCE SCORING:
-            - 1.0: Explicitly stated relationship in text
-            - 0.8: Strong logical connection evident from content
-            - 0.6: Moderate connection based on educational flow
-            - 0.4: Weak but plausible relationship
-            - 0.2: Uncertain relationship
-
-            Focus on creating a comprehensive network that represents the educational flow and dependencies.
-            """
-        )
-    )
 
 
 def azure_openai_credentials() -> Dict[str, Optional[str]]:
@@ -108,20 +66,18 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
 
     name = "extract_entity_relationships"
     description = "Extract relationships between entities using Azure OpenAI"
-    input_types = {"entity_content", "chapter_entities"}
+    input_types = {"entity_with_content"}
+    optional_input_types = {"lba_entities"}
     output_types = {"entity_relationships"}
 
     def process(self, input_paths: Dict[str, str], output_dir: str) -> StepResult:
         """Run the entity relationship extraction step."""
         try:
             # Validate input parameters
-            entity_content_path = input_paths.get("entity_content")
-            chapter_concepts_path = input_paths.get("chapter_entities")
-
-            if not entity_content_path or not chapter_concepts_path:
-                raise ValueError(
-                    "Both 'entity_content' and 'chapter_concepts' input paths must be provided"
-                )
+            entity_content_path = input_paths.get("entity_with_content")
+            lba_entity_content_path = input_paths.get(
+                "lba_entities"
+            )  # Optional LBA entity inputs
 
             logger.info(
                 "Processing entity relationship extraction for: %s", entity_content_path
@@ -131,11 +87,6 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             if not os.path.exists(entity_content_path):
                 raise FileNotFoundError(
                     f"Entity content file not found: {entity_content_path}"
-                )
-
-            if not os.path.exists(chapter_concepts_path):
-                raise FileNotFoundError(
-                    f"Chapter concepts file not found: {chapter_concepts_path}"
                 )
 
             # Create output directory if it doesn't exist
@@ -150,11 +101,22 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
 
             # Load entity data
             entity_content_data = self._load_json_file(entity_content_path)
-            chapter_concepts_data = self._load_json_file(chapter_concepts_path)
+            if lba_entity_content_path and os.path.exists(lba_entity_content_path):
+                lba_entities = self._load_json_file(lba_entity_content_path)
+                logger.info(
+                    "Loaded Additional %d LBA entities",
+                    len(lba_entities),
+                )
+                entity_content_data.extend(lba_entities)
+
+            logger.info(
+                "Total entities for relationship extraction: %d",
+                len(entity_content_data),
+            )
 
             # Extract relationships
             extracted_relationships = self._extract_relationships(
-                entity_content_data, chapter_concepts_data, extractor, credentials
+                entity_content_data, extractor, credentials
             )
 
             # Save results to output file
@@ -177,21 +139,20 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             logger.exception("Error during entity relationship extraction: %s", str(e))
             return StepResult(status=StepStatus.FAILED, error=e)
 
-    def _load_json_file(self, file_path: str) -> Dict:
+    def _load_json_file(self, file_path: str) -> List[GraphEntity]:
         """Load JSON data from file."""
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)
             logger.debug("Successfully loaded JSON data from %s", file_path)
-            return data
+            return [GraphEntity(**entity) for entity in data]
         except (json.JSONDecodeError, IOError) as e:
             logger.error("Error reading JSON file %s: %s", file_path, str(e))
             raise
 
     def _extract_relationships(
         self,
-        entity_content_data: List[Dict],
-        chapter_concepts_data: Dict,
+        entity_content_data: List[GraphEntity],
         extractor: SimpleMetadataExtractor,
         credentials: Dict[str, str],
     ) -> ExtractedEntityRelationships:
@@ -202,17 +163,14 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             all_relationships = []
             processed_entity_ids = set()
 
-            # Get all entity IDs for reference
-            entity_ids = [entity.get("entity_id") for entity in entity_content_data]
-
             # Process each entity one at a time
             for idx, current_entity in enumerate(entity_content_data):
-                current_entity_id = current_entity.get("entity_id")
+                current_entity_id = current_entity.id
                 logger.info(
                     "Processing entity %d/%d: %s",
                     idx + 1,
                     len(entity_content_data),
-                    current_entity.get("entity_name", current_entity_id),
+                    current_entity.name,
                 )
 
                 # Skip if already processed
@@ -224,7 +182,7 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
 
                 # Prepare context for current entity
                 relationship_context = self._prepare_entity_focused_context(
-                    current_entity, entity_content_data, chapter_concepts_data
+                    current_entity, entity_content_data
                 )
 
                 # Create a custom description for the relationships model
@@ -280,9 +238,8 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
 
     def _prepare_entity_focused_context(
         self,
-        current_entity: Dict,
-        entity_content_data: List[Dict],
-        chapter_concepts_data: Dict,
+        current_entity: GraphEntity,
+        entity_content_data: List[GraphEntity],
     ) -> str:
         """
         Prepare context text focused on a single entity for relationship extraction.
@@ -290,38 +247,37 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
         Args:
             current_entity: The entity to focus on
             entity_content_data: List of all entity content data
-            chapter_concepts_data: Chapter concepts metadata
 
         Returns:
             str: Formatted context for relationship analysis
         """
-        current_entity_id = current_entity.get("entity_id", "unknown")
+        current_entity_id = current_entity.id
         context_parts = []
 
         # Add focused entity metadata first
         context_parts.append("=== FOCUS ENTITY ===")
         context_parts.append(
             f"Entity ID: {current_entity_id}\n"
-            f"Name: {current_entity.get('entity_name', 'unknown')}\n"
-            f"Type: {current_entity.get('entity_type', 'unknown')}\n"
-            f"Content: {current_entity.get('content', '')}\n"
+            f"Name: {current_entity.name}\n"
+            f"Type: {current_entity.type}\n"
+            f"Content: {current_entity.content}\n"
         )
 
         # Add all other entity metadata
         context_parts.append("\n=== OTHER ENTITIES ===")
         for entity in entity_content_data:
-            entity_id = entity.get("entity_id", "unknown")
+            entity_id = entity.id
             if entity_id != current_entity_id:
                 context_parts.append(
                     f"Entity ID: {entity_id}\n"
-                    f"Name: {entity.get('entity_name', 'unknown')}\n"
-                    f"Type: {entity.get('entity_type', 'unknown')}\n"
-                    f"Content: {entity.get('content', '')[:300]}...\n"
+                    f"Name: {entity.name}\n"
+                    f"Type: {entity.type}\n"
+                    f"Content: {entity.content}\n"
                 )
 
         return "\n".join(context_parts)
 
-    def _create_entity_focused_model(self, entity: Dict) -> type:
+    def _create_entity_focused_model(self, entity: GraphEntity) -> type:
         """
         Create a custom model with entity-focused description for the relationships attribute.
 
@@ -331,10 +287,18 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
         Returns:
             type: A custom model with entity-specific description
         """
-        entity_id = entity.get("entity_id", "unknown")
-        entity_name = entity.get("entity_name", "unknown")
-        entity_type = entity.get("entity_type", "unknown")
-        entity_content = entity.get("content", "")[:500]  # First 500 chars for context
+        entity_id = entity.id
+        entity_name = entity.name
+        entity_type = entity.type
+        entity_content = entity.content[:200]  # First 200 chars for context
+
+        # Create list of relationship types from the constant
+        relationship_types_text = "\n".join(
+            [
+                f'            - "{rel_type}": {description}'
+                for rel_type, description in RELATIONSHIP_TYPES
+            ]
+        )
 
         # Create custom description focused on this entity
         custom_description = dedent(
@@ -347,7 +311,7 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             Each item is an EntityRelationship object with the following attributes:
             - source_entity_id: ID of the source entity
             - target_entity_id: ID of the target entity 
-            - relationship_type: Type of relationship ('prerequisite', 'builds_upon', 'demonstrates', 'tests', 'explains', 'applies', 'related')
+            - relationship_type: Type of relationship ({', '.join([f"'{rt}'" for rt, _ in RELATIONSHIP_TYPES])})
             - description: Brief description of how the entities are related
             - confidence: Confidence score (0.0-1.0) for this relationship
 
@@ -355,13 +319,7 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             For each related entity pair, identify:
 
             RELATIONSHIP TYPES:
-            - "prerequisite": Entity A must be understood before Entity B
-            - "builds_upon": Entity B extends or builds upon concepts from Entity A
-            - "demonstrates": Entity A provides an example or demonstration of Entity B
-            - "tests": Entity A (assessment) tests knowledge of Entity B (concept)
-            - "explains": Entity A provides explanation or theory for Entity B
-            - "applies": Entity A shows practical application of Entity B
-            - "related": General semantic relationship between entities
+{relationship_types_text}
 
             RELATIONSHIP IDENTIFICATION GUIDELINES:
             1. Look for explicit connections in the text
@@ -465,17 +423,9 @@ class ExtractEntityRelationshipsStep(BasePipelineStep):
             output_path = os.path.join(output_dir, output_filename)
 
             # Convert to dict format
-            output_data = {
-                "relationships": [
-                    rel.dict() for rel in extracted_relationships.relationships
-                ],
-                "metadata": {
-                    "total_relationships": len(extracted_relationships.relationships),
-                    "relationship_types": self._analyze_relationship_types(
-                        extracted_relationships.relationships
-                    ),
-                },
-            }
+            output_data = [
+                rel.model_dump() for rel in extracted_relationships.relationships
+            ]
 
             # Write extracted relationships to JSON file
             with open(output_path, "w", encoding="utf-8") as json_file:
