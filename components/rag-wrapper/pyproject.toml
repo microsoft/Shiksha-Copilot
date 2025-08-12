@@ -26,6 +26,7 @@ llama-index-instrumentation = "0.2.0"
 llama-index-llms-azure-openai = "0.3.4"
 llama-index-llms-openai = "0.4.7"
 llama-index-vector-stores-azureaisearch = "0.3.8"
+llama-index-vector-stores-qdrant = "0.6.1"
 llama-index-workflows = "1.1.0"
 azure-search-documents = "11.5.1"
 
