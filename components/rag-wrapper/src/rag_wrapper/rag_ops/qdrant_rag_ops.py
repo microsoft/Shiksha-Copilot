@@ -1,12 +1,18 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.llms import LLM
-from llama_index.vector_stores.qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
+from llama_index.vector_stores.qdrant.base import QdrantVectorStore, DEFAULT_DENSE_VECTOR_NAME
+from qdrant_client.http.models import VectorParams, Distance
+from qdrant_client import QdrantClient, AsyncQdrantClient
 from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 
 class QdrantRagOps(BaseVectorIndexRagOps):
-    """Qdrant RAG operations for vector database."""
+    """Qdrant RAG operations for vector database.
+    
+    Supports both synchronous and asynchronous Qdrant clients by providing
+    both client types to the QdrantVectorStore for maximum flexibility.
+    Uses async client for index existence checks.
+    """
 
     _ERROR = ValueError(
         "Qdrant index is not properly initialized. "
@@ -34,23 +40,47 @@ class QdrantRagOps(BaseVectorIndexRagOps):
             vector_store_kwargs: Additional vector store configuration
             **kwargs: Additional arguments passed to BaseRagOps (similarity_top_k, response_mode)
         """
-        super().__init__(emb_llm, completion_llm, **kwargs)
+        super().__init__(completion_llm, emb_llm, **kwargs)
         self.url = url
         self.collection_name = collection_name
         self.api_key = api_key
         self.vector_store_kwargs = vector_store_kwargs or {}
         self.vector_store = None
 
+    def _create_sync_client(self) -> QdrantClient:
+        """Create a synchronous Qdrant client."""
+        return QdrantClient(
+            url=self.url,
+            api_key=self.api_key,
+        )
+
+    def _create_async_client(self) -> AsyncQdrantClient:
+        """Create an asynchronous Qdrant client."""
+        return AsyncQdrantClient(
+            url=self.url,
+            api_key=self.api_key,
+        )
+
+    def _get_vector_store_config(self) -> Dict:
+        """Get the vector store configuration with both sync and async clients."""
+        base_config = {
+            "collection_name": self.collection_name,
+            "client": self._create_sync_client(),
+            "aclient": self._create_async_client(),
+            "dense_vector_name": DEFAULT_DENSE_VECTOR_NAME,
+            **self.vector_store_kwargs,
+        }
+        
+        return base_config
+
     async def index_exists(self) -> bool:
-        """Check if the Qdrant collection exists."""
+        """Check if the Qdrant collection exists using async client."""
         try:
-            client = QdrantClient(
-                url=self.url,
-                api_key=self.api_key,
-            )
-            collections = client.get_collections()
+            client = self._create_async_client()
+            collections = await client.get_collections()
             collection_names = [c.name for c in collections.collections]
             exists = self.collection_name in collection_names
+            
             self.logger.info(f"Qdrant collection '{self.collection_name}' exists: {exists}")
             return exists
         except Exception as e:
@@ -65,16 +95,19 @@ class QdrantRagOps(BaseVectorIndexRagOps):
                 self.logger.info(
                     f"Collection {self.collection_name} does not exist. Use create_index() to create a new collection."
                 )
-                # Set up storage context but don't create an index
-                client = QdrantClient(
-                    url=self.url,
-                    api_key=self.api_key,
+                # Create the collection
+                client = self._create_sync_client()
+                probe_vec = self.emb_llm.get_text_embedding("dim-probe")
+                dim = len(probe_vec)
+                client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        DEFAULT_DENSE_VECTOR_NAME: VectorParams(size=dim, distance=Distance.COSINE)
+                    },
                 )
-                vector_store_config = {
-                    "client": client,
-                    "collection_name": self.collection_name,
-                    **self.vector_store_kwargs,
-                }
+                
+                # Set up storage context but don't create an index
+                vector_store_config = self._get_vector_store_config()
                 self.vector_store = QdrantVectorStore(**vector_store_config)
                 self.storage_context = StorageContext.from_defaults(
                     vector_store=self.vector_store
@@ -82,25 +115,17 @@ class QdrantRagOps(BaseVectorIndexRagOps):
                 return
 
             # If collection exists, connect to it
-            client = QdrantClient(
-                url=self.url,
-                api_key=self.api_key,
-            )
             self.logger.info(
                 f"Connecting to existing Qdrant collection: {self.collection_name}"
             )
-            vector_store_config = {
-                "client": client,
-                "collection_name": self.collection_name,
-                **self.vector_store_kwargs,
-            }
+            
+            vector_store_config = self._get_vector_store_config()
             self.vector_store = QdrantVectorStore(**vector_store_config)
             self.storage_context = StorageContext.from_defaults(
                 vector_store=self.vector_store
             )
-            self.rag_index = VectorStoreIndex.from_documents(
-                [],
-                storage_context=self.storage_context,
+            self.rag_index = VectorStoreIndex.from_vector_store(
+                vector_store=self.vector_store,
                 embed_model=self.emb_llm,
             )
             self.logger.info(

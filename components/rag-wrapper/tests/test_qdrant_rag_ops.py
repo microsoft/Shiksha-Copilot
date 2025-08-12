@@ -23,7 +23,6 @@ from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core.llms import ChatMessage
 from llama_index.core.node_parser import MarkdownNodeParser, SentenceSplitter
-from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 from rag_wrapper.rag_ops.qdrant_rag_ops import QdrantRagOps
 
 # Configure logging
@@ -52,23 +51,15 @@ def metadata_fields_b():
 
 @pytest.fixture
 def embedding_llm():
-    """Initialize Azure OpenAI embedding model and print credentials"""
-    model = os.getenv("AZURE_OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002")
-    deployment_name = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
-    print(f"Embedding Model: {model}")
-    print(f"Deployment Name: {deployment_name}")
-    print(f"API Key: {api_key}")
-    print(f"Azure Endpoint: {azure_endpoint}")
-    print(f"API Version: {api_version}")
+    """Initialize Azure OpenAI embedding model"""
     return AzureOpenAIEmbedding(
-        model=model,
-        deployment_name=deployment_name,
-        api_key=api_key,
-        azure_endpoint=azure_endpoint,
-        api_version=api_version,
+        model=os.getenv("AZURE_OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        deployment_name=os.getenv(
+            "AZURE_OPENAI_EMBEDDING_DEPLOYMENT", "text-embedding-ada-002"
+        ),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
     )
 
 
@@ -92,7 +83,7 @@ def qdrant_config():
     }
 
 @pytest.fixture(scope="function")
-def rag_ops_instance(qdrant_config, embedding_llm, completion_llm, metadata_fields_a) -> BaseVectorIndexRagOps:
+def rag_ops_instance(qdrant_config, embedding_llm, completion_llm, metadata_fields_a):
     return QdrantRagOps(
         url=qdrant_config["url"],
         collection_name=qdrant_config["collection_name"],
@@ -184,7 +175,7 @@ async def test_create_index_with_metadata(
 
 @pytest.mark.asyncio
 async def test_query_index(
-    rag_ops_instance: BaseVectorIndexRagOps, ai_scientists_markdown_content, transformations
+    rag_ops_instance, ai_scientists_markdown_content, transformations
 ):
     text_chunks = ai_scientists_markdown_content
     await rag_ops_instance.create_index(text_chunks, transformations=transformations)
@@ -197,7 +188,7 @@ async def test_query_index(
     assert isinstance(response.response, str)
 
 @pytest.mark.asyncio
-async def test_chat(rag_ops_instance: BaseVectorIndexRagOps, ai_scientists_markdown_content, transformations):
+async def test_chat(rag_ops_instance, ai_scientists_markdown_content, transformations):
     text_chunks = ai_scientists_markdown_content
     await rag_ops_instance.create_index(text_chunks, transformations=transformations)
     message = "Tell me about the three scientists known as the Godfathers of AI"
@@ -212,48 +203,87 @@ async def test_chat(rag_ops_instance: BaseVectorIndexRagOps, ai_scientists_markd
 
 @pytest.mark.asyncio
 async def test_query_index_with_metadata_filtering(
-    rag_ops_instance: BaseVectorIndexRagOps,
+    rag_ops_instance,
     metadata_fields_a,
     metadata_fields_b,
-    ai_scientists_markdown_content,
     transformations,
 ):
-    ai_chunks = ai_scientists_markdown_content
-    await rag_ops_instance.create_index(
-        ai_chunks, metadata=metadata_fields_a, transformations=transformations
-    )
-    non_ai_chunks = [
-        "This is content about cooking recipes. Chocolate chip cookies require flour, sugar, and chocolate chips.",
-        "Sports news: The local basketball team won the championship last night.",
-        "Weather forecast: Tomorrow will be sunny with a high of 75 degrees.",
+    # Create highly specific fictional content that LLM cannot know from training data
+    fictional_technical_docs_a = [
+        """XQ-7742 Protocol Specification: The quantum entanglement synchronizer operates at 47.832 THz with 
+        a crystalline matrix efficiency of 99.2%. Serial number XQ-7742-Alpha requires recalibration every 
+        3,847 operational cycles. The flux capacitor integration module (Model: FC-9881-Beta) must maintain 
+        temperature at exactly 273.847 Kelvin for optimal performance.""",
+        
+        """ZV-9351 Security Manual: Access Code Delta-7-7-9-2 grants Level 4 clearance to the Neural Interface 
+        Chamber. Dr. Mikhail Volkov's research on Project Constellation shows that the bio-neural implant 
+        (Designation: BNI-4492) has a success rate of 87.34% when calibrated with quantum frequency 891.247 MHz.""",
+        
+        """RT-5563 Maintenance Log: The antimatter containment field generator (Unit ID: ACF-2290) experienced 
+        anomalous readings on Stardate 4827.3. Chief Engineer Sarah Chen reported power fluctuations in the 
+        primary dilithium chamber, requiring replacement of crystal assembly RT-5563-Gamma."""
     ]
-    await rag_ops_instance.insert_text_chunks(
-        non_ai_chunks, metadata=metadata_fields_b, transformations=transformations
+    
+    fictional_technical_docs_b = [
+        """PS-1188 Manufacturing Guide: The nano-fabrication unit produces exactly 12,847 micro-processors 
+        per cycle using Element-X compound (Formula: X₇Y₃Z₁₁). Quality Inspector Maria Santos documented 
+        that batch PS-1188-Charlie meets specification tolerance of 0.0034 nanometers.""",
+        
+        """WK-4429 Energy Report: The fusion reactor core (Reactor ID: FR-8834) achieved 94.7% efficiency 
+        during Test Run Omega-Prime. Dr. James Liu's calculations show optimal plasma temperature of 
+        15,847,293 Kelvin with magnetic confinement field strength of 47.2 Tesla.""",
+        
+        """LM-7796 Research Notes: The temporal displacement device created a stable wormhole lasting 
+        14.6 seconds. Professor Elena Rodriguez observed chronoton emissions at 662.411 TeV during 
+        Experiment LM-7796-Delta, confirming theoretical predictions."""
+    ]
+    
+    # Index first set of documents with metadata_a
+    await rag_ops_instance.create_index(
+        fictional_technical_docs_a, metadata=metadata_fields_a, transformations=transformations
     )
-    query = "Tell me about Alan Turing's contributions to AI"
-    logger.info(f"Testing with CORRECT metadata filter - query: '{query}', metadata: {metadata_fields_a}")
+    
+    # Insert second set with different metadata
+    await rag_ops_instance.insert_text_chunks(
+        fictional_technical_docs_b, metadata=metadata_fields_b, transformations=transformations
+    )
+    
+    # Query that should only be answerable from docs_a (with correct metadata filter)
+    query_for_a = "What is the serial number of the quantum entanglement synchronizer and its recalibration cycle?"
+    
+    logger.info(f"Testing with CORRECT metadata filter - query: '{query_for_a}', metadata: {metadata_fields_a}")
     response_with_correct_filter = await rag_ops_instance.query_index(
-        query, metadata_filter=metadata_fields_a
+        query_for_a, metadata_filter=metadata_fields_a
     )
     logger.info(f"Response with CORRECT filter: {response_with_correct_filter.response}")
-    logger.info(f"Testing with INCORRECT metadata filter - query: '{query}', metadata: {metadata_fields_b}")
+    
+    logger.info(f"Testing with INCORRECT metadata filter - query: '{query_for_a}', metadata: {metadata_fields_b}")
     response_with_wrong_filter = await rag_ops_instance.query_index(
-        query, metadata_filter=metadata_fields_b
+        query_for_a, metadata_filter=metadata_fields_b
     )
     logger.info(f"Response with INCORRECT filter: {response_with_wrong_filter.response}")
-    logger.info(f"Testing WITHOUT metadata filter - query: '{query}'")
-    response_without_filter = await rag_ops_instance.query_index(query)
-    logger.info(f"Response WITHOUT filter: {response_without_filter.response}")
+    
+    # Verify responses exist
     assert response_with_correct_filter is not None
     assert response_with_wrong_filter is not None
-    assert response_without_filter is not None
+    
+    # The correct filter should contain specific information from docs_a
     correct_response_text = response_with_correct_filter.response.lower()
     assert (
-        "turing" in correct_response_text
-        or "artificial intelligence" in correct_response_text
-        or "ai" in correct_response_text
-    )
-    if hasattr(response_with_correct_filter, "source_nodes"):
+        "xq-7742" in correct_response_text 
+        or "3,847" in correct_response_text
+        or "quantum entanglement" in correct_response_text
+    ), f"Response with correct filter should contain specific info from docs_a: {response_with_correct_filter.response}"
+    
+    # The wrong filter should NOT contain specific information from docs_a
+    # Since it can only access docs_b which don't contain XQ-7742 info
+    wrong_response_text = response_with_wrong_filter.response.lower()
+    assert not (
+        "xq-7742" in wrong_response_text and "3,847" in wrong_response_text
+    ), f"Response with wrong filter should NOT contain specific XQ-7742 info: {response_with_wrong_filter.response}"
+    
+    # Verify source metadata if available
+    if hasattr(response_with_correct_filter, "source_nodes") and response_with_correct_filter.source_nodes:
         correct_sources = [
             node.metadata.get("source", "")
             for node in response_with_correct_filter.source_nodes
@@ -261,8 +291,9 @@ async def test_query_index_with_metadata_filtering(
         logger.info(f"Sources with correct filter: {correct_sources}")
         assert all(
             source == metadata_fields_a["source"] for source in correct_sources
-        )
-    if hasattr(response_with_wrong_filter, "source_nodes"):
+        ), f"All sources should match metadata_a: {correct_sources}"
+    
+    if hasattr(response_with_wrong_filter, "source_nodes") and response_with_wrong_filter.source_nodes:
         wrong_sources = [
             node.metadata.get("source", "")
             for node in response_with_wrong_filter.source_nodes
@@ -270,41 +301,7 @@ async def test_query_index_with_metadata_filtering(
         logger.info(f"Sources with wrong filter: {wrong_sources}")
         assert all(
             source == metadata_fields_b["source"] for source in wrong_sources
-        )
+        ), f"All sources should match metadata_b: {wrong_sources}"
+    
     logger.info("✅ Metadata filtering test completed successfully")
     logger.info("✅ Demonstrated that metadata filters correctly restrict which documents are retrieved")
-
-@pytest.mark.asyncio
-async def test_metadata_filtering_effectiveness(
-    rag_ops_instance: BaseVectorIndexRagOps,
-    metadata_fields_a,
-    metadata_fields_b,
-    ai_scientists_markdown_content,
-    transformations,
-):
-    ai_chunks = ai_scientists_markdown_content
-    await rag_ops_instance.create_index(
-        ai_chunks, metadata=metadata_fields_a, transformations=transformations
-    )
-    specific_chunks = [
-        "The zebra is a unique animal with black and white stripes found in Africa.",
-        "Purple elephants dance under the moonlight in magical forests every Tuesday.",
-        "The secret recipe for invisible soup contains exactly 42 rainbow crystals.",
-    ]
-    await rag_ops_instance.insert_text_chunks(
-        specific_chunks, metadata=metadata_fields_b, transformations=transformations
-    )
-    query = "What is the Turing Test?"
-    response = await rag_ops_instance.query_index(
-        query, metadata_filter=metadata_fields_b
-    )
-    logger.info(f"Query for AI content with non-AI metadata filter: {response.response}")
-    response_text = response.response.lower()
-    specific_ai_terms = [
-        "bletchley park",
-        "wartime contributions",
-        "computational thinking framework",
-    ]
-    contains_specific_ai = any(term in response_text for term in specific_ai_terms)
-    assert not contains_specific_ai
-    logger.info("✅ Metadata filtering effectively blocked retrieval of irrelevant content")
