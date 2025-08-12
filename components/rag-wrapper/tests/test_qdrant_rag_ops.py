@@ -23,7 +23,7 @@ from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core.llms import ChatMessage
 from llama_index.core.node_parser import MarkdownNodeParser, SentenceSplitter
-from rag_wrapper.rag_ops.qdrant_rag_ops import QdrantRagOps
+from rag_wrapper import QdrantRagOps
 
 # Configure logging
 logging.basicConfig(
