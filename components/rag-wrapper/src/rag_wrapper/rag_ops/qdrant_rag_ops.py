@@ -1,8 +1,8 @@
-from typing import Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List
 from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.llms import LLM
 from llama_index.vector_stores.qdrant.base import QdrantVectorStore, DEFAULT_DENSE_VECTOR_NAME
-from qdrant_client.http.models import VectorParams, Distance, PayloadSchemaType, CreateFieldIndex
+from qdrant_client.http.models import VectorParams, Distance, PayloadSchemaType, Filter as QFilter, FieldCondition, MatchValue
 from qdrant_client import QdrantClient, AsyncQdrantClient
 from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
 
@@ -171,3 +171,29 @@ class QdrantRagOps(BaseVectorIndexRagOps):
     async def persist_index(self):
         """No-op as Qdrant automatically persists the index."""
         pass
+
+    def _to_qdrant_filter(self, metadata_filter: Dict[str, Any]) -> QFilter:
+        # Exact-match map (you already build ExactMatchFilter upstream)
+        return QFilter(
+            must=[
+                FieldCondition(key=k, match=MatchValue(value=v))
+                for k, v in metadata_filter.items()
+            ]
+        )
+
+    async def _prequery_filter_guard(self, metadata_filter: Optional[Dict[str, Any]]) -> None:
+        if not metadata_filter:
+            return
+        aclient = self._create_async_client()
+        qf = self._to_qdrant_filter(metadata_filter)
+
+        # Fast existence check: scroll 1 point by filter only (no vectors/payload)
+        points, _ = await aclient.scroll(
+            collection_name=self.collection_name,
+            scroll_filter=qf,
+            with_payload=False,
+            with_vectors=False,
+            limit=1,
+        )
+        if not points:
+            raise ValueError(f"No data matches metadata filter: {metadata_filter}")

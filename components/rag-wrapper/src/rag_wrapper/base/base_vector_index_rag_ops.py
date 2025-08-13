@@ -183,6 +183,8 @@ class BaseVectorIndexRagOps(ABC):
                 )
 
         try:
+            if metadata_filter:
+                await self._prequery_filter_guard(metadata_filter) 
             answer = await self._query_with_retries(text_str, metadata_filter)
             # Validate response quality
             if self._retry_on_empty_string_or_timeout_response(answer):
@@ -221,6 +223,8 @@ class BaseVectorIndexRagOps(ABC):
                 )
 
         try:
+            if metadata_filter:
+                await self._prequery_filter_guard(metadata_filter) 
             # Create chat engine with context awareness
             chat_engine_kwargs = {
                 "chat_mode": ChatMode.CONTEXT,
@@ -419,6 +423,11 @@ class BaseVectorIndexRagOps(ABC):
             or "timeout" in response_text.lower()
             or len(response_text.strip()) == 0
         )
+    
+    async def _prequery_filter_guard(self, metadata_filter: Optional[Dict[str, Any]]) -> None:
+        """Hook to validate that the metadata filter has at least one match.
+        Default no-op; override in backend-specific subclasses."""
+        return
 
     @abstractmethod
     async def persist_index(self):
