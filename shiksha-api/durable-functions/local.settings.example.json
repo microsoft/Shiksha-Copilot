@@ -1,0 +1,16 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "AzureWebJobsStorage": "<STORAGE_ACCOUNT_CONNECTION_STRING>",
+    "Storage": "<STORAGE_ACCOUNT_CONNECTION_STRING>",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AZURE_OPENAI_API_BASE": "<AZURE_OPENAI_API_BASE_URL>",
+    "AZURE_OPENAI_API_KEY": "<AZURE_OPENAI_API_KEY>",
+    "AZURE_OPENAI_API_VERSION": "2024-08-01-preview",
+    "AZURE_OPENAI_MODEL": "gpt-4o",
+    "AZURE_OPENAI_EMBED_MODEL": "text-embedding-ada-002",
+    "QDRANT_URL": "<QDRANT_URL>",
+    "BLOB_STORE_CONNECTION_STRING": "<STORAGE_ACCOUNT_CONNECTION_STRING>"
+  }
+}
