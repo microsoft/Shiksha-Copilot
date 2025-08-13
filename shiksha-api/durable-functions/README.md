@@ -25,9 +25,21 @@ The application consists of the following components:
 
 ## RAG Agent Strategies
 
-The system supports two distinct Retrieval-Augmented Generation (RAG) strategies for content generation:
+The system supports multiple Retrieval-Augmented Generation (RAG) strategies for content generation, including:
 
-### Vector Index RAG Agent (`VectorIndexRAGAgent`)
+
+### Qdrant RAG Agent (`QdrantRAGAgent`)
+
+- **Strategy**: Uses Qdrant vector database for scalable, production-grade vector search and retrieval
+- **Implementation**: Integrates with `QdrantRagOps` for querying Qdrant collections
+- **Best for**: Large-scale, high-performance semantic search and retrieval tasks
+- **How it works**:
+   - The agent parses the `index_path` to determine the Qdrant collection and metadata filter
+   - Uses Azure OpenAI for both embedding and completion
+   - Queries Qdrant for relevant content using vector similarity and metadata filtering
+   - Handles structured JSON responses and robust error handling
+
+### Vector Index RAG Agent (Data store- Azure Blob) (`VectorIndexRAGAgent`)
 
 - **Strategy**: Traditional vector-based retrieval using similarity search
 - **Implementation**: Uses `InMemRagOps` from the rag-wrapper library
@@ -37,7 +49,8 @@ The system supports two distinct Retrieval-Augmented Generation (RAG) strategies
   - Queries are embedded and matched against document vectors using cosine similarity
   - Most relevant content is retrieved based on semantic similarity
 
-### Graph Index RAG Agent (`GraphIndexRAGAgent`)
+
+### Graph Index RAG Agent (Data store- Azure Blob) (`GraphIndexRAGAgent`)
 
 - **Strategy**: Property graph-based retrieval with entity and relationship awareness
 - **Implementation**: Uses `InMemGraphRagOps` from the rag-wrapper library
@@ -47,11 +60,26 @@ The system supports two distinct Retrieval-Augmented Generation (RAG) strategies
   - Enables sophisticated reasoning over interconnected concepts
   - Supports complex queries that require understanding of entity relationships
 
-Both agents inherit from `BaseAzureBlobRAGAgent` which provides:
+
+#### RAG agents with Azure blob as data store inherit `BaseAzureBlobRAGAgent` which provides:
 
 - Azure OpenAI integration with structured JSON response formatting
 - Blob storage management for downloading and caching RAG indexes
 - Resource cleanup and error handling
+
+## Agent Pool
+
+The `AgentPool` class manages singleton instances of all agent types, ensuring efficient resource usage and consistent access throughout the application.
+
+- **Purpose**: Centralized factory and cache for all agent instances (GPT, RAG, Validator, etc.)
+- **Features**:
+   - Prevents duplicate instantiation of agents
+   - Supports multiple RAG agent types (Qdrant, Vector, Graph) based on identifier
+   - Provides methods to clear and reset agent resources
+- **Usage**:
+   - `AgentPool.get_rag_agent(identifier)`: Returns the correct RAG agent instance for the given index/identifier
+   - `AgentPool.get_gpt_agent()`: Returns the singleton GPT agent
+   - `AgentPool.clear_rag_agent_resources(identifier)`: Clears resources for a specific RAG agent
 
 ## Lesson Plan Creation Flow
 
@@ -108,11 +136,17 @@ The lesson plan generation follows a sophisticated workflow orchestration patter
 
 #### Generation Agents
 
+
 - **`BaseAzureBlobRAGAgent`**: Abstract base class for RAG agents
+- **`QdrantRAGAgent`**: Qdrant vector database-based content retrieval (see details above)
 - **`VectorIndexRAGAgent`**: Vector similarity-based content retrieval
 - **`GraphIndexRAGAgent`**: Knowledge graph-based content retrieval
 - **`GPTAgent`**: Direct GPT-based content generation
 - **`ValidatorAgent`**: Content validation and quality assurance
+
+#### Agent Management
+
+- **`AgentPool`**: Singleton factory and manager for all agent instances (see details above)
 
 #### Data Models
 
