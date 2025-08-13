@@ -18,3 +18,5 @@ class Config:
     BLOB_STORE_CONNECTION_STRING = os.environ.get("BLOB_STORE_CONNECTION_STRING", None)
     BLOB_STORE_URL = os.environ.get("BLOB_STORE_URL", None)
     WEBHOOK_URL = os.environ.get("WEBHOOK_URL", None)
+    QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
+    QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", None)

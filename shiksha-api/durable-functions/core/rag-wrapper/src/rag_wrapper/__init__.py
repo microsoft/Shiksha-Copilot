@@ -11,6 +11,7 @@ from .base.base_graph_index_rag_ops import BaseGraphIndexRagOps
 from .rag_ops.in_mem_rag_ops import InMemRagOps
 from .rag_ops.azure_ai_search_rag_ops import AzureAISearchRagOps
 from .rag_ops.in_mem_graph_rag_ops import InMemGraphRagOps
+from .rag_ops.qdrant_rag_ops import QdrantRagOps
 
 __version__ = "1.0.0"
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "InMemRagOps",
     "AzureAISearchRagOps",
     "InMemGraphRagOps",
+    "QdrantRagOps"
 ]

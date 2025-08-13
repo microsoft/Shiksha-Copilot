@@ -3,6 +3,7 @@ from typing import Dict, Type, TypeVar, Any
 from core.agents.base_azure_blob_rag_agent import BaseAzureBlobRAGAgent
 from core.agents.gpt_agent import GPTAgent
 from core.agents.vector_index_rag_agent import VectorIndexRAGAgent
+from core.agents.qdrant_rag_agent import QdrantRAGAgent
 from core.agents.graph_index_rag_agent import GraphIndexRAGAgent
 from core.agents.validator_agent import ValidatorAgent
 
@@ -19,10 +20,6 @@ class AgentPool:
     without creating multiple instances of the same agent type,
     which helps with resource management and consistency.
     """
-
-    VECTOR_INDEX_AGENT_CLASS = VectorIndexRAGAgent
-    GRAPH_INDEX_AGENT_CLASS = GraphIndexRAGAgent
-
     # Dictionary to store agent instances
     _instances: Dict[Type, Any] = {}
     # Dictionary to store RAG agent instances by identifier
@@ -52,10 +49,14 @@ class AgentPool:
         """
         if identifier not in cls._rag_instances:
             # TODO: Improve this logic to handle different types of RAG agents
-            if "graph-index" in identifier:
-                cls._rag_instances[identifier] = cls.GRAPH_INDEX_AGENT_CLASS(identifier)
-            else:
-                cls._rag_instances[identifier] = cls.VECTOR_INDEX_AGENT_CLASS(
+            if GraphIndexRAGAgent.INDEX_NAME in identifier:
+                cls._rag_instances[identifier] = GraphIndexRAGAgent(identifier)
+            elif QdrantRAGAgent.INDEX_NAME in identifier:
+                cls._rag_instances[identifier] = QdrantRAGAgent(
+                    identifier
+                )
+            else: 
+                cls._rag_instances[identifier] = VectorIndexRAGAgent(
                     identifier
                 )
 

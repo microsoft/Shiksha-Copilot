@@ -13,6 +13,7 @@ class GraphIndexRAGAgent(BaseAzureBlobRAGAgent):
 
     Inherits from BaseAzureBlobRAGAgent which provides common Azure OpenAI setup and blob storage management.
     """
+    INDEX_NAME = "graph-index"
 
     def __init__(self, index_path: str):
         """
