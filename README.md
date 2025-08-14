@@ -18,85 +18,80 @@ Please find additional details in [Shiksha-Copilot User FAQ](Transparency_FAQ_Sh
 ## System Architecture
 
 ```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "background": "transparent",
-    "primaryTextColor": "#1f2328",
-    "primaryColor": "#e8f1ff",
-    "secondaryColor": "#fff1e5",
-    "lineColor": "#6e7781",
-    "clusterBkg": "#f6f8fa",
-    "clusterBorder": "#d0d7de",
-    "edgeLabelBackground": "#ffffff"
-  },
-  "flowchart": { "curve": "basis", "diagramPadding": 8, "nodeSpacing": 35, "rankSpacing": 40 }
-}}%%
-flowchart TB
-  %% Offline
-  subgraph OFFLINE["🔄 Offline Processing"]
+---
+config:
+  theme: base
+  themeVariables:
+    background: transparent
+    primaryTextColor: '#1f2328'
+    primaryColor: '#e8f1ff'
+    secondaryColor: '#fff1e5'
+    lineColor: '#6e7781'
+    clusterBkg: '#f6f8fa'
+    clusterBorder: '#d0d7de'
+    edgeLabelBackground: '#ffffff'
+  flowchart:
+    curve: basis
+    diagramPadding: 8
+    nodeSpacing: 35
+    rankSpacing: 40
+  layout: elk
+---
+flowchart LR
+ subgraph OFFLINE["🔄 Offline Processing"]
     direction TB
-    A("📘 Curriculum Textbooks")
-    A2("🌐 External Open-Source Material")
-    B("🧭 Shiksha Ingestion")
-    B2("👨‍🏫 Human Curators")
+        A("📘 Curriculum Textbooks")
+        A2("🌐 External Open-Source Material")
+        B("🧭 Shiksha Ingestion")
+        B2("👨‍🏫 Human Curators")
+  end
+ subgraph F["📚 Knowledge Base"]
+    direction LR
+        C("🧠 Vector Datastore")
+        D("🕸️ Graph Datastore")
+        E("📄 Document Datastore")
+        F1("☁️ Azure Blob Store")
+  end
+ subgraph s1["🖥️ Frontend"]
+        G("Shiksha Website")
+  end
+ subgraph H["🧩 Shiksha-API • FastAPI"]
+        I("💬 Lesson Chat")
+        J("📝 Question Paper")
+        K("🎓 Edu Chat")
+  end
+ subgraph M["⚙️ Shiksha-API • Durable Functions"]
+        N("🛠️ Lesson Plan Generation")
+  end
+ subgraph ONLINE["🌐 Online User Experience"]
+        s1
+        H
+        M
+        L("🔎 Bing Search API")
+  end
     A --> B
     A2 --> B
     B --> B2
-  end
+    B2 --> F
+    G -- SYNC --> H
+    G -. ASYNC .-> M
+    I --> F
+    J --> F
+    K --> L
+    M --> F
+     C:::store
+     D:::store
+     E:::store
+     F1:::store
+    classDef store fill:#eef6ff,stroke:#1f6feb,stroke-width:1px,color:#1f2328
+    classDef ghost fill:transparent,stroke:transparent,color:transparent
+    style s1 fill:#e8f8f0,stroke:#2da44e,stroke-width:1px
+    style H fill:#fff1e5,stroke:#bf8700,stroke-width:1px
+    style M fill:#f5f0ff,stroke:#8250df,stroke-width:1px
+    style F fill:#f6f8fa,stroke:#8b949e,stroke-width:1px
+    style OFFLINE fill:#fff5f5,stroke:#e5534b,stroke-width:1px
+    style ONLINE fill:#f0fff4,stroke:#2da44e,stroke-width:1px
 
-  %% Knowledge Base (horizontal, edges hidden)
-  subgraph F["📚 Knowledge Base"]
-    direction LR
-    C("🧠 Vector Datastore"):::store
-    D("🕸️ Graph Datastore"):::store
-    E("📄 Document Datastore"):::store
-    F1("☁️ Azure Blob Store"):::store
-  end
-
-  %% Online
-  subgraph ONLINE["🌐 Online User Experience"]
-    subgraph s1["🖥️ Frontend"]
-      G("Shiksha Website")
-    end
-    subgraph H["🧩 Shiksha-API • FastAPI"]
-      I("💬 Lesson Chat")
-      J("📝 Question Paper")
-      K("🎓 Edu Chat")
-    end
-    subgraph M["⚙️ Shiksha-API • Durable Functions"]
-      N("🛠️ Lesson Plan Generation")
-    end
-    L("🔎 Bing Search API")
-  end
-
-  %% Connections
-  B2 --> F
-  G -->|SYNC| H
-  G -. ASYNC .-> M
-  I --> F
-  J --> F
-  K --> L
-  M --> F
-
-  %% Spacer edges to keep KB horizontal (place LAST)
-  C --- D
-  D --- E
-  E --- F1
-
-  %% Hide the 3 spacer edges (indices 7, 8, 9 in this diagram)
-  linkStyle 7 stroke-width:0px,stroke:transparent,opacity:0;
-  linkStyle 8 stroke-width:0px,stroke:transparent,opacity:0;
-  linkStyle 9 stroke-width:0px,stroke:transparent,opacity:0;
-
-  %% Styles
-  classDef store fill:#eef6ff,stroke:#1f6feb,stroke-width:1px,color:#1f2328;
-  style s1 fill:#e8f8f0,stroke:#2da44e,stroke-width:1px
-  style H  fill:#fff1e5,stroke:#bf8700,stroke-width:1px
-  style M  fill:#f5f0ff,stroke:#8250df,stroke-width:1px
-  style F  fill:#f6f8fa,stroke:#8b949e,stroke-width:1px
-  style OFFLINE fill:#fff5f5,stroke:#e5534b,stroke-width:1px
-  style ONLINE  fill:#f0fff4,stroke:#2da44e,stroke-width:1px
 ```
 
 ## Key Features
