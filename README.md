@@ -35,7 +35,6 @@ config:
     diagramPadding: 8
     nodeSpacing: 35
     rankSpacing: 40
-  layout: elk
 ---
 flowchart LR
  subgraph OFFLINE["🔄 Offline Processing"]
@@ -55,20 +54,20 @@ flowchart LR
  subgraph s1["🖥️ Frontend"]
         G("Shiksha Website")
   end
- subgraph H["🧩 Shiksha-API • FastAPI"]
+ subgraph H["🧩 FastAPI"]
         I("💬 Lesson Chat")
         J("📝 Question Paper")
         K("🎓 Edu Chat")
   end
- subgraph M["⚙️ Shiksha-API • Durable Functions"]
+ subgraph M["⚙️ Durable Functions"]
         N("🛠️ Lesson Plan Generation")
   end
  subgraph ONLINE["🌐 Online User Experience"]
         s1
         H
         M
-        L("🔎 Bing Search API")
   end
+  L("🔎 Bing Search API")
     A --> B
     A2 --> B
     B --> B2
