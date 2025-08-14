@@ -15,20 +15,80 @@ Once teachers review and validate the generated content, the system automaticall
 
 Please find additional details in [Shiksha-Copilot User FAQ](Transparency_FAQ_Shiksha-Copilot_latest.pdf)
 
+## System Architecture
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart TB
+    %% Offline Process
+    subgraph OFFLINE["🔄 Offline Curriculum Processing"]
+        A["Curriculum Textbooks"]
+        A2["External Open Source Material"]
+        B["Shiksha Ingestion"]
+        B2["👨‍🎓 Curators"]
+        A --> B
+        A2 --> B
+        B --> B2
+    end
+    
+    %% Central Knowledge Base
+    subgraph F["📚 Knowledge Base"]
+        C["Vector Datastore"]
+        D["Graph Datastore"] 
+        E["Document Datastore"]
+    end
+    
+    %% Online Process
+    subgraph ONLINE["🌐 Online User Experience"]
+        subgraph s1["Frontend"]
+            G["Shiksha Website"]
+        end
+        
+        subgraph H["Shiksha-API: FastAPI"]
+            I["Lesson Chat"]
+            J["Question Paper"]
+            K["Edu Chat"]
+        end
+        
+        subgraph M["Shiksha-API: Durable Functions"]
+            N["Lesson Plan Generation"]
+        end
+        
+        L["Bing Search API"]
+    end
+    
+    %% Connections
+    B2 --> F
+    G -- SYNC --> H
+    G -- ASYNC --> M
+    I --> F
+    J --> F
+    K --> L
+
+    M --> F
+```
+
 ## Key Features
-- **Curriculum-Aligned Content Creation:** Automatically generates lesson content strictly grounded in the chosen curriculum, enhancing relevance and coherence.
-- **Interactive Pedagogical Tools:** Supports the generation of multiple forms of educational content like interactive activities, analogies, and examples to cater to diverse learner needs.
+- **Multi-Source Content Ingestion:** Processes curriculum textbooks and external open-source educational materials through an intelligent [ingestion pipeline](shiksha-ingestion/) with human curator oversight for quality assurance.
+- **Comprehensive Knowledge Base:** Maintains curriculum content across vector, graph, and document datastores enabling rich contextual retrieval and cross-referenced learning materials.
+- **Curriculum-Aligned Content Creation:** Automatically generates lesson content strictly grounded in the curated knowledge base, enhancing relevance and coherence with educational standards and learning objectives.
+- **Interactive Pedagogical Tools:** Supports the generation of multiple forms of educational content including interactive activities, analogies, real-world examples, and hands-on exercises to cater to diverse learner needs and teaching contexts.
+- **Low-Resource Classroom Support:** Designed to empower educators in resource-constrained environments by providing comprehensive lesson planning tools, reducing preparation time, and ensuring access to quality educational materials regardless of infrastructure limitations.
+- **Dual API Architecture:** Features both synchronous [FastAPI services](shiksha-api/app-service/) for real-time interactions and asynchronous [durable functions](shiksha-api/durable-functions/) for complex lesson plan orchestration.
+- **Interactive Conversational Features:** 
+  - **Lesson Chat:** Context-aware discussions about specific curriculum topics
+  - **Question Paper Generator:** Structured assessment creation aligned with educational blueprints
+  - **Edu Chat:** General educational queries enhanced with external web search capabilities
+- **Full-Stack Web Application:** Complete [frontend](shiksha-website/shiksha-frontend/) and [backend](shiksha-website/shiksha-backend/) implementation for seamless user experience and robust server-side processing.
 - **Deliverable Generation:** Converts validated lesson plans into readily usable classroom materials such as DOCX documents, PowerPoint slides, and student handouts.
-- **Conversational Interface:** Allows free-form interaction through a chat interface to support spontaneous queries and content customization.
-- **Question Bank Generator:** Facilitates structured assessment creation aligned with accepted blueprint formats for examinations.
 - **Modular Architecture:** Offers independently usable components including:
-  - Ingestion Pipeline
-  - LLM Task Queue
+  - Ingestion Pipeline with multiple processing engines (MinerU, SmolDocLing, OlmOCR)
+  - LLM Task Queue (Deprecated)
   - Retrieval-Augmented Generation (RAG) Wrapper
   - Translation Model Training and Evaluation Toolkit
-- **Full-Stack Web Application:** Complete [frontend](shiksha-website/shiksha-frontend/) and [backend](shiksha-website/shiksha-backend/) implementation for seamless user experience and robust server-side processing.
-- **RESTful API Services:** Comprehensive [API layer](shiksha-api/) with app services and durable functions for scalable lesson plan generation and content management.
-- **Automated Content Ingestion:** Intelligent [ingestion system](shiksha-ingestion/) for processing educational content from various textbook formats and curriculum standards.
 
 ## Intended Use
 - Empower educators across different regions and teaching contexts to create personalized, effective, and inclusive learning experiences.
@@ -43,35 +103,48 @@ Please find additional details in [Shiksha-Copilot User FAQ](Transparency_FAQ_Sh
 - The system is designed exclusively for teacher use with human oversight and is **not intended** for direct student interaction.
 
 ## Getting Started with Reusable Components
-Shiksha Copilot has a modular design philosophy, allowing each of its core functionalities to be used independently based on specific user requirements:
+Shiksha Copilot follows a modular architecture with clear separation between offline content processing and online user services:
 
-[Ingestion Pipeline](components/ingestion-pipeline/README.md)
+### Offline Content Processing
+- **[Curriculum Ingestion](shiksha-ingestion/)** - Processes textbooks and external educational materials into structured knowledge
+- **[Ingestion Pipeline Components](components/ingestion-pipeline/README.md)** - Core text extraction and processing engines
+  - [MinerU Pipeline](components/ingestion-pipeline-mineru/README.md) - Advanced document processing
+  - [SmolDocLing Pipeline](components/ingestion-pipeline-smoldocling/README.md) - Lightweight document processing  
+  - [OlmOCR Pipeline](components/ingestion-pipeline-olmocr/README.md) - OCR-based text extraction
 
-[LLM Queue](components/llm-queue/README.md) -- Deprecated
+### Online User Services
+- **[Shiksha Website Frontend](shiksha-website/shiksha-frontend/)** - React-based user interface
+- **[Shiksha Website Backend](shiksha-website/shiksha-backend/)** - Server-side application logic
+- **[Shiksha API Services](shiksha-api/app-service/)** - FastAPI endpoints for real-time interactions
+- **[Durable Functions](shiksha-api/durable-functions/)** - Orchestrated lesson plan generation workflows
 
-[RAG Wrapper](components/rag-wrapper/README.md)
-
-[Translation Model Data Collection](components/translation/data_collection/README.md)
-
-[Translation Model Training](components/translation/training/README.md)
-
-[Translation Model Inference](components/translation/inference/README.md)
+### Supporting Components
+- **[RAG Wrapper](components/rag-wrapper/README.md)** - Retrieval-augmented generation interface
+- **[LLM Queue](components/llm-queue/README.md)** -- Deprecated
+- **Translation Toolkit:**
+  - [Data Collection](components/translation/data_collection/README.md)
+  - [Model Training](components/translation/training/README.md)  
+  - [Inference Engine](components/translation/inference/README.md)
 
 ----
 *Instructions for backend and frontend deployment of the entire Shiksha Copilot system, as well as individual modules, are provided in dedicated setup guides within the repository.*
 
 ## Evaluation
 - We conducted extensive qualitative evaluations involving internal user testing teams and collaborated with educational partners such as the *Sikshana Foundation* to assess usability and utility in real-world classroom scenarios.
-- The system integrates Azure Content Filtering services to moderate both user inputs and generated outputs, ensuring educational appropriateness, factual correctness, and respectful communication.
-- Additionally, meta prompts are employed to guide the language model toward generating only education-relevant and unbiased content.
+- **Azure Content Filtering Integration:** The system integrates Azure Content Filtering services to moderate both user inputs and generated outputs, ensuring educational appropriateness, factual correctness, and respectful communication across all interactions.
+- **Human-in-the-Loop Quality Assurance:** The system incorporates human curators in the content ingestion pipeline to ensure educational quality and accuracy before materials enter the knowledge base.
+- **Multi-Layer Content Filtering:** Beyond Azure services, the system employs additional content validation mechanisms and meta prompts to guide the language model toward generating only education-relevant and unbiased content.
+- **Structured Knowledge Representation:** Content is stored across multiple datastore types (vector, graph, document) enabling comprehensive retrieval and cross-validation of educational materials.
 - Ongoing system performance is tracked via anonymous telemetry available to the developers of the application.
 
 ## Limitations
 - **Experimental Nature:** Shiksha Copilot is a research prototype and has not been extensively tested for production use. All usage should be under human supervision.
+- **Content Dependency:** The quality of generated lessons is directly dependent on the curated knowledge base, which requires ongoing maintenance and updates by human curators.
 - **Language Support:** Primarily tested on English-language inputs and outputs; support for other languages is experimental and should be used cautiously.
 - **Model Limitations:** Outputs from large language models may occasionally include hallucinated facts, speculative content, or biased information. It is crucial that educators carefully review and validate the content before classroom use.
 - **Content Accuracy:** The AI-generated content may contain occasional errors or inaccuracies. Users of Shiksha Copilot should thoroughly validate all content before incorporating it into their classroom teaching materials.
 - **Model Dependency:** The quality and reliability of outputs are inherently tied to the underlying model. Shiksha Copilot currently utilizes the GPT-4o model.
+- **Infrastructure Requirements:** The system requires multiple components (knowledge base, API services, web application) to be properly deployed and maintained for full functionality.
 - **Security:** Developers deploying the tool in open environments must implement/use appropriate security mechanisms like Azure's content moderation.
 
 ## Best Practices
