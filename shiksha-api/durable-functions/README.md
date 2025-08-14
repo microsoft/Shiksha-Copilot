@@ -85,44 +85,34 @@ The `AgentPool` class manages singleton instances of all agent types, ensuring e
 
 The lesson plan generation follows a sophisticated workflow orchestration pattern using Directed Acyclic Graphs (DAGs) for optimal parallel execution:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                            Lesson Plan Creation Flow                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-1. HTTP Request
-   └─ LessonPlanHttpTrigger
-      └─ Validates input and starts orchestration
-
-2. Main Orchestration
-   └─ LessonPlanOrchestrator
-      ├─ Creates DAG from WorkflowDefinition
-      ├─ Splits DAG into independent subgraphs for parallel execution
-      └─ Calls SectionsGraphOrchestrator for each subgraph
-
-3. Section Generation
-   └─ SectionsGraphOrchestrator
-      ├─ Executes ready nodes in parallel
-      ├─ Manages dependencies between sections
-      └─ Calls GenerateSectionActivity for each section
-
-4. Content Generation
-   └─ GenerateSectionActivity
-      ├─ Determines generation mode (RAG vs GPT)
-      ├─ RAG Mode:
-      │  ├─ AgentPool.get_rag_agent(agent_type)
-      │  ├─ VectorIndexRAGAgent OR GraphIndexRAGAgent
-      │  ├─ Downloads index from blob storage
-      │  ├─ QueryGenerator creates optimized prompts
-      │  └─ Returns structured JSON content
-      └─ GPT Mode:
-         ├─ AgentPool.get_gpt_agent()
-         ├─ GPTAgent with direct prompting
-         └─ Returns generated content
-
-5. Status Updates
-   └─ WebhookStatusActivity
-      └─ Sends real-time status updates via HTTP webhooks
+```mermaid
+graph TD
+    A[HTTP Request] --> B[LessonPlanHttpTrigger]
+    B --> |Validates input and starts orchestration| C[LessonPlanOrchestrator]
+    
+    C --> D[Creates DAG from WorkflowDefinition]
+    C --> E[Splits DAG into independent subgraphs]
+    C --> F[Calls SectionsGraphOrchestrator for each subgraph]
+    
+    F --> G[SectionsGraphOrchestrator]
+    G --> H[Executes ready nodes in parallel]
+    G --> I[Manages dependencies between sections]
+    G --> J[Calls GenerateSectionActivity for each section]
+    
+    J --> K[GenerateSectionActivity]
+    K --> L{Determines generation mode}
+    
+    L --> |RAG Mode| M[AgentPool.get_rag_agent]
+    M --> P[QueryGenerator creates optimized prompts]
+    P --> Q[Returns structured JSON content]
+    
+    L --> |GPT Mode| R[AgentPool.get_gpt_agent]
+    R --> S[GPTAgent with direct prompting]
+    S --> T[Returns generated content]
+    
+    Q --> U[WebhookStatusActivity]
+    T --> U
+    U --> V[Sends real-time status updates via HTTP webhooks]
 ```
 
 ### Key Classes and Components
@@ -169,58 +159,45 @@ The system uses a **Directed Acyclic Graph (DAG)** to optimize lesson plan gener
 
 #### 1. Initial DAG Creation
 
-```
-Workflow Definition → DAG Nodes → Independent Subgraphs
+```mermaid
+graph LR
+    A[Workflow Definition] --> B[DAG Nodes] --> C[Independent Subgraphs]
 ```
 
-```
-Example 5E Instructional Model Workflow DAG:
-┌─────────────────────────────────────────────────────────────────┐
-│                    Original DAG                                 │
-│                                                                 │
-│  [Engage]              [Evaluate]                               │
-│     │                     │                                     │
-│     ▼                     │                                     │
-│  [Explore]                │                                     │
-│     │                     │                                     │
-│     ▼                     │                                     │
-│  [Explain]                |                                     │
-│     │                     |                                     │
-│     ▼                     |                                     │
-│  [Elaborate]              |                                     │
-│     │                     |                                     │
-│     ▼     ▼───────────────┘                                     │
-│  [Checklist] ← Dependencies from all phases                     │
-└─────────────────────────────────────────────────────────────────┘
+**Example 5E Instructional Model Workflow DAG:**
 
-Split into Independent Subgraphs:
-┌─────────────────────────┐  ┌─────────────────────┐
-│     Subgraph 1          │  │    Subgraph 2       │
-│                         │  │                     │
-│  [Engage]               │  │  [Evaluate]         │
-│     │                   │  │     │               │
-│     ▼                   │  │     │               │
-│  [Explore]              │  │     │               │
-│     │                   │  │     │               │
-│     ▼                   │  │     │               │
-│  [Explain]              │  │     │               │
-│     │                   │  │     │               │
-│     ▼                   │  │     │               │
-│  [Elaborate]            │  │     │               │
-│     │                   │  │     │               │
-│     └─────────────────────┐│  │──┘               │
-│                           ▼│  │                  │
-│                    [Checklist]                   │
-└─────────────────────────┘  └─────────────────────┘
+```mermaid
+graph TD
+    subgraph "Split into Independent Subgraphs"
+        subgraph "Subgraph 1"
+            E1[Engage] --> Ex1[Explore]
+            Ex1 --> Ep1[Explain]
+            Ep1 --> El1[Elaborate]
+            El1 --> C1[Checklist]
+        end
+        
+        subgraph "Subgraph 2" 
+            Ev1[Evaluate] --> C1
+        end
+    end
+    subgraph "Original DAG"
+        E[Engage] --> Ex[Explore]
+        Ex --> Ep[Explain] 
+        Ep --> El[Elaborate]
+        Ev[Evaluate]
+        El --> C[Checklist]
+        Ev --> C
+    end
 ```
 
 #### 2. Parallel Execution Strategy
 
-```
-Subgraph Parallelism
-├─ Subgraph 1: [Engage] → [Explore] → [Explain] → [Elaborate] ──┐
-├─ Subgraph 2: [Evaluate] ──────────────────────────────────────┼─→ [Checklist]
-└─ Wait for completion -────────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph "Subgraph Parallelism"
+        A[Subgraph 1: Engage → Explore → Explain → Elaborate] --> C[Checklist]
+        B[Subgraph 2: Evaluate] --> C
+    end
 ```
 
 Within subgraphs, if multiple nodes are NOT waiting for any of their parent dependencies to be generated, they are processed in parallel as well.
@@ -229,41 +206,47 @@ Within subgraphs, if multiple nodes are NOT waiting for any of their parent depe
 
 When regenerating with user feedback, previously generated sections are added as **completed dependency nodes** to existing workflow nodes:
 
-```
-Regeneration DAG - User wants to improve "Engage" phase:
-┌─────────────────────────────────────────────────────────────────┐
-│                 Regeneration DAG                                │
-│                                                                 │
-│  [other_section_engage: ✓ Previous Content] ←── User Feedback:  │
-│           │                                     "Change the     │
-│           ▼                                     starting        │
-│  [section_engage: Regenerate] ←────────────────  scenario"      │
-│           │                                                     │
-│           ▼                                                     │
-│  [other_section_explore: ✓ Previous Content]                    │
-│           │                                                     │
-│           ▼                                                     │
-│  [section_explore: Regenerate] ←─── Uses: other_section_engage  │
-│           │                          + section_engage (new)     │
-│           ▼                                                     │
-│  [other_section_explain: ✓ Previous Content]                    │
-│           │                                                     │
-│           ▼                                                     │
-│  [section_explain: Regenerate] ←─── Uses: other_section_engage  │
-│           │                          + other_section_explore    │
-│           ▼                          + section_engage (new)     │
-│  [section_elaborate: Regenerate]     + section_explore (new)    │
-│           │                                                     │
-│           ▼                                                     │
-│  [section_evaluate: ✓ Previous Content]                         │
-│           │                                                     │
-│           ▼                                                     │
-│  [section_checklist: Regenerate] ←── Uses all previous +        │
-│                                       current sections          │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    UF["User Feedback: 'Change the starting scenario'"] -.-> B
+    
+    subgraph "Previous Content (Completed)"
+        A["other_section_engage: ✓"]
+        C["other_section_explore: ✓"]
+        E["other_section_explain: ✓"]
+        G["other_section_elaborate: ✓"]
+        I["other_section_evaluate: ✓"]
+    end
+    
+    subgraph "Sequential Regeneration Chain"
+        B["section_engage: Regenerate"]
+        D["section_explore: Regenerate"]
+        F["section_explain: Regenerate"]
+        H["section_elaborate: Regenerate"]
+        J["section_elvaluate: Regenerate"]
+        L["section_checklist: Regenerate"]
+    end
+    
+    subgraph "Final Output"
+        M["Complete Regenerated Lesson Plan"]
+    end
+    
+    A --> B
+    B --> D
+    C --> D
+    
+    D --> F
+    E --> F
+    
+    F --> H
+    G --> H
+    H --> J
+    I --> J
+    J --> L
+    L --> M
 ```
 
-How It Works:
+**How It Works:**
 
 1. Each previous section becomes "other\_[section_id]" dependency node (COMPLETED)
 2. Original workflow nodes get these "other\_" nodes as additional dependencies
