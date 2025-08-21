@@ -12,6 +12,7 @@ PREVIOUSLY_GENERATED_DAG_NODE_TITLE_PREFIX = "Previously Generated Section: "
 class LPLevel(str, Enum):
     CHAPTER = "CHAPTER"
     SUBTOPIC = "SUBTOPIC"
+    TELANGANA_ENGLISH_RESOURCE_PLAN = "TELANGANA_ENGLISH_RESOURCE_PLAN"
 
 
 class EnglishLPType(str, Enum):
@@ -73,10 +74,10 @@ class LessonPlanGenerationInput(BaseModel):
         ..., description="Legacy workflow definition field"
     )
     lp_id: str = Field(default="", description="ID of the lesson plan")
-    lp_level: LPLevel = Field(
-        ..., description="Level of the lesson plan (CHAPTER or SUBTOPIC)"
-    )
     chapter_info: ChapterInfo = Field(..., description="Information about the chapter")
+    lp_level: LPLevel = Field(
+        ..., description="Level of the lesson plan (CHAPTER or SUBTOPIC or TELANGANA_ENGLISH_RESOURCE_PLAN)"
+    )
     learning_outcomes: Optional[List[str]] = Field(
         default_factory=list, description="Learning outcomes for the lesson plan"
     )

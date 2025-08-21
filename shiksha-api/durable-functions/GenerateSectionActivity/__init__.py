@@ -3,14 +3,14 @@ import json
 from typing import Dict, Any
 
 from core.agents import AgentPool
-from core import QueryGenerator, RegenQueryGenerator
+from core import QueryGenerator, RegenQueryGenerator, QueryGeneratorTelanganaEnglishResourcePlan
 
 from core.models.workflow_models import (
     Mode,
     RAGInput,
     GPTInput,
 )
-from core.models.requests import LessonPlanGenerationInput
+from core.models.requests import LessonPlanGenerationInput, LPLevel
 
 
 async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
@@ -49,8 +49,12 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         query_generator = (
             RegenQueryGenerator(lp_gen_input, section)
             if lp_gen_input.lesson_plan and not lp_gen_input.start_from_section_id
+            else QueryGeneratorTelanganaEnglishResourcePlan(lp_gen_input, section)
+            if lp_gen_input.lp_level == LPLevel.TELANGANA_ENGLISH_RESOURCE_PLAN
             else QueryGenerator(lp_gen_input, section)
         )
+        
+        logging.info(f"Using query generator: {type(query_generator).__name__}")
 
         # Generate synthesis queries
         synthesis_query = query_generator.generate_synthesis_query(
