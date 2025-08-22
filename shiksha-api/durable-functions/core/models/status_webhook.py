@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 import logging
 import os
 import aiohttp
@@ -20,11 +20,11 @@ class GenStatus(BaseModel):
     status: str
     timestamp: str
     input: Optional[dict] = None
-    output: Optional[dict] = None
+    output: Optional[Union[dict, str]] = None
 
     @staticmethod
     def from_status_and_output(
-        instance_id, input, status: StatusEnum, output: dict = None
+        instance_id, input, status: StatusEnum, output: dict | str = None
     ):
         return GenStatus(
             instance_id=instance_id,

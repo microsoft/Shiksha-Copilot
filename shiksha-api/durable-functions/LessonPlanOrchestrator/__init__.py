@@ -17,17 +17,6 @@ from core.models.requests import LPLevel, LessonPlanGenerationInput
 from core.models.dag import DAG, NodeStatus
 
 
-def prepare_status_payload(context, status: StatusEnum, output: dict = None):
-    gen_status = GenStatus(
-        instance_id=context.instance_id,
-        status=status.value,
-        timestamp=datetime.datetime.now().isoformat(),
-        input=context.get_input(),
-        output=output,
-    )
-    return context.call_activity("WebhookStatusActivity", gen_status.dict())
-
-
 def main(
     context: df.DurableOrchestrationContext,
 ) -> Generator[Any, Any, Dict[str, Any]]:
@@ -41,7 +30,7 @@ def main(
         The generated lesson plan
     """
 
-    def prepare_status_payload(context, status: StatusEnum, output: dict = None):
+    def prepare_status_payload(context, status: StatusEnum, output: dict | str = None):
         return GenStatus.from_status_and_output(
             context.instance_id,
             context.get_input(),
