@@ -9,6 +9,7 @@ from core import (
     QueryGeneratorTelanganaEnglishResourcePlan,
 )
 
+from core.base_query_generator import BaseQueryGenerator
 from core.models.workflow_models import (
     Mode,
     RAGInput,
@@ -50,7 +51,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             raise ValueError(f"Section with ID {section_id} not found in workflow")
 
         # Initialize the query generator with section
-        query_generator = (
+        query_generator: BaseQueryGenerator = (
             RegenQueryGenerator(lp_gen_input, section)
             if lp_gen_input.lesson_plan and not lp_gen_input.start_from_section_id
             else (

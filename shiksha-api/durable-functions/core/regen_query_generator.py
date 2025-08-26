@@ -10,9 +10,10 @@ from core.models.requests import (
     LPLevel,
     PREVIOUSLY_GENERATED_DAG_NODE_TITLE_PREFIX,
 )
+from core.base_query_generator import BaseQueryGenerator
 
 
-class RegenQueryGenerator:
+class RegenQueryGenerator(BaseQueryGenerator):
     """
     Class responsible for generating retrieval and synthesis queries for lesson plan generation
     """
@@ -29,8 +30,7 @@ class RegenQueryGenerator:
             lp_gen_input: The lesson plan generation input
             section: The section for which queries will be generated
         """
-        self.lp_gen_input = lp_gen_input
-        self.section = section
+        super().__init__(lp_gen_input, section)
 
     def generate_retrieval_query(self) -> str:
         """
@@ -137,4 +137,4 @@ class RegenQueryGenerator:
         else:
             synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters."
 
-        return dedent(synthesis_query)
+        return dedent(self.replace_prompt_variables(synthesis_query))

@@ -94,3 +94,6 @@ class LessonPlanGenerationInput(BaseModel):
     lesson_plan: Optional[LessonPlanContent] = Field(
         None, description="Existing lesson plan content for regeneration"
     )
+    prompt_variables: Optional[Dict] = Field(
+        default_factory=dict, description="Optional variables for section prompts in workflow"
+    )

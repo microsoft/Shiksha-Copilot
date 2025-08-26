@@ -7,24 +7,27 @@ from core.models.workflow_models import (
     SectionDefinition,
 )
 from core.models.requests import LessonPlanGenerationInput, LPLevel
+from core.base_query_generator import BaseQueryGenerator
 
 
-class QueryGeneratorTelanganaEnglishResourcePlan:
+class QueryGeneratorTelanganaEnglishResourcePlan(BaseQueryGenerator):
     """
     Class responsible for generating synthesis queries for English subject resource plan generation
     """
 
     def __init__(
         self,
+        lp_gen_input: LessonPlanGenerationInput,
         section: SectionDefinition,
     ):
         """
         Initialize the QueryGeneratorTelanganaEnglishResourcePlan
 
         Args:
-            section: The section for which synthesis queries will be generated
+            lp_gen_input: The input parameters for lesson plan generation.
+            section: The section for which synthesis queries will be generated.
         """
-        self.section = section
+        super().__init__(lp_gen_input, section)
 
     def generate_synthesis_query(
         self,
@@ -82,4 +85,4 @@ class QueryGeneratorTelanganaEnglishResourcePlan:
         else:
             synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters."
 
-        return dedent(synthesis_query)
+        return dedent(self.replace_prompt_variables(synthesis_query))

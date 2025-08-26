@@ -7,9 +7,10 @@ from core.models.workflow_models import (
     SectionDefinition,
 )
 from core.models.requests import LessonPlanGenerationInput, LPLevel
+from core.base_query_generator import BaseQueryGenerator
 
 
-class QueryGenerator:
+class QueryGenerator(BaseQueryGenerator):
     """
     Class responsible for generating retrieval and synthesis queries for lesson plan generation
     """
@@ -26,31 +27,11 @@ class QueryGenerator:
             lp_gen_input: The lesson plan generation input
             section: The section for which queries will be generated
         """
-        self.lp_gen_input = lp_gen_input
-        self.section = section
+        super().__init__(lp_gen_input, section)
 
     def generate_retrieval_query(self) -> str:
-        """
-        Generate a retrieval query based on the lesson plan generation input
-
-        Returns:
-            The retrieval query string
-        """
-        if self.lp_gen_input.lp_level == LPLevel.SUBTOPIC:
-            retrieval_query = "\n\n".join(
-                [
-                    f"Topic Title: {subtopic_info.name}\n"
-                    f"Learning Outcomes: {chr(10).join(subtopic_info.learning_outcomes)}"
-                    for subtopic_info in self.lp_gen_input.subtopics
-                ]
-            )
-        else:
-            retrieval_query = (
-                f"Chapter Title: {self.lp_gen_input.chapter_info.chapter_title}\n"
-                f"Learning Outcomes: {chr(10).join(self.lp_gen_input.learning_outcomes)}"
-            )
-
-        return dedent(retrieval_query)
+        # Use the default retrieval generation from BaseQueryGenerator
+        return super().generate_retrieval_query()
 
     def generate_synthesis_query(
         self,
@@ -119,4 +100,4 @@ class QueryGenerator:
         else:
             synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters."
 
-        return dedent(synthesis_query)
+        return dedent(self.replace_prompt_variables(synthesis_query))
