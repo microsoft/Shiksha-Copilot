@@ -15,15 +15,28 @@ class BaseQueryGenerator(ABC):
     generate_synthesis_query.
     """
 
-    def __init__(self, lp_gen_input: LessonPlanGenerationInput, section: SectionDefinition):
+    def __init__(
+        self, lp_gen_input: LessonPlanGenerationInput, section: SectionDefinition
+    ):
         self.lp_gen_input = lp_gen_input
         self.section = section
 
+    def add_additional_context_if_present(self, synthesis_query: str) -> str:
+        if (
+            self.lp_gen_input
+            and self.lp_gen_input.additional_context
+            and self.lp_gen_input.additional_context.strip()
+        ):
+            synthesis_query += f"\n---\nAdditional Context:\n\n{self.lp_gen_input.additional_context.strip()}\n---\n"
+        return synthesis_query
+
     @abstractmethod
-    def generate_synthesis_query(self, dependencies: Optional[Dict[str, Any]] = None) -> str:
+    def generate_synthesis_query(
+        self, dependencies: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Return a synthesis query for the configured section."""
         raise NotImplementedError
-    
+
     def replace_prompt_variables(self, text: str) -> str:
         """
         Replace placeholders of the form ${VAR_NAME} in `text` with values from
@@ -55,7 +68,6 @@ class BaseQueryGenerator(ABC):
             return ""
 
         return pattern.sub(_replace, text)
-    
 
     def generate_retrieval_query(self) -> str:
         """

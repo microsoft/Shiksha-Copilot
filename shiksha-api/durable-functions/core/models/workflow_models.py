@@ -51,6 +51,9 @@ class RAGInput(BaseModel):
     response_synthesis_query: str = Field(
         ..., description="Query to synthesize the response"
     )
+    retrieval_query: Optional[str] = Field(
+        None, description="Optional retrieval query to fetch relevant documents"
+    )
 
 
 class GPTInput(BaseModel):

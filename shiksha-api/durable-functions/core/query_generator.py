@@ -29,23 +29,10 @@ class QueryGenerator(BaseQueryGenerator):
         """
         super().__init__(lp_gen_input, section)
 
-    def generate_retrieval_query(self) -> str:
-        # Use the default retrieval generation from BaseQueryGenerator
-        return super().generate_retrieval_query()
-
     def generate_synthesis_query(
         self,
         dependencies: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """
-        Generate a synthesis query for the section specified in constructor
-
-        Args:
-            dependencies: The outputs of dependency sections
-
-        Returns:
-            The synthesis query string
-        """
         if not self.section:
             raise ValueError(
                 "Section must be provided either in constructor or method call"
@@ -56,52 +43,61 @@ class QueryGenerator(BaseQueryGenerator):
         mode = self.section.mode
         output_format = self.section.output_format
 
-        retrieval_query = self.generate_retrieval_query()
-
+        # Build the instructional prompt for the LLM (NOT the retriever)
         if self.lp_gen_input.lp_level == LPLevel.SUBTOPIC:
             synthesis_query = (
-                f"You are creating the '{section_title}' section of a lesson plan. "
-                f"Following are the subtopic(s) and their learning outcomes:\n\n"
-                f"{retrieval_query}"
+                f"You are creating the '{section_title}' section of a lesson plan.\n"
+                f"Focus on the given subtopic(s) and their learning outcomes.\n"
             )
         else:
             synthesis_query = (
-                f"You are creating the '{section_title}' section of a lesson plan. "
-                f"Following are the learning outcomes:\n\n"
-                f"{retrieval_query}"
+                f"You are creating the '{section_title}' section of a lesson plan.\n"
+                f"Focus on the given learning outcomes.\n"
             )
 
-        # Add additional context if available
-        if self.lp_gen_input.additional_context.strip():
-            synthesis_query += f"\n---\nAdditional Context:\n\n{self.lp_gen_input.additional_context.strip()}\n---\n"
+        # Optional: show LOs to the LLM for grounding (kept compact).
+        # This is NOT used for retrieval; retrieval will use QueryBundle.embedding_strs.
+        retrieval_seed = self.generate_retrieval_query().strip()
+        if retrieval_seed:
+            synthesis_query += "=== LEARNING OUTCOMES (REFERENCE) ===\n"
+            synthesis_query += retrieval_seed
 
+        # Additional context from caller (if any)
+        synthesis_query = self.add_additional_context_if_present(synthesis_query)
+
+        # Dependencies (previous sections) remain inline so LLM can use them
         if dependencies:
-            dependencies_str = "\n\n".join(
+            deps_str = "\n\n".join(
                 [
-                    f"# Section: {section_title}\n{json.dumps(content)}"
-                    for section_title, content in dependencies.items()
+                    f"# Section: {title}\n{json.dumps(content, ensure_ascii=False)}"
+                    for title, content in dependencies.items()
                 ]
             )
             synthesis_query += (
                 "\nThe content of this section depends on the following previously generated sections:\n"
-                "```\n"
-                f"{dependencies_str}\n"
-                "```"
+                "```json\n" + deps_str + "\n```\n"
             )
 
+        # Section instructions (source of truth)
         synthesis_query += (
-            f"\n# Section Description: {dedent(section_description)}\n\n"
-            "**Note: Adhere to the mentioned learning outcomes and ensure the content is relevant to the chapter. Do NOT include section title in the output unless specifically mentioned in output format.**\n"
+            f"\n# Section Description:\n{dedent(section_description)}\n\n"
+            "**IMPORTANT: Follow the above section description EXACTLY. "
+            "Adhere to the learning outcomes. Do NOT include the section title unless the output format asks for it.**\n"
         )
+
         if mode == Mode.RAG:
-            synthesis_query += "**Refer to the retrieved content for context.**"
+            synthesis_query += "**Use the attached context passages (from the system) when relevant.**\n"
 
         if output_format:
             synthesis_query += (
-                "\nThe output should be in the following JSON format:\n"
-                f"{json.dumps(output_format, indent=2)}"
+                "\nReturn a single JSON object ONLY matching this schema (no prose, no fences):\n"
+                f"{json.dumps(output_format, ensure_ascii=False, indent=2)}\n"
+                'If a field is empty, use "" or [] appropriately.'
             )
         else:
-            synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters. Do NOT repeat or regurgitate descriptions of sections provided above. Only generate relevant material as indicated in the section description."
+            synthesis_query += (
+                "\nReturn Markdown ONLY (no code fences). "
+                "Do NOT repeat the section description; generate the requested content."
+            )
 
         return dedent(self.replace_prompt_variables(synthesis_query))

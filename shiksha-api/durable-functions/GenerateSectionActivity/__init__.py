@@ -81,6 +81,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         synthesis_query = query_generator.generate_synthesis_query(
             dependencies=dependencies
         )
+        retrieval_query = query_generator.generate_retrieval_query()
 
         logging.info(
             "---------------- Query:\n%s\n---------------",
@@ -97,6 +98,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
                 RAGInput(
                     index_path=lp_gen_input.chapter_info.index_path,
                     response_synthesis_query=synthesis_query,
+                    retrieval_query=retrieval_query,
                 )
             )
 

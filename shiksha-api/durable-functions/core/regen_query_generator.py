@@ -94,8 +94,7 @@ class RegenQueryGenerator(BaseQueryGenerator):
             )
 
         # Add additional context if available
-        if self.lp_gen_input.additional_context.strip():
-            synthesis_query += f"\n---\nAdditional Context:\n\n{self.lp_gen_input.additional_context.strip()}\n---\n"
+        synthesis_query = self.add_additional_context_if_present(synthesis_query)
 
         if dependencies:
             previous_generation_dependency_str = None
