@@ -12,7 +12,9 @@ from tenacity import (
 )
 
 from llama_index.core.chat_engine.types import ChatMode
+from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core import (
+    QueryBundle,
     StorageContext,
     VectorStoreIndex,
     Document,
@@ -57,7 +59,7 @@ class BaseVectorIndexRagOps(ABC):
         self,
         completion_llm: LLM,
         emb_llm: Optional[LLM] = None,
-        similarity_top_k: int = 3,
+        similarity_top_k: int = 10,
         response_mode: str = "tree_summarize",
     ):
         """Initialize with embedding and completion language models and configuration parameters.
@@ -109,6 +111,7 @@ class BaseVectorIndexRagOps(ABC):
     async def _query_with_retries(
         self,
         text_str: str,
+        retrieval_query: Optional[str] = None,
         metadata_filter: Optional[Dict[str, str]] = None,
     ):
         """Internal method with retry logic for robust querying."""
@@ -149,7 +152,13 @@ class BaseVectorIndexRagOps(ABC):
                 )
 
                 # Generate response using the query engine
-                response = await query_engine.aquery(text_str)
+                qb = QueryBundle(
+                    query_str=text_str,
+                    custom_embedding_strs=[
+                        retrieval_query or text_str
+                    ],  # fallback if empty
+                )
+                response = await query_engine.aquery(qb)
                 return response
 
             except Exception as e:
@@ -161,6 +170,7 @@ class BaseVectorIndexRagOps(ABC):
     async def query_index(
         self,
         text_str: str,
+        retrieval_query: Optional[str] = None,
         metadata_filter: Optional[Dict[str, str]] = None,
     ) -> Any:
         """
@@ -184,8 +194,10 @@ class BaseVectorIndexRagOps(ABC):
 
         try:
             if metadata_filter:
-                await self._prequery_filter_guard(metadata_filter) 
-            answer = await self._query_with_retries(text_str, metadata_filter)
+                await self._prequery_filter_guard(metadata_filter)
+            answer = await self._query_with_retries(
+                text_str, retrieval_query, metadata_filter
+            )
             # Validate response quality
             if self._retry_on_empty_string_or_timeout_response(answer):
                 raise ValueError(f"LLM RESPONSE IS NOT VALID: {answer}")
@@ -224,7 +236,7 @@ class BaseVectorIndexRagOps(ABC):
 
         try:
             if metadata_filter:
-                await self._prequery_filter_guard(metadata_filter) 
+                await self._prequery_filter_guard(metadata_filter)
             # Create chat engine with context awareness
             chat_engine_kwargs = {
                 "chat_mode": ChatMode.CONTEXT,
@@ -423,8 +435,10 @@ class BaseVectorIndexRagOps(ABC):
             or "timeout" in response_text.lower()
             or len(response_text.strip()) == 0
         )
-    
-    async def _prequery_filter_guard(self, metadata_filter: Optional[Dict[str, Any]]) -> None:
+
+    async def _prequery_filter_guard(
+        self, metadata_filter: Optional[Dict[str, Any]]
+    ) -> None:
         """Hook to validate that the metadata filter has at least one match.
         Default no-op; override in backend-specific subclasses."""
         return
