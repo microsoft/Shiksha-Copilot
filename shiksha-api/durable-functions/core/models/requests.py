@@ -76,7 +76,8 @@ class LessonPlanGenerationInput(BaseModel):
     lp_id: str = Field(default="", description="ID of the lesson plan")
     chapter_info: ChapterInfo = Field(..., description="Information about the chapter")
     lp_level: LPLevel = Field(
-        ..., description="Level of the lesson plan (CHAPTER or SUBTOPIC or TELANGANA_ENGLISH_RESOURCE_PLAN)"
+        ...,
+        description="Level of the lesson plan (CHAPTER or SUBTOPIC or TELANGANA_ENGLISH_RESOURCE_PLAN)",
     )
     learning_outcomes: Optional[List[str]] = Field(
         default_factory=list, description="Learning outcomes for the lesson plan"
@@ -95,5 +96,10 @@ class LessonPlanGenerationInput(BaseModel):
         None, description="Existing lesson plan content for regeneration"
     )
     prompt_variables: Optional[Dict] = Field(
-        default_factory=dict, description="Optional variables for section prompts in workflow"
+        default_factory=dict,
+        description="Optional variables for section prompts in workflow",
+    )
+    additional_context: Optional[str] = Field(
+        None,
+        description="Additional context from previously generated lesson plans (auto-summarized)",
     )

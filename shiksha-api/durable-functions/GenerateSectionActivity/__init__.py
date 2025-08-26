@@ -10,6 +10,7 @@ from core import (
 )
 
 from core.base_query_generator import BaseQueryGenerator
+from core.gpt_context_summarizer import GPTContextSummarizer
 from core.models.workflow_models import (
     Mode,
     RAGInput,
@@ -39,6 +40,19 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         inputData.get("lp_gen_input", {})
     )
 
+    # Preprocess to compress additional context
+    if lp_gen_input.additional_context:
+        try:
+            lp_gen_input.additional_context = (
+                await GPTContextSummarizer.summarize_lesson_plan_context(
+                    lp_gen_input.additional_context
+                )
+            )
+        except Exception as e:
+            logging.error(
+                f"Error summarizing additional context: {str(e)}. Proceeding without summarization."
+            )
+
     logging.info(f"Generating section '{section_id}' using {mode} mode")
 
     try:
@@ -55,7 +69,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             RegenQueryGenerator(lp_gen_input, section)
             if lp_gen_input.lesson_plan and not lp_gen_input.start_from_section_id
             else (
-                QueryGeneratorTelanganaEnglishResourcePlan(section)
+                QueryGeneratorTelanganaEnglishResourcePlan(lp_gen_input, section)
                 if lp_gen_input.lp_level == LPLevel.TELANGANA_ENGLISH_RESOURCE_PLAN
                 else QueryGenerator(lp_gen_input, section)
             )

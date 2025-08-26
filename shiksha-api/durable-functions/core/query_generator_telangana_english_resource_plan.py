@@ -54,6 +54,10 @@ class QueryGeneratorTelanganaEnglishResourcePlan(BaseQueryGenerator):
 
         synthesis_query = f"You are creating the '{section_title}' section of a resource plan for english subject."
 
+        # Add additional context if available
+        if self.lp_gen_input.additional_context.strip():
+            synthesis_query += f"\n---\nAdditional Context:\n\n{self.lp_gen_input.additional_context.strip()}\n---\n"
+
         if dependencies:
             dependencies_str = "\n\n".join(
                 [
