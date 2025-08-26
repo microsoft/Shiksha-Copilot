@@ -52,9 +52,7 @@ class QueryGeneratorTelanganaEnglishResourcePlan(BaseQueryGenerator):
         mode = self.section.mode
         output_format = self.section.output_format
 
-        synthesis_query = (
-            f"You are creating the '{section_title}' section of a resource plan for english subject."
-        )
+        synthesis_query = f"You are creating the '{section_title}' section of a resource plan for english subject."
 
         if dependencies:
             dependencies_str = "\n\n".join(
@@ -83,6 +81,6 @@ class QueryGeneratorTelanganaEnglishResourcePlan(BaseQueryGenerator):
                 f"{json.dumps(output_format, indent=2)}"
             )
         else:
-            synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters."
+            synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters. Do NOT repeat or regurgitate descriptions of sections provided above. Only generate relevant material as indicated in the section description."
 
         return dedent(self.replace_prompt_variables(synthesis_query))

@@ -98,6 +98,6 @@ class QueryGenerator(BaseQueryGenerator):
                 f"{json.dumps(output_format, indent=2)}"
             )
         else:
-            synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters."
+            synthesis_query += "\nThe output should be in plain string **Markdown** format for ease of readability. DO NOT annotate the output with any special characters. Do NOT repeat or regurgitate descriptions of sections provided above. Only generate relevant material as indicated in the section description."
 
         return dedent(self.replace_prompt_variables(synthesis_query))
