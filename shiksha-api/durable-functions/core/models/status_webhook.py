@@ -1,11 +1,11 @@
 import datetime
 from enum import Enum
 from typing import Optional, Union
-import logging
 import os
 import aiohttp
 from pydantic import BaseModel
 from core.config import Config
+from core.logger import LoggerFactory
 
 
 class StatusEnum(Enum):
@@ -38,6 +38,7 @@ class GenStatus(BaseModel):
 class WebhookPoster:
     def __init__(self):
         self.webhook_url = Config.WEBHOOK_URL
+        self.logger = LoggerFactory.get_logger("WebhookPoster")
 
     async def post_status(self, gen_status: GenStatus):
         if self.webhook_url:
@@ -47,14 +48,16 @@ class WebhookPoster:
                         self.webhook_url, json=gen_status.dict()
                     ) as response:
                         response.raise_for_status()  # Raise an error for bad status codes
-                        logging.info(
+                        self.logger.info(
                             f"Successfully posted GenStatus: {gen_status.instance_id}"
                         )
                 except aiohttp.ClientError as e:
-                    logging.error(f"Failed to post GenStatus: {gen_status.instance_id}")
-                    logging.error(f"Error: {e}")
+                    self.logger.error(
+                        f"Failed to post GenStatus: {gen_status.instance_id}"
+                    )
+                    self.logger.error(f"Error: {e}")
                     self.log_gen_status(gen_status)
 
     @staticmethod
     def log_gen_status(gen_status: GenStatus):
-        logging.info(f"GenStatus log: {gen_status.dict()}")
+        WebhookPoster.logger.info(f"GenStatus log: {gen_status.dict()}")

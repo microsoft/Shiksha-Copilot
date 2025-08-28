@@ -1,4 +1,3 @@
-import logging
 import json
 from typing import Dict, Any
 
@@ -8,6 +7,10 @@ from core import (
     RegenQueryGenerator,
     QueryGeneratorTelanganaEnglishResourcePlan,
 )
+from core.logger import LoggerFactory
+
+# Get logger for this module
+logger = LoggerFactory.get_function_logger("GenerateSectionActivity")
 
 from core.base_query_generator import BaseQueryGenerator
 from core.gpt_context_summarizer import GPTContextSummarizer
@@ -43,17 +46,18 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
     # Preprocess to compress additional context
     if lp_gen_input.additional_context:
         try:
+            summarizer = GPTContextSummarizer()
             lp_gen_input.additional_context = (
-                await GPTContextSummarizer.summarize_lesson_plan_context(
+                await summarizer.summarize_lesson_plan_context(
                     lp_gen_input.additional_context
                 )
             )
         except Exception as e:
-            logging.error(
+            logger.error(
                 f"Error summarizing additional context: {str(e)}. Proceeding without summarization."
             )
 
-    logging.info(f"Generating section '{section_id}' using {mode} mode")
+    logger.info(f"Generating section '{section_id}' using {mode} mode")
 
     try:
         # Get the workflow from the database
@@ -75,7 +79,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
             )
         )
 
-        logging.info(f"Using query generator: {type(query_generator).__name__}")
+        logger.info(f"Using query generator: {type(query_generator).__name__}")
 
         # Generate synthesis queries
         synthesis_query = query_generator.generate_synthesis_query(
@@ -83,7 +87,7 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         )
         retrieval_query = query_generator.generate_retrieval_query()
 
-        logging.info(
+        logger.info(
             "---------------- Query:\n%s\n---------------",
             synthesis_query,
         )
@@ -117,5 +121,5 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         return {"content": result}
 
     except Exception as e:
-        logging.exception(f"Error generating section '{section_id}': {str(e)}")
-        return {"error": str(e)}
+        logger.exception(f"Error generating section '{section_id}': {str(e)}")
+        raise e

@@ -1,11 +1,14 @@
 from datetime import datetime
 import json
-import logging
 import azure.functions as func
 import azure.durable_functions as df
 
 from core.models.requests import LessonPlanGenerationInput
 from core.models.status_webhook import GenStatus, StatusEnum, WebhookPoster
+from core.logger import LoggerFactory
+
+# Get logger for this module
+logger = LoggerFactory.get_function_logger("LessonPlanHttpTrigger")
 
 
 async def main(
@@ -31,7 +34,7 @@ async def main(
         - For checklist mode: the complete generated result (200 OK) or timeout response
         - For errors: appropriate error message (400 Bad Request)
     """
-    logging.info(
+    logger.info(
         "Python HTTP trigger function processed a request to generate a lesson plan."
     )
 
@@ -76,7 +79,7 @@ async def main(
             )
 
     except Exception as e:
-        logging.error(f"Error starting lesson plan generation: {str(e)}")
+        logger.error(f"Error starting lesson plan generation: {str(e)}")
         return func.HttpResponse(
             body=json.dumps({"error": str(e)}),
             mimetype="application/json",
@@ -127,7 +130,7 @@ async def generate_checklist(req: func.HttpRequest, starter: str) -> func.HttpRe
             status_code=400,
         )
 
-    logging.info(
+    logger.info(
         f"Starting workflow from section (sync mode): {input_data.start_from_section_id}"
     )
 

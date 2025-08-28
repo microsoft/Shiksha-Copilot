@@ -21,13 +21,6 @@ class EnglishLPType(str, Enum):
     NONE = "NONE"
 
 
-class SubtopicInfo(BaseModel):
-    name: str = Field(..., description="Name of the subtopic")
-    learning_outcomes: List[str] = Field(
-        default_factory=list, description="Learning outcomes for the subtopic"
-    )
-
-
 class ChapterInfo(BaseModel):
     id: str = Field(..., description="ID of the chapter")
     index_path: str = Field(..., description="Path to the index for content retrieval")
@@ -79,8 +72,8 @@ class LessonPlanGenerationInput(BaseModel):
         ...,
         description="Level of the lesson plan (CHAPTER or SUBTOPIC or TELANGANA_ENGLISH_RESOURCE_PLAN)",
     )
-    learning_outcomes: Optional[List[str]] = Field(
-        default_factory=list, description="Learning outcomes for the lesson plan"
+    learning_outcomes: List[str] = Field(
+        ..., description="Learning outcomes for the lesson plan"
     )
     lp_type_english: Optional[EnglishLPType] = Field(
         default=EnglishLPType.NONE,
@@ -89,8 +82,8 @@ class LessonPlanGenerationInput(BaseModel):
     start_from_section_id: Optional[str] = Field(
         None, description="ID of the section to start from for regeneration"
     )
-    subtopics: Optional[List[SubtopicInfo]] = Field(
-        default_factory=list, description="List of subtopics for the lesson plan"
+    subtopics: Optional[List[str]] = Field(
+        default_factory=list, description="List of subtopic names for the lesson plan"
     )
     lesson_plan: Optional[LessonPlanContent] = Field(
         None, description="Existing lesson plan content for regeneration"

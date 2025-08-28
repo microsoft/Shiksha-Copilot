@@ -27,7 +27,7 @@ class BaseQueryGenerator(ABC):
             and self.lp_gen_input.additional_context
             and self.lp_gen_input.additional_context.strip()
         ):
-            synthesis_query += f"\n---\nAdditional Context:\n\n{self.lp_gen_input.additional_context.strip()}\n---\n"
+            synthesis_query += f"\n=== ADDITIONAL CONTEXT ===\n{self.lp_gen_input.additional_context.strip()}\n===\n"
         return synthesis_query
 
     @abstractmethod
@@ -78,12 +78,13 @@ class BaseQueryGenerator(ABC):
             return ""
 
         if self.lp_gen_input.lp_level == LPLevel.SUBTOPIC:
-            retrieval_query = "\n\n".join(
-                [
-                    f"Topic Title: {subtopic_info.name}\n"
-                    f"Learning Outcomes: {chr(10).join(subtopic_info.learning_outcomes)}"
-                    for subtopic_info in self.lp_gen_input.subtopics
-                ]
+            if not self.lp_gen_input.subtopics or len(self.lp_gen_input.subtopics) == 0:
+                raise ValueError(
+                    "Subtopics must be provided for SUBTOPIC level lesson plans"
+                )
+            retrieval_query = (
+                f"Topic(s): {'; '.join(self.lp_gen_input.subtopics) }\n"
+                f"Learing Outcomes: {chr(10).join(self.lp_gen_input.learning_outcomes)}"
             )
         else:
             retrieval_query = (

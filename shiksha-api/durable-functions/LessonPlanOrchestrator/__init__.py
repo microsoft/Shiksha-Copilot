@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 import uuid
 import azure.functions as func
 import azure.durable_functions as df
@@ -8,6 +7,10 @@ from typing import Dict, Generator, List, Any
 
 from core.agents.agent_pool import AgentPool
 from core.blob_store import BlobStore
+from core.logger import LoggerFactory
+
+# Get logger for this module
+logger = LoggerFactory.get_function_logger("LessonPlanOrchestrator")
 from core.models.responses import LessonPlan
 from core.models.status_webhook import GenStatus, StatusEnum
 from core.models.workflow_models import (
@@ -52,7 +55,7 @@ def main(
 
         # Start from a specific section
         if lp_gen_input.start_from_section_id and lp_gen_input.lesson_plan:
-            logging.info(
+            logger.info(
                 f"Creating DAG with filled nodes starting from section: {lp_gen_input.start_from_section_id}"
             )
             # Mark dependency content nodes as completed in the current DAG.
@@ -65,7 +68,7 @@ def main(
             )
         # LP Regeneration with given feedback
         elif lp_gen_input.lesson_plan:
-            logging.info("Creating DAG with filled nodes from the provided lesson plan")
+            logger.info("Creating DAG with filled nodes from the provided lesson plan")
             dag_from_previous_lp = DAG.from_nodes(
                 [
                     section.get_dag_node()
@@ -119,22 +122,14 @@ def main(
             created_at=int(context.current_utc_datetime.timestamp()),
             workflow_id=lp_gen_input.workflow.id,
             chapter_id=lp_gen_input.chapter_info.id,
-            subtopics=[subtopic.name for subtopic in lp_gen_input.subtopics],
-            learning_outcomes=(
-                lp_gen_input.learning_outcomes
-                if lp_gen_input.lp_level == LPLevel.CHAPTER
-                else [
-                    lo
-                    for subtopic in lp_gen_input.subtopics
-                    for lo in subtopic.learning_outcomes
-                ]
-            ),
+            subtopics=lp_gen_input.subtopics,
+            learning_outcomes=(lp_gen_input.learning_outcomes),
             lp_level=lp_gen_input.lp_level,
             lp_type_english=lp_gen_input.lp_type_english,
             sections=all_sections,
         ).model_dump(by_alias=True, exclude_none=True)
 
-        logging.info(
+        logger.info(
             "FINAL RESPONSE: %s",
             json.dumps(lesson_plan_json, indent=2),
         )
@@ -146,11 +141,12 @@ def main(
         # Return the final result
         return lesson_plan_json
     except Exception as e:
-        logging.exception("Error in main orchestrator", exc_info=True)
+        logger.exception("Error in main orchestrator", exc_info=True)
         yield context.call_activity(
             "WebhookStatusActivity",
             prepare_status_payload(context, StatusEnum.FAILED, str(e)),
         )
+        raise e
     finally:
         # CLEAR RAG RESOURCES
         if lp_gen_input is not None:

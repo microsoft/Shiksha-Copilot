@@ -1,4 +1,3 @@
-import logging
 from core.models.status_webhook import GenStatus, WebhookPoster
 
 

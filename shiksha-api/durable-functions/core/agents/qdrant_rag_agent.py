@@ -1,13 +1,13 @@
 import json
 import os
 import tempfile
-import logging
 import shutil
 import abc
 from typing import Dict, Union
 from core.blob_store import BlobStore
 from core.config import Config
 from core.models.workflow_models import RAGInput
+from core.logger import LoggerFactory
 from rag_wrapper.rag_ops.qdrant_rag_ops import QdrantRagOps
 
 
@@ -36,6 +36,7 @@ class QdrantRAGAgent:
             emb_llm=self._embed_llm,
             completion_llm=self._llm,
         )
+        self.logger = LoggerFactory.get_agent_logger("QdrantRAGAgent")
 
     def _get_llm(self):
         from llama_index.llms.azure_openai import AzureOpenAI
@@ -72,14 +73,16 @@ class QdrantRAGAgent:
             )
             try:
                 content = json.loads(content_text.strip("```json").strip("````"))
-                logging.info("Successfully parsed RAG response as JSON")
+                self.logger.info("Successfully parsed RAG response as JSON")
             except json.JSONDecodeError as e:
-                logging.warning(f"Failed to parse RAG agent response as JSON: {str(e)}")
-                logging.warning(f"Response text: {content_text[:200]}...")
+                self.logger.warning(
+                    f"Failed to parse RAG agent response as JSON: {str(e)}"
+                )
+                self.logger.warning(f"Response text: {content_text[:200]}...")
                 content = content_text
             return content
         except Exception as e:
-            logging.error(f"Error in Qdrant RAG generation: {str(e)}")
+            self.logger.error(f"Error in Qdrant RAG generation: {str(e)}")
             raise
 
     def clear_resources(self):

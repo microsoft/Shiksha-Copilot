@@ -1,11 +1,11 @@
 from textwrap import dedent
 from typing import Dict, Any, List
 import json
-import logging
 from openai import AzureOpenAI
 
 from core.config import Config
 from core.models.workflow_models import SectionOutput
+from core.logger import LoggerFactory
 
 
 class ValidatorAgent:
@@ -20,6 +20,7 @@ class ValidatorAgent:
             api_key=Config.AZURE_OPENAI_API_KEY,
             api_version=Config.AZURE_OPENAI_API_VERSION,
         )
+        self.logger = LoggerFactory.get_agent_logger("ValidatorAgent")
 
     def validate_lesson_plan(
         self,
@@ -37,7 +38,7 @@ class ValidatorAgent:
             The validation result
         """
         try:
-            logging.info("Validating lesson plan")
+            self.logger.info("Validating lesson plan")
 
             sections_str = "\n----------------\n".join(
                 [
@@ -75,7 +76,9 @@ class ValidatorAgent:
                 }}
             """
 
-            logging.info("Prompt for validation agent: \n%s", dedent(validation_prompt))
+            self.logger.info(
+                "Prompt for validation agent: \n%s", dedent(validation_prompt)
+            )
             # Make the completion call to OpenAI
             response = self.client.chat.completions.create(
                 model=Config.AZURE_OPENAI_MODEL,
@@ -104,7 +107,7 @@ class ValidatorAgent:
                 return validation_result
 
             except Exception as e:
-                logging.error(f"Error parsing validation result: {str(e)}")
+                self.logger.error(f"Error parsing validation result: {str(e)}")
                 return {
                     "is_valid": False,
                     "errors": [f"Error parsing validation result: {str(e)}"],
@@ -113,7 +116,7 @@ class ValidatorAgent:
                 }
 
         except Exception as e:
-            logging.error(f"Error in validator agent: {str(e)}")
+            self.logger.error(f"Error in validator agent: {str(e)}")
             return {
                 "is_valid": False,
                 "errors": [f"Error in validator agent: {str(e)}"],

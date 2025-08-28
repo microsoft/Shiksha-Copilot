@@ -1,4 +1,4 @@
-import logging
+from core.logger import LoggerFactory
 from typing import Optional, Dict, Any
 from textwrap import dedent
 
@@ -12,9 +12,10 @@ class GPTContextSummarizer:
     the most important information for avoiding duplication across lesson plans.
     """
 
-    @staticmethod
+    logger = LoggerFactory.get_logger("GPTContextSummarizer")
+
     async def summarize_lesson_plan_context(
-        lesson_plan_content: str, max_summary_length: int = 800
+        self, lesson_plan_content: str, max_summary_length: int = 800
     ) -> str:
         """
         Use GPT to create an intelligent summary of lesson plan content.
@@ -73,13 +74,13 @@ class GPTContextSummarizer:
                 else:
                     summary = truncated + "..."
 
-            logging.info(
+            self.logger.info(
                 f"Successfully summarized lesson plan context: {len(lesson_plan_content)} -> {len(summary)} characters"
             )
             return summary.strip()
 
         except Exception as e:
-            logging.error(f"Failed to summarize lesson plan context: {str(e)}")
+            self.logger.error(f"Failed to summarize lesson plan context: {str(e)}")
             # Fallback to truncated original content
             return (
                 lesson_plan_content[:max_summary_length] + "..."

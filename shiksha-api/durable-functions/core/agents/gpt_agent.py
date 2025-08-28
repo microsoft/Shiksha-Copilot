@@ -1,8 +1,8 @@
 import json
-import logging
 from typing import Dict, Union
 from openai import AsyncAzureOpenAI
 from core.config import Config
+from core.logger import LoggerFactory
 
 from core.models.workflow_models import GPTInput
 
@@ -40,6 +40,7 @@ class GPTAgent:
             api_key=Config.AZURE_OPENAI_API_KEY,
             api_version=Config.AZURE_OPENAI_API_VERSION,
         )
+        self.logger = LoggerFactory.get_agent_logger("GPTAgent")
 
     async def generate_section(self, gpt_input: GPTInput) -> Union[str, Dict]:
         """
@@ -70,7 +71,7 @@ class GPTAgent:
         try:
             content = json.loads(content_text.strip("```json").strip("```"))
         except Exception as e:
-            logging.warning(f"Failed to parse RAG agent response as JSON: {str(e)}")
+            self.logger.warning(f"Failed to parse RAG agent response as JSON: {str(e)}")
             content = content_text
 
         return content

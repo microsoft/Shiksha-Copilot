@@ -1,11 +1,12 @@
 import abc
 import json
+import logging
 import os
 from typing import Dict, Union, Type
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 import tempfile
-import logging
+from core.logger import LoggerFactory
 import shutil
 
 from rag_wrapper import InMemRagOps, InMemGraphRagOps
@@ -25,7 +26,7 @@ class BaseAzureBlobRAGAgent(abc.ABC):
     Implements the BaseRagAgent abstract class.
     """
 
-    def __init__(self, index_path: str):
+    def __init__(self, index_path: str, logger: logging.Logger = None):
         """
         Initializes the Azure RAG Agent with Azure OpenAI LLM and embedding models.
 
@@ -36,6 +37,7 @@ class BaseAzureBlobRAGAgent(abc.ABC):
         Args:
             index_path (str): Path to the RAG index in blob storage.
         """
+        self.logger = logger or LoggerFactory.get_agent_logger("BaseAzureBlobRAGAgent")
         # Initialize Azure OpenAI LLM with JSON response format for structured output
         self._llm = AzureOpenAI(
             model=Config.AZURE_OPENAI_MODEL,
@@ -95,11 +97,11 @@ class BaseAzureBlobRAGAgent(abc.ABC):
         if os.path.exists(self._local_index_path):
             try:
                 shutil.rmtree(self._local_index_path)
-                logging.info(
+                self.logger.info(
                     f"Successfully cleared resources at {self._local_index_path}"
                 )
             except Exception as e:
-                logging.error(
+                self.logger.error(
                     f"Failed to clear resources at {self._local_index_path}: {e}"
                 )
 
@@ -125,7 +127,7 @@ class BaseAzureBlobRAGAgent(abc.ABC):
             index_exists = await self._rag_ops.index_exists()
 
             if not index_exists:
-                logging.info(
+                self.logger.info(
                     f"Downloading new RAG index at {self._local_index_path}..."
                 )
 
@@ -140,7 +142,7 @@ class BaseAzureBlobRAGAgent(abc.ABC):
                     )
 
                 file_paths_str = "\n".join(downloaded_file_paths)
-                logging.info(f"Downloaded RAG index files: {file_paths_str}")
+                self.logger.info(f"Downloaded RAG index files: {file_paths_str}")
 
             # Initialize the index if needed (for property graph operations)
             if hasattr(self._rag_ops, "initiate_index"):
@@ -156,10 +158,12 @@ class BaseAzureBlobRAGAgent(abc.ABC):
             # Attempt to parse response as JSON for structured output
             try:
                 content = json.loads(content_text.strip("```json").strip("```"))
-                logging.info("Successfully parsed RAG response as JSON")
+                self.logger.info("Successfully parsed RAG response as JSON")
             except json.JSONDecodeError as e:
-                logging.warning(f"Failed to parse RAG agent response as JSON: {str(e)}")
-                logging.warning(
+                self.logger.warning(
+                    f"Failed to parse RAG agent response as JSON: {str(e)}"
+                )
+                self.logger.warning(
                     f"Response text: {content_text[:200]}..."
                 )  # Log first 200 chars
                 content = content_text
@@ -167,5 +171,5 @@ class BaseAzureBlobRAGAgent(abc.ABC):
             return content
 
         except Exception as e:
-            logging.error(f"Error in RAG generation: {str(e)}")
+            self.logger.error(f"Error in RAG generation: {str(e)}")
             raise

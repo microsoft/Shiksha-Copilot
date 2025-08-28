@@ -59,8 +59,8 @@ class QueryGenerator(BaseQueryGenerator):
         # This is NOT used for retrieval; retrieval will use QueryBundle.embedding_strs.
         retrieval_seed = self.generate_retrieval_query().strip()
         if retrieval_seed:
-            synthesis_query += "=== LEARNING OUTCOMES (REFERENCE) ===\n"
-            synthesis_query += retrieval_seed
+            synthesis_query += "=== CURRENT SECTION'S LEARNING OUTCOMES ===\n"
+            synthesis_query += retrieval_seed + "\n===\n"
 
         # Additional context from caller (if any)
         synthesis_query = self.add_additional_context_if_present(synthesis_query)
@@ -74,15 +74,19 @@ class QueryGenerator(BaseQueryGenerator):
                 ]
             )
             synthesis_query += (
+                "\n=== PREVIOUSLY GENERATED SECTIONS ===\n"
                 "\nThe content of this section depends on the following previously generated sections:\n"
-                "```json\n" + deps_str + "\n```\n"
+                f"{deps_str}"
+                "\n===\n"
             )
 
         # Section instructions (source of truth)
         synthesis_query += (
-            f"\n# Section Description:\n{dedent(section_description)}\n\n"
+            f"=== CURRENT SECTION DESCRIPTION ===\n{dedent(section_description)}\n"
             "**IMPORTANT: Follow the above section description EXACTLY. "
-            "Adhere to the learning outcomes. Do NOT include the section title unless the output format asks for it.**\n"
+            "Adhere to the **CURRENT SECTION'S LEARNING OUTCOMES** to generate content for this section. All references of learning outcomes in the above description belong to **CURRENT SECTION'S LEARNING OUTCOMES** ONLY. "
+            "Do NOT include the section title unless the output format asks for it.**"
+            "\n===\n"
         )
 
         if mode == Mode.RAG:

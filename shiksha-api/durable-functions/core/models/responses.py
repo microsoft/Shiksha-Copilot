@@ -14,7 +14,7 @@ class LessonPlan(BaseModel):
         ..., description="ID of the workflow used to generate the lesson plan"
     )
     chapter_id: str = Field(..., description="ID of the chapter")
-    subtopics: List[str] = Field(
+    subtopics: Optional[List[str]] = Field(
         default_factory=list, description="List of subtopic names"
     )
     learning_outcomes: List[str] = Field(
