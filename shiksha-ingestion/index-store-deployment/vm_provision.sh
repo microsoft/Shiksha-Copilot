@@ -61,7 +61,7 @@ if sudo docker ps -a --format '{{.Names}}' | grep -q '^neo4j$'; then
   echo "♻️ Neo4j container exists; ensuring it's running..."
   sudo docker start neo4j >/dev/null 2>&1 || true
 else
-  echo "🐳 Starting Neo4j..."
+  echo "🐳 Starting Neo4j with APOC plugin..."
   sudo docker run -d \
     --name neo4j \
     --restart unless-stopped \
@@ -78,7 +78,11 @@ else
     -e NEO4J_server_https_advertised__address="$PUBLIC_IP_VM:7473" \
     -e NEO4J_dbms_security_procedures_unrestricted="gds.*,apoc.*" \
     -e NEO4J_dbms_security_procedures_allowlist="gds.*,apoc.*" \
-    neo4j:5.15.0
+    -e NEO4J_apoc_export_file_enabled=true \
+    -e NEO4J_apoc_import_file_enabled=true \
+    -e NEO4J_apoc_import_file_use__neo4j__config=true \
+    -e NEO4JLABS_PLUGINS='["apoc"]' \
+    neo4j:latest
 fi
 
 # ---------- Qdrant container (idempotent) ----------
