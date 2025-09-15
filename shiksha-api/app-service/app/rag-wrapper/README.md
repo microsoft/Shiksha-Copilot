@@ -420,10 +420,14 @@ pytest tests/test_azure_ai_search_rag_ops.py -v
 
 # Test in-memory property graph RAG operations
 pytest tests/test_property_graph_rag_ops.py -v
+
+# Test Neo4j + Qdrant property graph RAG operations (requires Neo4j and Qdrant)
+pytest tests/test_neo_4j_qdrant_graph_ragops.py -v
 ```
 
 Tests cover:
 - **Vector Operations**: Document insertion, retrieval, querying, chat interactions, and metadata filtering
 - **Graph Operations**: Knowledge graph extraction, entity/relationship mapping, graph traversal, and sub-retriever functionality
+- **Multiple Backends**: In-memory storage, Azure AI Search, and Neo4j+Qdrant distributed storage
 - **Integration**: End-to-end workflows combining vector and graph capabilities
 - **Error Handling**: Robust error scenarios and recovery mechanisms

@@ -1,5 +1,6 @@
 import logging
 import uuid
+import json
 from abc import ABC, abstractmethod
 from typing import Any, List, Dict, Optional, Union
 
@@ -19,8 +20,9 @@ from llama_index.core import (
     Settings,
 )
 from llama_index.core.llms import ChatMessage, LLM
-from llama_index.core.schema import TransformComponent
+from llama_index.core.schema import TransformComponent, TextNode
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
+from llama_index.core.graph_stores.types import EntityNode, Relation
 
 from llama_index.core.callbacks import CallbackManager, TokenCountingHandler
 import traceback
@@ -62,7 +64,7 @@ class BaseGraphIndexRagOps(ABC):
         self,
         completion_llm: LLM,
         emb_llm: Optional[LLM] = None,
-        similarity_top_k: int = 3,
+        similarity_top_k: int = 6,
         response_mode: str = "tree_summarize",
         kg_extractors: Optional[List[TransformComponent]] = None,
         path_depth: int = 1,
@@ -408,6 +410,7 @@ class BaseGraphIndexRagOps(ABC):
             self.rag_index = PropertyGraphIndex.from_documents(
                 documents,
                 property_graph_store=self.property_graph_store,
+                vector_store=self.vector_store,
                 embed_model=self.emb_llm if self.embed_kg_nodes else None,
                 kg_extractors=extractors_to_use,
                 transformations=transformations,
@@ -575,6 +578,260 @@ class BaseGraphIndexRagOps(ABC):
         except Exception as e:
             self.logger.error(f"Failed to create index from existing graph store: {e}")
             raise
+
+    async def ingest_networkx_graph_nodes(
+        self,
+        networkx_graph_json: Union[str, Dict],
+        content_field: str = "content",
+    ) -> Dict[str, int]:
+        """
+        Ingest nodes and edges from a NetworkX graph JSON and convert to LlamaIndex objects.
+
+        This function directly processes NetworkX graph JSON data and converts nodes/edges to
+        LlamaIndex EntityNode, TextNode, and Relation objects for insertion into Neo4j and Qdrant.
+        No KG extractors are used since all relationships are already present in the JSON.
+
+        Args:
+            networkx_graph_json: Either a JSON string or dictionary containing the NetworkX graph data
+            content_field: The field name in each node that contains the text content for embeddings (default: "content")
+
+        Returns:
+            Dictionary containing:
+                - "entity_nodes_added": Count of entity nodes that were created
+                - "text_nodes_added": Count of text nodes that were created
+                - "relations_added": Count of relation objects that were created
+
+        Raises:
+            ValueError: If the JSON structure is invalid or content field is missing
+            KeyError: If required graph structure is not found
+        """
+        try:
+            # Step 1: Parse and validate input JSON
+            graph_data = self._parse_networkx_json(networkx_graph_json)
+            nodes, edges = self._extract_nodes_and_edges(graph_data)
+
+            # Step 2: Initialize index if needed
+            if not self.property_graph_store:
+                await self.initiate_index()
+
+            # Step 3: Process nodes and create LlamaIndex objects
+            entity_nodes, text_nodes = self._process_networkx_nodes(
+                nodes, content_field
+            )
+
+            # Step 4: Process edges and create relation objects
+            relations = self._process_networkx_edges(edges)
+
+            self.logger.info(
+                f"Created {len(entity_nodes)} entity nodes, {len(text_nodes)} text nodes, and {len(relations)} relations"
+            )
+
+            # Step 5: Store data in graph and vector stores
+            self._store_entity_nodes_and_relations(entity_nodes, relations)
+            self._store_text_nodes_with_embeddings(text_nodes)
+
+            # Step 6: Create index and persist
+            self.from_existing_graph_store(
+                property_graph_store=self.property_graph_store,
+                vector_store=self.vector_store if self.embed_kg_nodes else None,
+            )
+            await self.persist_index()
+
+            self.logger.info(
+                f"Successfully ingested NetworkX graph: {len(entity_nodes)} nodes, {len(relations)} relations"
+            )
+
+            return {
+                "entity_nodes_added": len(entity_nodes),
+                "text_nodes_added": len(text_nodes),
+                "relations_added": len(relations),
+            }
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON format: {e}")
+        except Exception as e:
+            self.logger.error(f"Error ingesting NetworkX graph: {e}")
+            raise e
+
+    def _parse_networkx_json(self, networkx_graph_json: Union[str, Dict]) -> Dict:
+        """Parse NetworkX JSON input into a dictionary."""
+        if isinstance(networkx_graph_json, str):
+            return json.loads(networkx_graph_json)
+        return networkx_graph_json
+
+    def _extract_nodes_and_edges(
+        self, graph_data: Dict
+    ) -> tuple[List[Dict], List[Dict]]:
+        """Extract nodes and edges from NetworkX graph data structure."""
+        try:
+            networkx_data = graph_data["graph_data"]["networkx_data"]["directed"]
+        except KeyError as e:
+            missing_key = str(e).strip("'\"")
+            raise KeyError(
+                f"Required key '{missing_key}' not found in graph data structure. Expected path: graph_data['graph_data']['networkx_data']['directed']"
+            )
+
+        # Validate required keys exist
+        if "nodes" not in networkx_data:
+            raise KeyError("'nodes' key not found in the directed graph data")
+        if "links" not in networkx_data:
+            raise KeyError("'links' key not found in the directed graph data")
+
+        nodes = networkx_data["nodes"]
+        edges = networkx_data["links"]  # NetworkX JSON format uses "links" for edges
+
+        if not nodes:
+            raise ValueError("No nodes found in the graph data")
+
+        return nodes, edges
+
+    def _process_networkx_nodes(
+        self,
+        nodes: List[Dict],
+        content_field: str,
+    ) -> tuple[List[EntityNode], List[TextNode]]:
+        """Convert NetworkX nodes to LlamaIndex EntityNode and TextNode objects."""
+        # Define node field constants
+        NODE_ID_FIELD = "id"
+        NODE_TYPE_FIELD = "type"
+        NODE_NAME_FIELD = "name"
+        ENTITY_NODE_FIELDS = {NODE_ID_FIELD, NODE_TYPE_FIELD, NODE_NAME_FIELD}
+
+        entity_nodes = []
+        text_nodes = []
+
+        for node in nodes:
+            node_id = str(node.get(NODE_ID_FIELD, f"node_{uuid.uuid4()}"))
+            entity_label = node.get(NODE_TYPE_FIELD, "entity")
+            node_name = node.get(NODE_NAME_FIELD, "default_name")
+
+            # Create entity properties (exclude content and core entity fields)
+            entity_properties = self._extract_entity_properties(
+                node, ENTITY_NODE_FIELDS
+            )
+
+            # Create EntityNode
+            entity_node = EntityNode(
+                label=entity_label,
+                name=node_name,
+                properties=entity_properties,
+            )
+            entity_nodes.append(entity_node)
+
+            # Create TextNode if content exists and embedding is enabled
+            text_node = self._create_text_node_if_valid(
+                node, node_id, content_field, entity_properties
+            )
+            if text_node:
+                text_nodes.append(text_node)
+
+        return entity_nodes, text_nodes
+
+    def _extract_entity_properties(
+        self, node: Dict, excluded_fields: set
+    ) -> Dict[str, str]:
+        """Extract entity properties from node, excluding content and core fields."""
+        entity_properties = {}
+
+        for key, value in node.items():
+            if key not in excluded_fields:
+                if isinstance(value, (dict, list)):
+                    entity_properties[key] = json.dumps(value)
+                else:
+                    entity_properties[key] = str(value)
+
+        return entity_properties
+
+    def _create_text_node_if_valid(
+        self,
+        node: Dict,
+        node_id: str,
+        content_field: str,
+        entity_properties: Dict[str, str],
+    ) -> Optional[TextNode]:
+        """Create TextNode for embedding if content is valid and embedding is enabled."""
+        # Check if content exists and embedding is enabled
+        has_content = content_field in node and node[content_field]
+        if not (has_content and self.embed_kg_nodes):
+            self.logger.warning(
+                f"Node {node_id} missing '{content_field}' field, skipping text node creation or self.embed_kg_nodes is False"
+            )
+            return None
+
+        content = node[content_field]
+        if not content.strip():
+            self.logger.warning(
+                f"Node {node_id} has empty '{content_field}' field, skipping text node creation"
+            )
+            return None
+
+        # Create text node
+        text_node = TextNode(id_=node_id, text=content, metadata=entity_properties)
+
+        return text_node
+
+    def _process_networkx_edges(self, edges: List[Dict]) -> List[Relation]:
+        """Convert NetworkX edges to LlamaIndex Relation objects."""
+        relations = []
+
+        for edge in edges:
+            source_id = str(edge.get("source", ""))
+            target_id = str(edge.get("target", ""))
+
+            if not source_id or not target_id:
+                self.logger.warning(f"Edge missing source or target: {edge}")
+                continue
+
+            # Extract edge properties
+            edge_properties = {
+                "confidence": str(edge.get("confidence", "1.0")),
+                "description": str(edge.get("description", "")),
+            }
+
+            relation_label = edge.get("relation_type", "related")
+            relation = Relation(
+                label=relation_label,
+                source_id=source_id,
+                target_id=target_id,
+                properties=edge_properties,
+            )
+            relations.append(relation)
+
+        return relations
+
+    def _store_entity_nodes_and_relations(
+        self, entity_nodes: List[EntityNode], relations: List[Relation]
+    ) -> None:
+        """Store entity nodes and relations in the property graph store."""
+        if entity_nodes:
+            self.property_graph_store.upsert_nodes(entity_nodes)
+            self.logger.info(
+                f"Inserted {len(entity_nodes)} entity nodes into property graph store"
+            )
+
+        if relations:
+            self.property_graph_store.upsert_relations(relations)
+            self.logger.info(
+                f"Inserted {len(relations)} relations into property graph store"
+            )
+
+    def _store_text_nodes_with_embeddings(self, text_nodes: List[TextNode]) -> None:
+        """Generate embeddings for text nodes and store in vector store."""
+        if not (text_nodes and self.vector_store and self.emb_llm):
+            return
+
+        # Generate embeddings for text nodes
+        for node in text_nodes:
+            if hasattr(self.emb_llm, "get_text_embedding"):
+                node.embedding = self.emb_llm.get_text_embedding(node.text)
+            elif hasattr(self.emb_llm, "_get_text_embedding"):
+                node.embedding = self.emb_llm._get_text_embedding(node.text)
+
+        # Add text nodes to vector store
+        self.vector_store.add(text_nodes)
+        self.logger.info(
+            f"Inserted {len(text_nodes)} text nodes with embeddings into vector store"
+        )
 
     def _create_default_sub_retrievers(
         self, metadata_filter: Optional[Dict[str, str]]
