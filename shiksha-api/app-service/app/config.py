@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     blob_store_connection_string: Optional[str] = None
     blob_store_url: Optional[str] = None
 
+    qdrant_url: Optional[str] = None
+    qdrant_api_key: Optional[str] = None
+
     class Config:
         env_file = ".env"
         extra = "ignore"  # Allow extra fields to be ignored

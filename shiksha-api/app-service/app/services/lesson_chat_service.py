@@ -2,15 +2,12 @@ import os
 from pathlib import Path
 import logging
 import re
-import shutil
-import tempfile
 from collections import OrderedDict
 from typing import Optional
 from app.config import settings
 from app.models.chat import LessonChatRequest
-from app.utils.blob_store import BlobStore
 from app.utils.prompt_template import PromptTemplate
-from rag_wrapper import InMemRagOps
+from app.services.rag_adapters import BaseRagAdapter, RagAdapterFactory
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core.llms import ChatMessage
@@ -48,10 +45,10 @@ class LessonChatService:
         )
 
         # Initialize blob storage for retrieving index files
-        self._blob_store = BlobStore()
+        # Note: BlobStore is now handled inside InMemRagOpsAdapter
 
-        # Initialize LRU cache for RAGOps instances (max 32 items)
-        self._rag_ops_cache: OrderedDict[str, InMemRagOps] = OrderedDict()
+        # Initialize LRU cache for RAG adapter instances (max 32 items)
+        self._rag_adapter_cache: OrderedDict[str, BaseRagAdapter] = OrderedDict()
         self._cache_size = 32
 
     async def __call__(
@@ -68,31 +65,11 @@ class LessonChatService:
             str: The chat response from the RAG system
         """
         try:
-            # Create local directory for storing downloaded index files
-            index_persist_dir = os.path.join(
-                tempfile.gettempdir(), request.index_path.replace("/", "_")
-            )
+            # Get or create cached RAG adapter instance
+            rag_adapter = await self._get_or_create_rag_adapter(request.index_path)
 
-            # Get or create cached RAGOps instance
-            rag_ops = self._get_or_create_rag_ops(index_persist_dir)
-
-            # Check if index exists locally, download if not
-            index_exists = await rag_ops.index_exists()
-            if not index_exists:
-                logging.info(f"Downloading new RAG index at {index_persist_dir}...")
-
-                # Download index files from blob storage
-                downloaded_file_paths = await self._blob_store.download_blobs_to_folder(
-                    prefix=request.index_path, target_folder=index_persist_dir
-                )
-
-                if not downloaded_file_paths:
-                    raise RuntimeError(
-                        f"No files downloaded for index path: {request.index_path}"
-                    )
-
-                file_paths_str = "\n".join(downloaded_file_paths)
-                logging.info(f"Downloaded RAG index files: {file_paths_str}")
+            # Initiate the index (download files for InMem, no-op for Qdrant)
+            await rag_adapter.initiate_index()
 
             # Extract chapter details and build system message
             system_message = self._prompt_template.get_prompt_with_variables(
@@ -111,7 +88,7 @@ class LessonChatService:
             ] + chat_messages[:-1]
 
             # Get response from RAG system using current message and chat history
-            return await rag_ops.chat_with_index(
+            return await rag_adapter.chat_with_index(
                 curr_message=chat_messages[-1].content, chat_history=chat_history
             )
 
@@ -119,19 +96,25 @@ class LessonChatService:
             logger.error(f"Error in lesson chat service: {e}", exc_info=True)
             raise
 
-    def _clear_index_files(self, index_folder) -> None:
+    def _clear_adapter_resources(self, adapter: BaseRagAdapter) -> None:
         """
-        Clean up index files from the specified folder.
+        Clean up resources used by the RAG adapter.
 
         Args:
-            index_folder: Path to the folder containing index files to remove
+            adapter: The RAG adapter instance to clean up
         """
-        if os.path.exists(index_folder):
-            try:
-                shutil.rmtree(index_folder)
-                logging.info(f"Successfully cleared resources at {index_folder}")
-            except Exception as e:
-                logging.error(f"Failed to clear resources at {index_folder}: {e}")
+        try:
+            # Use asyncio to run the async cleanup method
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # Create a task for cleanup if we're in an async context
+                asyncio.create_task(adapter.cleanup())
+            else:
+                loop.run_until_complete(adapter.cleanup())
+        except Exception as e:
+            logging.error(f"Failed to clean up adapter resources: {e}")
 
     def _extract_details(self, chapter_id: str):
         """
@@ -162,57 +145,63 @@ class LessonChatService:
         else:
             raise ValueError(f"Invalid chapter_id format: {chapter_id}")
 
-    def _get_or_create_rag_ops(self, index_persist_dir: str) -> InMemRagOps:
+    async def _get_or_create_rag_adapter(self, index_path: str) -> BaseRagAdapter:
         """
-        Get or create a RAGOps instance with LRU caching.
+        Get or create a RAG adapter instance with LRU caching.
 
         Args:
-            index_persist_dir: Directory path for the RAG index persistence
+            index_path: Path to the RAG index
 
         Returns:
-            InMemRagOps: Cached or newly created RAGOps instance
+            BaseRagAdapter: Cached or newly created RAG adapter instance
         """
-        # Check if RAGOps instance exists in cache
-        if index_persist_dir in self._rag_ops_cache:
-            # Move to end (most recently used)
-            rag_ops = self._rag_ops_cache.pop(index_persist_dir)
-            self._rag_ops_cache[index_persist_dir] = rag_ops
-            logger.debug(f"Retrieved RAGOps from cache for: {index_persist_dir}")
-            return rag_ops
+        # Generate cache key using the factory method
+        cache_key = index_path
 
-        # Create new RAGOps instance
-        rag_ops = InMemRagOps(
-            persist_dir=index_persist_dir,
+        # Check if adapter instance exists in cache
+        if cache_key in self._rag_adapter_cache:
+            # Move to end (most recently used)
+            adapter = self._rag_adapter_cache.pop(cache_key)
+            self._rag_adapter_cache[cache_key] = adapter
+            logger.debug(f"Retrieved RAG adapter from cache for: {index_path}")
+            return adapter
+
+        # Create new adapter instance
+        adapter = RagAdapterFactory.create_adapter(
+            index_path=index_path,
             completion_llm=self._completion_llm,
-            emb_llm=self._embedding_llm,
+            embedding_llm=self._embedding_llm,
         )
 
+        # Initialize the adapter
+        await adapter.initialize()
+
         # Add to cache and handle LRU eviction
-        self._rag_ops_cache[index_persist_dir] = rag_ops
+        self._rag_adapter_cache[cache_key] = adapter
 
         # Remove least recently used item if cache is full
-        if len(self._rag_ops_cache) > self._cache_size:
-            oldest_key = next(iter(self._rag_ops_cache))
-            evicted_rag_ops = self._rag_ops_cache.pop(oldest_key)
+        if len(self._rag_adapter_cache) > self._cache_size:
+            oldest_key = next(iter(self._rag_adapter_cache))
+            evicted_adapter = self._rag_adapter_cache.pop(oldest_key)
 
-            # Clean up index files for the evicted RAGOps instance
-            self._clear_index_files(evicted_rag_ops.persist_dir)
+            # Clean up resources for the evicted adapter
+            self._clear_adapter_resources(evicted_adapter)
 
             logger.debug(
-                f"Evicted RAGOps from cache and cleared index files: {oldest_key}"
+                f"Evicted RAG adapter from cache and cleared resources: {oldest_key}"
             )
 
-        logger.debug(f"Created new RAGOps and cached for: {index_persist_dir}")
-        return rag_ops
+        logger.debug(f"Created new RAG adapter and cached for: {index_path}")
+        return adapter
 
     def cleanup(self) -> None:
-        """Clear the RAGOps cache and associated index files."""
-        # Clean up index files for all cached RAGOps instances
-        for rag_ops in self._rag_ops_cache.values():
-            self._clear_index_files(rag_ops.persist_dir)
+        """Clear the RAG adapter cache and associated resources."""
+        # Clean up resources for all cached adapters
+        for adapter in self._rag_adapter_cache.values():
+            self._clear_adapter_resources(adapter)
 
-        self._rag_ops_cache.clear()
-        logger.info("RAGOps cache cleared and index files cleaned up")
+        self._rag_adapter_cache.clear()
+        logger.info("RAG adapter cache cleared and resources cleaned up")
 
     def get_cache_info(self) -> dict:
         """
@@ -222,9 +211,9 @@ class LessonChatService:
             dict: Dictionary containing cache size and keys
         """
         return {
-            "cache_size": len(self._rag_ops_cache),
+            "cache_size": len(self._rag_adapter_cache),
             "max_cache_size": self._cache_size,
-            "cached_keys": list(self._rag_ops_cache.keys()),
+            "cached_keys": list(self._rag_adapter_cache.keys()),
         }
 
 
