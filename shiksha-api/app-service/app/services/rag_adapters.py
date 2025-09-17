@@ -209,6 +209,7 @@ class QdrantRagOpsAdapter(BaseRagAdapter):
                 emb_llm=self.embedding_llm,
                 url=settings.qdrant_url,
                 api_key=settings.qdrant_api_key,
+                similarity_top_k=5,
             )
         return self._rag_ops
 

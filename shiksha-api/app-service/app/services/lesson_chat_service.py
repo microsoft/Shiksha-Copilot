@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 import logging
 import re
-from collections import OrderedDict
 from typing import Optional
 from app.config import settings
 from app.models.chat import LessonChatRequest
 from app.utils.prompt_template import PromptTemplate
-from app.services.rag_adapters import BaseRagAdapter, RagAdapterFactory
+from app.services.rag_adapters import BaseRagAdapter
+from app.services.rag_adapter_cache import RAG_ADAPTER_CACHE
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core.llms import ChatMessage
@@ -45,8 +45,7 @@ class LessonChatService:
         )
 
         # Initialize LRU cache for RAG adapter instances (max 32 items)
-        self._rag_adapter_cache: OrderedDict[str, BaseRagAdapter] = OrderedDict()
-        self._cache_size = 32
+        self._rag_adapter_cache = RAG_ADAPTER_CACHE
 
     async def __call__(
         self,
@@ -93,26 +92,6 @@ class LessonChatService:
             logger.error(f"Error in lesson chat service: {e}", exc_info=True)
             raise
 
-    def _clear_adapter_resources(self, adapter: BaseRagAdapter) -> None:
-        """
-        Clean up resources used by the RAG adapter.
-
-        Args:
-            adapter: The RAG adapter instance to clean up
-        """
-        try:
-            # Use asyncio to run the async cleanup method
-            import asyncio
-
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # Create a task for cleanup if we're in an async context
-                asyncio.create_task(adapter.cleanup())
-            else:
-                loop.run_until_complete(adapter.cleanup())
-        except Exception as e:
-            logging.error(f"Failed to clean up adapter resources: {e}")
-
     def _extract_details(self, chapter_id: str):
         """
         Extract chapter details from the chapter ID string.
@@ -152,53 +131,15 @@ class LessonChatService:
         Returns:
             BaseRagAdapter: Cached or newly created RAG adapter instance
         """
-        # Generate cache key using the factory method
-        cache_key = index_path
-
-        # Check if adapter instance exists in cache
-        if cache_key in self._rag_adapter_cache:
-            # Move to end (most recently used)
-            adapter = self._rag_adapter_cache.pop(cache_key)
-            self._rag_adapter_cache[cache_key] = adapter
-            logger.debug(f"Retrieved RAG adapter from cache for: {index_path}")
-            return adapter
-
-        # Create new adapter instance
-        adapter = RagAdapterFactory.create_adapter(
+        return await self._rag_adapter_cache.get_or_create_adapter(
             index_path=index_path,
             completion_llm=self._completion_llm,
             embedding_llm=self._embedding_llm,
         )
 
-        # Initialize the adapter
-        await adapter.initialize()
-
-        # Add to cache and handle LRU eviction
-        self._rag_adapter_cache[cache_key] = adapter
-
-        # Remove least recently used item if cache is full
-        if len(self._rag_adapter_cache) > self._cache_size:
-            oldest_key = next(iter(self._rag_adapter_cache))
-            evicted_adapter = self._rag_adapter_cache.pop(oldest_key)
-
-            # Clean up resources for the evicted adapter
-            self._clear_adapter_resources(evicted_adapter)
-
-            logger.debug(
-                f"Evicted RAG adapter from cache and cleared resources: {oldest_key}"
-            )
-
-        logger.debug(f"Created new RAG adapter and cached for: {index_path}")
-        return adapter
-
     def cleanup(self) -> None:
         """Clear the RAG adapter cache and associated resources."""
-        # Clean up resources for all cached adapters
-        for adapter in self._rag_adapter_cache.values():
-            self._clear_adapter_resources(adapter)
-
-        self._rag_adapter_cache.clear()
-        logger.info("RAG adapter cache cleared and resources cleaned up")
+        self._rag_adapter_cache.clear_cache_synchronously()
 
     def get_cache_info(self) -> dict:
         """
@@ -207,11 +148,7 @@ class LessonChatService:
         Returns:
             dict: Dictionary containing cache size and keys
         """
-        return {
-            "cache_size": len(self._rag_adapter_cache),
-            "max_cache_size": self._cache_size,
-            "cached_keys": list(self._rag_adapter_cache.keys()),
-        }
+        return self._rag_adapter_cache.get_cache_info()
 
 
 LESSON_CHAT_SERVICE_INSTANCE = LessonChatService()

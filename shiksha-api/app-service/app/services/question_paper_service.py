@@ -7,7 +7,10 @@ from typing import List, Dict, Any, Optional
 import logging
 
 from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.core.llms import ChatMessage
+from app.services.rag_adapters import BaseRagAdapter
+from app.services.rag_adapter_cache import RAG_ADAPTER_CACHE
 from app.models.question_paper import (
     QuestionBankPartsGenerationRequest,
     QuestionBankResponse,
@@ -33,6 +36,15 @@ class QuestionPaperService:
             azure_endpoint=settings.azure_openai_endpoint,
         )
 
+        # Initialize Azure OpenAI embedding model
+        self.embedding_llm = AzureOpenAIEmbedding(
+            model=settings.azure_openai_embed_model,
+            deployment_name=settings.azure_openai_embed_model,
+            api_key=settings.azure_openai_api_key,
+            azure_endpoint=settings.azure_openai_endpoint,
+            api_version=settings.azure_openai_api_version,
+        )
+
         # Load YAML prompts
         self.prompt_dir = Path(__file__).parent.parent.parent / "prompts"
         self.prompts = self._load_prompts()
@@ -45,6 +57,9 @@ class QuestionPaperService:
             settings, "azure_embedding_deployment", settings.azure_openai_embed_model
         )
         self.max_questions_per_slot = 20
+
+        # Initialize LRU cache for RAG adapter instances (max 32 items)
+        self._rag_adapter_cache = RAG_ADAPTER_CACHE
 
     def _load_prompts(self) -> Dict[str, Any]:
         """Load prompts from YAML files."""
@@ -116,6 +131,7 @@ class QuestionPaperService:
     ) -> List[Dict[str, Any]]:
         """Build generation slots from template distributions, grouped by unit with max 20 questions per slot."""
         units_dict = self._get_unit_los_dict(request)
+        units_index_path_dict = self._get_unit_index_path_dict(request)
 
         # Group questions by unit_name first
         unit_questions = {}
@@ -152,6 +168,7 @@ class QuestionPaperService:
         for unit_name, questions in unit_questions.items():
             # Split questions into batches of max 20
             unit_los = units_dict.get(unit_name)
+            index_path = units_index_path_dict[unit_name]
             for i in range(0, len(questions), self.max_questions_per_slot):
                 batch = questions[i : i + self.max_questions_per_slot]
                 slots.append(
@@ -159,6 +176,7 @@ class QuestionPaperService:
                         "unit_name": unit_name,
                         "learning_outcomes": unit_los,  # Same for all questions in unit
                         "questions": batch,
+                        "index_path": index_path,
                     }
                 )
 
@@ -180,6 +198,23 @@ class QuestionPaperService:
             else {
                 chapter.title: chapter.learning_outcomes for chapter in request.chapters
             }
+        )
+        return units_dict
+
+    def _get_unit_index_path_dict(
+        self,
+        request: QuestionBankPartsGenerationRequest,
+    ) -> str:
+        is_subtopic_level = len(request.chapters) == 1
+
+        # Subtopic level Question papers will have only ONE chapter
+        units_dict = (
+            {
+                subtopic.title: request.chapters[0].index_path
+                for subtopic in request.chapters[0].subtopics
+            }
+            if is_subtopic_level
+            else {chapter.title: chapter.index_path for chapter in request.chapters}
         )
         return units_dict
 
@@ -236,10 +271,10 @@ class QuestionPaperService:
         """Generate format instruction for a specific question type."""
         return f"- For {qtype}: {qtype.description}. Use format: {qtype.schema_dict()}"
 
-    def _generate_questions_batch(
-        self, system_prompt: str, slot: Dict[str, Any]
+    async def _generate_questions_batch(
+        self, system_prompt: str, slot: Dict[str, Any], rag_adapter: BaseRagAdapter
     ) -> List[Dict[str, Any]]:
-        """Generate questions for a batch of slots."""
+        """Generate questions for a batch of slots using RAG adapter."""
         try:
             # Build slot directives from the new slot structure
             slot_questions = slot["questions"]
@@ -261,23 +296,24 @@ class QuestionPaperService:
                 f"Question slots:\n{json.dumps(slot_questions, ensure_ascii=False)}"
             )
 
-            # Convert to ChatMessage format for llama_index
-            messages = [
-                ChatMessage(role="system", content=system_prompt),
-                ChatMessage(role="user", content=user_message),
-            ]
+            # Build chat history with system message only (as per requirement)
+            chat_history = [ChatMessage(role="system", content=system_prompt)]
 
-            # Use llama_index completion model
-            response = self.completion_llm.chat(
-                messages=messages,
-                temperature=0.6,
+            # Use RAG adapter to chat with index
+            response_content = await rag_adapter.chat_with_index(
+                curr_message=user_message, chat_history=chat_history
             )
 
-            content = response.message.content
-            content = content.strip("```json").strip("```")
+            # Clean up response content
+            content = response_content.strip("```json").strip("```")
 
             # Parse response
             response_data = json.loads(content)
+
+            print(
+                "********************** RESPONSE DATA **********************",
+                json.dumps(response_data, indent=2),
+            )
 
             items = response_data.get("items")
 
@@ -292,18 +328,19 @@ class QuestionPaperService:
             return []
 
     async def _generate_questions_batch_async(
-        self, system_prompt: str, slot: Dict[str, Any], delay_seconds: int = 0
+        self,
+        system_prompt: str,
+        slot: Dict[str, Any],
+        rag_adapter: BaseRagAdapter,
+        delay_seconds: int = 0,
     ) -> List[Dict[str, Any]]:
         """Async version of _generate_questions_batch with optional delay."""
         # Apply delay if specified
         if delay_seconds > 0:
             await asyncio.sleep(delay_seconds)
 
-        # Run the synchronous method in a thread pool
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self._generate_questions_batch, system_prompt, slot
-        )
+        # Run the async method directly since it's now async
+        return await self._generate_questions_batch(system_prompt, slot, rag_adapter)
 
     def _organize_questions_into_response(
         self,
@@ -323,7 +360,8 @@ class QuestionPaperService:
                 marks_per_question = generated.get("marks_per_question")
                 item = generated.get("item")
 
-                key = (qtype, marks_per_question, unit_name, objective)
+                # Normalize key to lowercase to avoid case sensitivity issues
+                key = f"{qtype.value}|{marks_per_question}|{unit_name}|{objective}".lower()
                 if key not in question_directory:
                     question_directory[key] = []
 
@@ -345,12 +383,8 @@ class QuestionPaperService:
 
                 # Add questions in the order specified by question_distribution
                 for q_dist in template.question_distribution or []:
-                    key = (
-                        template.type,
-                        template.marks_per_question,
-                        q_dist.unit_name,
-                        q_dist.objective,
-                    )
+                    # Normalize key to lowercase to match the question_directory keys
+                    key = f"{template.type.value}|{template.marks_per_question}|{q_dist.unit_name}|{q_dist.objective}".lower()
 
                     if key in question_directory and len(question_directory[key]) > 0:
                         question = question_directory[key].pop(0)
@@ -360,7 +394,9 @@ class QuestionPaperService:
                         if len(question_directory[key]) == 0:
                             del question_directory[key]
                     else:
-                        logger.warning(f"No question found for key: {key}")
+                        logger.warning(
+                            f"--\nNo question found for Normalized key: {key}"
+                        )
 
                 response_questions.append(question_type_resp)
 
@@ -373,7 +409,7 @@ class QuestionPaperService:
     async def generate_question_bank_by_parts(
         self, request: QuestionBankPartsGenerationRequest
     ) -> QuestionBankResponse:
-        """Generate question bank by parts using parallel processing with delays."""
+        """Generate question bank by parts using parallel processing with delays and RAG."""
         try:
             # Build generation slots
             slots = self._build_generation_slots(request)
@@ -396,6 +432,13 @@ class QuestionPaperService:
                 # Create tasks for parallel execution with delays
                 tasks = []
                 for j, slot in enumerate(batch_slots):
+                    # Get or create cached RAG adapter instance
+                    rag_adapter = await self._get_or_create_rag_adapter(
+                        slot["index_path"]
+                    )
+                    # Initiate the index (download files for InMem, no-op for Qdrant)
+                    await rag_adapter.initiate_index()
+
                     # Generate unit-specific system prompt for this slot
                     system_prompt = self._format_system_prompt(
                         request, existing_flat, slot
@@ -403,7 +446,7 @@ class QuestionPaperService:
 
                     # Create task with delay
                     task = self._generate_questions_batch_async(
-                        system_prompt, slot, j * 2
+                        system_prompt, slot, rag_adapter, j * 2
                     )  # 2-second delay between each
                     tasks.append(task)
 
@@ -435,3 +478,35 @@ class QuestionPaperService:
         except Exception as e:
             logger.error(f"Error in generate_question_bank_by_parts: {e}")
             raise
+
+    async def _get_or_create_rag_adapter(self, index_path: str) -> BaseRagAdapter:
+        """
+        Get or create a RAG adapter instance with LRU caching.
+
+        Args:
+            index_path: Path to the RAG index
+
+        Returns:
+            BaseRagAdapter: Cached or newly created RAG adapter instance
+        """
+        return await self._rag_adapter_cache.get_or_create_adapter(
+            index_path=index_path,
+            completion_llm=self.completion_llm,
+            embedding_llm=self.embedding_llm,
+        )
+
+    def cleanup(self) -> None:
+        """Clear the RAG adapter cache and associated resources."""
+        self._rag_adapter_cache.clear_cache_synchronously()
+
+    def get_cache_info(self) -> dict:
+        """
+        Get information about the current cache state.
+
+        Returns:
+            dict: Dictionary containing cache size and keys
+        """
+        return self._rag_adapter_cache.get_cache_info()
+
+
+QUESTION_PAPER_SERVICE_INSTANCE = QuestionPaperService()
