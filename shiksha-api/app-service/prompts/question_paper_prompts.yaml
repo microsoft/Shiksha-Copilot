@@ -75,3 +75,62 @@ question_bank_parts_gen: |
       Return only a JSON array of the newly generated questions, adhering strictly to the output schema in each of the question slots.
 
       Replace placeholder data with the actual generated questions. Your final output should consist solely of the JSON array, without any additional commentary or formatting.
+
+question_bank_distribution: |
+  You are an expert in educational assessment design and Bloom's Taxonomy. Your task is to **assign a reasonable question distribution** across selected chapters (units) and objectives for a given examination template.
+  ---
+
+  ## Exam Details
+  - **Board:** {BOARD}
+  - **Medium:** {MEDIUM}
+  - **Grade:** {GRADE}
+  - **Subject:** {SUBJECT}
+  - **Total Marks:** {TOTAL_MARKS}
+  - **Chapters (Units):** {CHAPTERS}
+  - **Marks Distribution per Unit:** {MARKS_DISTRIBUTION}
+  - **Objective-Based Distribution:** {OBJECTIVE_DISTRIBUTION}
+
+  ---
+
+  {QUESTION_BANK_BLOOM_TAXONOMY_GUIDE}
+
+  ---
+
+  ## Existing Question Template
+  A predefined question template (JSON) is provided, specifying question types, the number of questions, and marks per question. Your role is to **add** the `question_distribution` for each question type. The template is given as:
+
+  ```json
+  {TEMPLATE_JSON}
+  ```
+
+  **Each template item currently does not have a question distribution. You must fill in this distribution according to the guidelines below.**
+
+  Guidelines for Assigning Question Distribution:
+  - Use Bloom’s Taxonomy for Mapping Objectives to Questions
+      Automatically infer mappings based on the provided question types.
+      Align question demands (cognitive complexity) with the corresponding objectives (e.g., a direct question on factual recall may align with Knowledge/Remember).
+  - Ensure Compliance with Mark and Objective Distributions
+      The total marks allocated per unit should match {MARKS_DISTRIBUTION}.
+      The overall objective-based distribution should guide the proportion of questions testing different cognitive levels.
+  - Assign a Balanced Mix of Topics
+      Distribute questions fairly across different chapters (units).
+      Ensure each question type is assigned to appropriate chapters.
+      Some chapters (units) may contain more questions depending on their weight in {MARKS_DISTRIBUTION}.
+
+  Output Format:
+  - Return a JSON array of Template objects with an added question_distribution attribute.
+  - Example structure:
+    ```json
+    {OUTPUT_FORMAT}
+    ```
+  - Each question_distribution entry represents one question.
+  - The unit_name should reference a valid chapter/unit from {CHAPTERS}.
+  - The objective should reference one of the objectives described above (e.g., "Knowledge", "Understanding", "Application", "Skill", "Comprehension", "Expression", "Appreciation").
+
+  Final Task
+  Generate a complete list of question templates (based on the JSON {TEMPLATE_JSON}) with an added question_distribution, ensuring:
+    - Coverage of all chapters (units) according to {MARKS_DISTRIBUTION}.
+    - Proportions of cognitive levels in line with {OBJECTIVE_DISTRIBUTION}.
+    - Appropriate mappings to the objectives defined above.
+    - Avoid placing questions from same unit together under one question type.
+    - Output should ONLY contain the output JSON in the mentioned structure

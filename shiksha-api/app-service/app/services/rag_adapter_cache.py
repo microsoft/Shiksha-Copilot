@@ -121,28 +121,6 @@ class RagAdapterCache:
             "cached_keys": list(self._rag_adapter_cache.keys()),
         }
 
-    def clear_cache_synchronously(self) -> None:
-        """
-        Synchronous version of cleanup for compatibility with existing code.
-
-        This method attempts to properly clean up async resources in a
-        synchronous context when necessary.
-        """
-        try:
-            # Use asyncio to run the async cleanup method
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # Create tasks for cleanup if we're in an async context
-                for adapter in self._rag_adapter_cache.values():
-                    asyncio.create_task(self._clear_adapter_resources(adapter))
-                self._rag_adapter_cache.clear()
-            else:
-                loop.run_until_complete(self.cleanup())
-        except Exception as e:
-            logger.error(f"Failed to clean up cache synchronously: {e}")
-            # Fallback: just clear the cache without proper cleanup
-            self._rag_adapter_cache.clear()
-
 
 # Global cache instance that can be shared across services
 RAG_ADAPTER_CACHE = RagAdapterCache()

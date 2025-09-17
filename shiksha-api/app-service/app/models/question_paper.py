@@ -2,8 +2,10 @@
 # Extracted from the original standalone FastAPI application
 
 from enum import Enum
-from typing import List, Dict, Any, Optional, Union
-from pydantic import BaseModel, computed_field
+from functools import reduce
+from math import gcd
+from typing import List, Dict, Any, Optional, Union, Tuple
+from pydantic import BaseModel, computed_field, validator
 
 
 # ==============================
@@ -197,22 +199,6 @@ class Template(BaseModel):
     def description(self) -> str:
         return self.type.description
 
-    def filter_qb_distribution_on_unit(self, units_str: list) -> Optional["Template"]:
-        if self.question_distribution:
-            qb_list = [
-                qb_dist
-                for qb_dist in self.question_distribution
-                if qb_dist.unit_name.strip() in units_str
-            ]
-            if len(qb_list) > 0:
-                return Template(
-                    type=self.type,
-                    marks_per_question=self.marks_per_question,
-                    number_of_questions=len(qb_list),
-                    question_distribution=qb_list,
-                )
-        return None
-
 
 class QuestionBankPartsGenerationRequest(BaseModel):
     user_id: str
@@ -226,34 +212,264 @@ class QuestionBankPartsGenerationRequest(BaseModel):
     existing_questions: List[QuestionTypeResponse] = []
 
 
-# =============================
-# HOW TO ADD A NEW QUESTION TYPE
-# =============================
-#
-# The system is now fully extensible! To add a new question type:
-#
-# 1) Define a Pydantic model for the new type (e.g., True/False):
-#
-# class TrueFalseQuestion(BaseModel):
-#     question: str = ""
-#     answer: bool = False
-#
-# 2) Add ONE enum member to QuestionType with:
-#    - value (title shown to students)
-#    - description (for prompt)
-#    - pydantic model class
-#
-# TRUE_FALSE = (
-#     "State whether the following is True or False",
-#     "Binary judgment items testing key concept recognition.",
-#     TrueFalseQuestion,
-# )
-#
-# That's it! The system will automatically:
-# - Extract required fields from the Pydantic model
-# - Generate appropriate format instructions from the model structure
-# - Use the correct Pydantic model for validation and casting
-# - Handle the new type in all existing workflows
-#
-# No changes needed to prompts, validation logic, or generation code!
-# The Pydantic model itself defines the structure and validation rules.
+class QBQuestionDistributionGenerationRequest(BaseModel):
+    user_id: str
+    board: str
+    medium: str
+    grade: int
+    subject: str
+    chapters: List[Chapter]
+    total_marks: int
+    marks_distribution: List[MarksDistribution]
+    objective_distribution: List[ObjectiveDistribution]
+    template: List[Template]
+
+    @validator("chapters")
+    def check_chapters_not_empty(cls, v):
+        if not v or len(v) == 0:
+            raise ValueError("The 'chapters' field must contain at least one Chapter.")
+        return v
+
+    def verify_template_for_marks_and_objective_distribution(
+        self, new_template: List[Template]
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Verifies if the given `new_template` follows:
+        1. The total marks match `self.total_marks`.
+        2. The marks distribution per unit (chapter) aligns with `self.marks_distribution`.
+        3. The objective-based percentage distribution aligns with `self.objective_distribution`.
+
+        Returns:
+            Tuple[bool, Optional[str]]: (True, None) if the new template is valid, (False, "Reason for failure") otherwise.
+        """
+
+        # **Step 1: Verify Total Marks**
+        new_template_total_marks = sum(
+            q_type.marks_per_question * q_type.number_of_questions
+            for q_type in new_template
+        )
+        if new_template_total_marks != self.total_marks:
+            return (
+                False,
+                f"Total marks mismatch: expected {self.total_marks}, got {new_template_total_marks}",
+            )
+
+        # **Step 2: Verify Unit (Chapter) Marks Distribution**
+        new_unit_marks_distribution = {}
+
+        for q_type in new_template:
+            if q_type.question_distribution:
+                for q_dist in q_type.question_distribution:
+                    unit_name = q_dist.unit_name
+                    new_unit_marks_distribution[unit_name] = (
+                        new_unit_marks_distribution.get(unit_name, 0)
+                        + q_type.marks_per_question
+                    )
+
+        # Convert `self.marks_distribution` to a dictionary for faster lookup
+        expected_unit_marks = {md.unit_name: md.marks for md in self.marks_distribution}
+
+        # Ensure the unit names match
+        if set(new_unit_marks_distribution.keys()) != set(expected_unit_marks.keys()):
+            return (
+                False,
+                "Mismatch in unit names between template and expected distribution",
+            )
+
+        # Ensure marks are correctly distributed
+        for unit_name, marks in new_unit_marks_distribution.items():
+            if marks != expected_unit_marks[unit_name]:
+                return (
+                    False,
+                    f"Marks distribution mismatch for unit '{unit_name}': expected {expected_unit_marks[unit_name]}, got {marks}",
+                )
+
+        # **Step 3: Verify Objective-Based Percentage Distribution**
+        new_objective_marks_distribution = {}
+
+        for q_type in new_template:
+            if q_type.question_distribution:
+                for q_dist in q_type.question_distribution:
+                    objective = q_dist.objective
+                    new_objective_marks_distribution[objective] = (
+                        new_objective_marks_distribution.get(objective, 0)
+                        + q_type.marks_per_question
+                    )
+
+        # Convert `self.objective_distribution` to a dictionary for faster lookup
+        expected_objective_distribution = {
+            obj_dist.objective: obj_dist.percentage_distribution
+            for obj_dist in self.objective_distribution
+        }
+
+        # Convert new marks distribution to percentage
+        new_objective_percentage_distribution = {
+            obj: (marks / self.total_marks) * 100
+            for obj, marks in new_objective_marks_distribution.items()
+        }
+
+        # Ensure the objectives match
+        if set(new_objective_percentage_distribution.keys()) != set(
+            expected_objective_distribution.keys()
+        ):
+            return False, "Mismatch in objective distribution keys"
+
+        # Ensure percentage distributions are within ±1% tolerance
+        for objective, percentage in new_objective_percentage_distribution.items():
+            if abs(percentage - expected_objective_distribution[objective]) > 1:
+                return (
+                    False,
+                    f"Objective '{objective}' percentage mismatch: expected {expected_objective_distribution[objective]}%, got {percentage:.2f}%",
+                )
+
+        return True, None  # If all checks pass
+
+
+class QBTemplateGenerationRequest(BaseModel):
+    user_id: str
+    board: str
+    medium: str
+    grade: int
+    subject: str
+    chapters: List[Chapter]
+    total_marks: int
+    marks_distribution: List[MarksDistribution]
+
+    def get_template(self) -> List[Template]:
+        """
+        Generates a List of Template objects, with the following question types:
+            1) QuestionType.MCQ
+            2) QuestionType.ANSWER_SHORT
+            3) QuestionType.ANSWER_LONG
+
+        Adhering to the self.marks_distribution such that the sum of marks
+        allocated to each unit equals self.total_marks. Here, we simply
+        verify consistency and then evenly split marks among these 3 question
+        types. Finally, set `question_distribution=None` in each Template.
+        """
+
+        sum_of_md_marks = sum(md.marks for md in self.marks_distribution)
+        if sum_of_md_marks != self.total_marks:
+            raise ValueError(
+                f"Sum of 'marks' in marks_distribution ({sum_of_md_marks}) "
+                f"does not match 'total_marks' ({self.total_marks})."
+            )
+
+        question_types = [
+            QuestionType.MCQ,
+            QuestionType.ANSWER_SHORT,
+            QuestionType.ANSWER_LONG,
+        ]
+
+        marks_per_q = {
+            QuestionType.MCQ: 1,  # e.g., each MCQ is 1 mark
+            QuestionType.ANSWER_SHORT: 2,  # each short-answer question is 2 marks
+            QuestionType.ANSWER_LONG: 5,  # each long-answer question is 5 marks
+        }
+
+        total_marks_per_q = self._divide_into_k_parts_with_divisors(
+            self.total_marks,
+            [marks_per_q[q_type] for q_type in question_types],
+        )
+
+        templates: List[Template] = []
+        for q_type, total_marks in zip(question_types, total_marks_per_q):
+            num_of_questions = total_marks // marks_per_q[q_type]
+            if num_of_questions > 0:
+                template_obj = Template(
+                    type=q_type,
+                    number_of_questions=num_of_questions,
+                    marks_per_question=marks_per_q[q_type],
+                    question_distribution=None,
+                )
+                templates.append(template_obj)
+
+        return templates
+
+    def _divide_into_k_parts_with_divisors(self, n: int, d: list[int]) -> list[int]:
+        """
+        Divide the integer 'n' into 'k' parts (where k = len(d)),
+        such that each part p[i] is:
+            - an integer multiple of d[i],
+            - the sum of all p[i] is 'n',
+            - and all p[i] are as close to each other as possible (heuristically).
+
+        Parameters:
+        -----------
+        n : int
+            The total integer to be divided.
+        d : list[int]
+            A list of k divisors. Each resulting part p[i] must be a multiple of d[i].
+
+        Returns:
+        --------
+        p : list[int]
+            A list of length k, where p[i] is a multiple of d[i], and sum(p) = n.
+
+        Raises:
+        -------
+        ValueError
+            If it's impossible to distribute 'n' as the sum of multiples of d[i].
+            (For example, if gcd(d) does not divide n.)
+        """
+
+        k = len(d)
+        if k == 0:
+            raise ValueError("Empty 'd' list; cannot divide into 0 parts.")
+
+        # 1) Check gcd(d[0], d[1], ..., d[k-1]) must divide n
+        common_divisor = reduce(gcd, d)
+        if n % common_divisor != 0:
+            raise ValueError(
+                "Impossible to distribute n as a sum of multiples of each d[i]. "
+                f"gcd(d) = {common_divisor} does not divide n = {n}."
+            )
+
+        # 2) We'll try to keep each part near n/k
+        target = n / k  # float, "ideal" size if no constraints
+        p = [0] * k
+
+        # 3) Initialize each p[i] to the largest multiple of d[i] that doesn't exceed target
+        #    i.e. p[i] = floor(target / d[i]) * d[i]
+        for i in range(k):
+            base_count = int(target // d[i])  # how many times d[i] fits in 'target'
+            p[i] = base_count * d[i]
+
+        # 4) Calculate how many units we still need to add or remove
+        leftover = n - sum(p)
+
+        # Helper cost functions to see how 'close' p[i] gets to the target if we add/subtract d[i]
+        def cost_if_add(i: int) -> float:
+            return abs((p[i] + d[i]) - target)
+
+        def cost_if_sub(i: int) -> float:
+            return abs((p[i] - d[i]) - target)
+
+        # 5) Greedily add or remove multiples of d[i] to fix leftover
+        while leftover != 0:
+            if leftover > 0:
+                # We want to add increments of d[i] to whichever part yields the smallest 'cost'
+                candidates = [i for i in range(k) if leftover >= d[i]]
+                if not candidates:
+                    raise ValueError(
+                        "Cannot distribute leftover>0. Possibly leftover < some d[i]."
+                    )
+                # Pick the index that yields minimal 'cost' after adding d[i]
+                i_best = min(candidates, key=cost_if_add)
+                p[i_best] += d[i_best]
+                leftover -= d[i_best]
+
+            else:  # leftover < 0
+                # We want to remove increments of d[i] (i.e., subtract d[i])
+                # from whichever part yields the smallest 'cost'.
+                candidates = [i for i in range(k) if p[i] >= d[i]]
+                if not candidates:
+                    raise ValueError(
+                        "Cannot reduce leftover<0. All parts are smaller than their divisor."
+                    )
+                i_best = min(candidates, key=cost_if_sub)
+                p[i_best] -= d[i_best]
+                leftover += d[i_best]
+
+        # Now sum(p) == n, and each p[i] is multiple of d[i]
+        return p

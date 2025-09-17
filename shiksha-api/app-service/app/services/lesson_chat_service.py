@@ -137,18 +137,9 @@ class LessonChatService:
             embedding_llm=self._embedding_llm,
         )
 
-    def cleanup(self) -> None:
+    async def cleanup(self) -> None:
         """Clear the RAG adapter cache and associated resources."""
-        self._rag_adapter_cache.clear_cache_synchronously()
-
-    def get_cache_info(self) -> dict:
-        """
-        Get information about the current cache state.
-
-        Returns:
-            dict: Dictionary containing cache size and keys
-        """
-        return self._rag_adapter_cache.get_cache_info()
+        await self._rag_adapter_cache.cleanup()
 
 
 LESSON_CHAT_SERVICE_INSTANCE = LessonChatService()

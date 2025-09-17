@@ -12,11 +12,14 @@ from llama_index.core.llms import ChatMessage
 from app.services.rag_adapters import BaseRagAdapter
 from app.services.rag_adapter_cache import RAG_ADAPTER_CACHE
 from app.models.question_paper import (
+    QBQuestionDistributionGenerationRequest,
     QuestionBankPartsGenerationRequest,
     QuestionBankResponse,
     QuestionBankMetadata,
+    QuestionDistribution,
     QuestionTypeResponse,
     QuestionType,
+    Template,
 )
 from app.config import settings
 
@@ -406,6 +409,22 @@ class QuestionPaperService:
             logger.exception(f"Error organizing questions into response: {e}")
             raise
 
+    async def _get_or_create_rag_adapter(self, index_path: str) -> BaseRagAdapter:
+        """
+        Get or create a RAG adapter instance with LRU caching.
+
+        Args:
+            index_path: Path to the RAG index
+
+        Returns:
+            BaseRagAdapter: Cached or newly created RAG adapter instance
+        """
+        return await self._rag_adapter_cache.get_or_create_adapter(
+            index_path=index_path,
+            completion_llm=self.completion_llm,
+            embedding_llm=self.embedding_llm,
+        )
+
     async def generate_question_bank_by_parts(
         self, request: QuestionBankPartsGenerationRequest
     ) -> QuestionBankResponse:
@@ -479,34 +498,97 @@ class QuestionPaperService:
             logger.error(f"Error in generate_question_bank_by_parts: {e}")
             raise
 
-    async def _get_or_create_rag_adapter(self, index_path: str) -> BaseRagAdapter:
+    async def cleanup(self) -> None:
+        """Clear the RAG adapter cache and associated resources."""
+        await self._rag_adapter_cache.cleanup()
+
+    async def get_question_distribution(
+        self,
+        request: QBQuestionDistributionGenerationRequest,
+    ) -> List[Template]:
         """
-        Get or create a RAG adapter instance with LRU caching.
+        Generate question paper template based on unit-wise marks distribution.
 
         Args:
-            index_path: Path to the RAG index
-
-        Returns:
-            BaseRagAdapter: Cached or newly created RAG adapter instance
+            request: The request containing board, medium, grade, subject, total marks, and chapters with unit-wise marks distribution.
         """
-        return await self._rag_adapter_cache.get_or_create_adapter(
-            index_path=index_path,
-            completion_llm=self.completion_llm,
-            embedding_llm=self.embedding_llm,
+
+        def prepare_context() -> str:
+            units_str = ""
+            if len(request.chapters) > 1:
+                units_str = ", ".join(chapter.title for chapter in request.chapters)
+            else:
+                units_str = ", ".join(
+                    [sub.title for sub in request.chapters[0].subtopics]
+                )
+
+            marks_distribution_str = json.dumps(
+                [md.model_dump() for md in request.marks_distribution], indent=2
+            )
+            objective_distribution_str = json.dumps(
+                [od.model_dump() for od in request.objective_distribution], indent=2
+            )
+            template_str = json.dumps(
+                [t.model_dump() for t in request.template], indent=2
+            )
+            output_structure = json.dumps(
+                [
+                    Template(
+                        type=QuestionType.ANSWER_SHORT,
+                        number_of_questions=3,
+                        marks_per_question=2,
+                        question_distribution=[
+                            QuestionDistribution(
+                                unit_name="Example Unit Name", objective="Knowledge"
+                            )
+                        ],
+                    ).model_dump()
+                ],
+                indent=4,
+            )
+            # Get Bloom's taxonomy guide
+            blooms_guide = self.prompts.get("blooms-taxonomy", {}).get("general", "")
+            if "english" in request.subject.lower():
+                blooms_guide = self.prompts.get("blooms-taxonomy", {}).get(
+                    "english", ""
+                )
+            return {
+                "BOARD": request.board,
+                "MEDIUM": request.medium,
+                "GRADE": str(request.grade),
+                "SUBJECT": request.subject,
+                "TOTAL_MARKS": str(request.total_marks),
+                "CHAPTERS": units_str,
+                "QUESTION_BANK_BLOOM_TAXONOMY_GUIDE": blooms_guide,
+                "MARKS_DISTRIBUTION": marks_distribution_str,
+                "OBJECTIVE_DISTRIBUTION": objective_distribution_str,
+                "TEMPLATE_JSON": template_str,
+                "OUTPUT_FORMAT": output_structure,
+            }
+
+        prompt_context = prepare_context()
+        prompt_template = self.prompts.get("question_bank_distribution", "")
+        prompt = prompt_template.format(**prompt_context)
+
+        print(
+            "********************** QUESTION DISTRIBUTION PROMPT **********************",
+            prompt,
         )
 
-    def cleanup(self) -> None:
-        """Clear the RAG adapter cache and associated resources."""
-        self._rag_adapter_cache.clear_cache_synchronously()
-
-    def get_cache_info(self) -> dict:
-        """
-        Get information about the current cache state.
-
-        Returns:
-            dict: Dictionary containing cache size and keys
-        """
-        return self._rag_adapter_cache.get_cache_info()
+        response = await self.completion_llm.acomplete(prompt=prompt)
+        response = response.text.strip("```json").strip("```")
+        print(
+            "********************** QUESTION DISTRIBUTION RESPONSE **********************",
+            response,
+        )
+        js = json.loads(response)
+        new_template = [Template(**item) for item in js]
+        verfication_status, reason = (
+            request.verify_template_for_marks_and_objective_distribution(new_template)
+        )
+        logger.info(verfication_status)
+        logger.info(reason)
+        return new_template
 
 
 QUESTION_PAPER_SERVICE_INSTANCE = QuestionPaperService()
