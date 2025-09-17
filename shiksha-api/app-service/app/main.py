@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from contextlib import asynccontextmanager
 from app.config import settings
-from app.routers import chat_router
+from app.routers import chat_router, question_paper_router
 from app.models.chat import ErrorResponse
 
 
@@ -43,6 +43,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_router)
+app.include_router(question_paper_router)
 
 
 @app.get("/")

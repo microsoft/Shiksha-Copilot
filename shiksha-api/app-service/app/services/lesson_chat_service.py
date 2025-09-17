@@ -44,9 +44,6 @@ class LessonChatService:
             api_version=settings.azure_openai_api_version,
         )
 
-        # Initialize blob storage for retrieving index files
-        # Note: BlobStore is now handled inside InMemRagOpsAdapter
-
         # Initialize LRU cache for RAG adapter instances (max 32 items)
         self._rag_adapter_cache: OrderedDict[str, BaseRagAdapter] = OrderedDict()
         self._cache_size = 32

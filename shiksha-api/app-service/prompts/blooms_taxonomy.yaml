@@ -1,0 +1,148 @@
+blooms-taxonomy:
+  english:  |
+    ## Objectives & Bloom’s Taxonomy (English-only)
+
+    1. **Knowledge** (*Remember*)  
+      - **Definition**: Assess recall of vocabulary, grammar terms, definitions, and simple facts.  
+      - **Verbs**: identify, name, select, choose, define, state, recall  
+      - **Sample Stems**:  
+        - Identify the synonym of the underlined word …  
+        - Choose the correct antonym for the highlighted term …  
+        - Select the word which rhymes with “…” …  
+        - State the meaning of the italicized phrase …  
+
+    2. **Understanding** (*Understand*)  
+      - **Definition**: Gauge comprehension of passages, explanations, and conceptual differences.  
+      - **Verbs**: explain, interpret, describe, summarize, infer  
+      - **Sample Stems**:  
+        - Explain why …  
+        - Describe how …  
+        - Summarize the main idea of the passage …  
+        - Interpret the information presented and explain what it indicates …  
+
+    3. **Application** (*Apply*)  
+      - **Definition**: Use grammar rules or vocabulary in context to complete or correct sentences.  
+      - **Verbs**: apply, fill, complete, use, correct, transform  
+      - **Sample Stems**:  
+        - Fill in the blank with the correct form of the verb …  
+        - Use the appropriate determiner to complete the sentence …  
+        - Apply the correct preposition in the sentence …  
+        - Correct the verb tense to match the required time frame …  
+
+    4. **Skill** (*Analyze/Evaluate*)  
+      - **Definition**: Analyze structures, compare forms, and sequence information.  
+      - **Verbs**: analyze, compare, contrast, categorize, rearrange, sequence  
+      - **Sample Stems**:  
+        - Rearrange the following steps in the correct order …  
+        - Categorize the given words into appropriate groups …  
+        - Compare the active and passive forms of the sentence …  
+        - Analyze the structure of the text and identify its key features …  
+
+    5. **Comprehension** (*Understand, language-focused*)  
+      - **Definition**: Transform or reorder language units; focus on structural understanding.  
+      - **Verbs**: convert, transform, reorder, identify, interpret  
+      - **Sample Stems**:  
+        - Change the paragraph into the specified tense …  
+        - Reorder the jumbled sentences to form a coherent paragraph …  
+        - Identify the correct sequence of steps for the process described …  
+
+    6. **Expression** (*Create*)  
+      - **Definition**: Produce original writing—narratives, letters, paragraphs.  
+      - **Verbs**: write, compose, construct, draft, develop, design  
+      - **Sample Stems**:  
+        - Write a paragraph on the topic …  
+        - Construct a story from the given outline …  
+        - Draft a letter to … about …  
+
+    7. **Appreciation** (*Evaluate*)  
+      - **Definition**: Critique language choices; justify stylistic or structural decisions.  
+      - **Verbs**: evaluate, assess, critique, justify, recommend  
+      - **Sample Stems**:  
+        - Evaluate the appropriateness of the format used …  
+        - Critique the coherence and structure of your writing …  
+        - Justify why a particular choice is the best option …  
+        - Assess the clarity of the message and suggest improvements …  
+
+  general: |
+    ## Objectives & Bloom’s Taxonomy
+
+    Below are the **seven objectives** with their definitions, recommended verbs, and sample stems. For each generated question, 
+    match the objective's cognitive level and ensure the language prompts multi-step reasoning and application to real-world scenarios. 
+    Adapt complexity based on the specified grade.
+
+    1. **Knowledge** (*Remember*)
+      - **Definition**: Assesses recall and recognition of facts, definitions, principles, and concepts.
+      - **Verbs**: tell, list, describe, relate, locate, write, find, state, name
+      - **Sample Stems**:
+        - What happened after ...?
+        - How many ...?
+        - Who was it that ...?
+        - Can you name the ...?
+        - Describe what happened at...?
+        - Can you tell why ...?
+        - Find the meaning of ...?
+        - Which is true or false ... ?
+
+    2. **Understanding** (*Understand*)
+      - **Definition**: Evaluates depth of conceptual comprehension; focuses on explaining processes, 
+        concepts, and relationships meaningfully.
+      - **Verbs**: explain, interpret, outline, discuss, distinguish, predict, restate, compare, describe
+      - **Sample Stems**:
+        - Can you write in your own words...?
+        - Can you write a brief outline...?
+        - What do you think could have happened next...?
+        - What was the main idea...?
+        - Can you distinguish between...?
+        - Can you provide a definition for...?
+
+    3. **Application** (*Apply*)
+      - **Definition**: Assesses the ability to use learned concepts to solve practical or real-world problems.
+      - **Verbs**: solve, show, use, illustrate, construct, complete, examine, classify
+      - **Sample Stems**:
+        - Do you know another instance where...?
+        - Could this have happened in...?
+        - Can you group by characteristics such as...?
+        - What factors would you change if...?
+        - Can you apply the method used to your own experience...?
+        - Would this information be useful if you had a...?
+
+    4. **Skill** (*Analyze/Evaluate*)
+      - **Definition**: Evaluates practical, analytical, and problem-solving skills.
+      - **Verbs**: analyze, distinguish, examine, compare, contrast, investigate, categorize, identify, explain, separate, advertise
+      - **Sample Stems**:
+        - Which events could have happened...?
+        - If ... happened, what might the ending have been...?
+        - Why did ... changes occur?
+        - Can you explain what must have happened when...?
+        - What are some of the problems of...?
+        - What was the turning point...?
+
+    5. **Comprehension** (*Understand, with emphasis on language*)
+      - **Definition**: Measures understanding of written or spoken language, focusing on interpretation of key themes, contexts, and underlying ideas.
+      - **Verbs**: (Use those from “Understanding” plus any language-focused ones: interpret, discuss, compare...)
+      - **Sample Stems**:
+        - Can you translate or restate ... in your own words?
+        - What is the main theme of ...?
+        - Can you clarify the meaning of ...?
+        - Compare how ... is represented here with ...?
+
+    6. **Expression** (*Create*)
+      - **Definition**: Assesses the ability to communicate clearly and effectively, including writing or presentations.
+      - **Verbs**: create, invent, compose, predict, plan, construct, design, imagine, propose, devise
+      - **Sample Stems**:
+        - Can you design a ... to ...?
+        - Why not compose a short piece about ...?
+        - Can you see a possible solution to ...?
+        - How many ways can you ...?
+        - Can you develop a proposal which would ...?
+
+    7. **Appreciation** (*Evaluate*)
+      - **Definition**: Involves analysis and critique of texts and encourages evaluative thinking and personal judgment.
+      - **Verbs**: judge, select, choose, decide, debate, verify, recommend, assess, rate, determine
+      - **Sample Stems**:
+        - Is there a better solution to ...?
+        - Judge the value of ...?
+        - Can you defend your position about ...?
+        - Do you think ... is good or bad?
+        - What changes to ... would you recommend?
+        - What do you think about ...?
