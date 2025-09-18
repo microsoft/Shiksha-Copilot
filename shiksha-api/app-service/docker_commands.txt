@@ -1,0 +1,4 @@
+az acr login --name srivarsiregistry
+docker build -t srivarsiregistry.azurecr.io/shikshafastapi:latest .
+docker push srivarsiregistry.azurecr.io/shikshafastapi:latest
+docker system prune -a --volumes

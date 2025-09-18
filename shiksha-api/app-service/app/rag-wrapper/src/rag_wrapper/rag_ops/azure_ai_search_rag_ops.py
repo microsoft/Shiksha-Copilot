@@ -1,5 +1,4 @@
 from typing import Any, Dict, Optional, List
-import nest_asyncio
 from llama_index.core import StorageContext, VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.vector_stores.azureaisearch import (
@@ -12,9 +11,6 @@ from azure.core.credentials import AzureKeyCredential
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from rag_wrapper.base.base_vector_index_rag_ops import BaseVectorIndexRagOps
-
-# Apply nest_asyncio to allow nested event loops
-nest_asyncio.apply()
 
 
 class AzureAISearchRagOps(BaseVectorIndexRagOps):
