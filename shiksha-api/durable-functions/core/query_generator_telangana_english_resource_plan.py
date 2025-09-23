@@ -54,6 +54,11 @@ class QueryGeneratorTelanganaEnglishResourcePlan(BaseQueryGenerator):
 
         synthesis_query = f"You are creating the '{section_title}' section of a resource plan for english subject."
 
+        # Add section names and learning journey context
+        journey_context = self.get_all_section_names_and_journey_context()
+        if journey_context:
+            synthesis_query += f"\n{journey_context}\n"
+
         # Add additional context if available
         synthesis_query = self.add_additional_context_if_present(synthesis_query)
 

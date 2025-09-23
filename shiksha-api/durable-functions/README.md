@@ -18,6 +18,7 @@ The application consists of the following components:
 - **Asynchronous Processing**: Long-running lesson plan generation with status tracking
 - **Workflow Orchestration**: Complex dependency management between lesson plan sections
 - **AI-Powered Content**: Integration with Azure OpenAI for intelligent content generation
+- **Learning Journey Integration**: Pedagogical guidance ensuring coherent progression from unknown to known concepts
 - **Multiple RAG Strategies**: Support for both vector-based and graph-based retrieval-augmented generation
 - **Status Webhooks**: Real-time status updates via HTTP callbacks
 - **Containerized Deployment**: Docker support for consistent deployments
@@ -27,17 +28,16 @@ The application consists of the following components:
 
 The system supports multiple Retrieval-Augmented Generation (RAG) strategies for content generation, including:
 
-
 ### Qdrant RAG Agent (`QdrantRAGAgent`)
 
 - **Strategy**: Uses Qdrant vector database for scalable, production-grade vector search and retrieval
 - **Implementation**: Integrates with `QdrantRagOps` for querying Qdrant collections
 - **Best for**: Large-scale, high-performance semantic search and retrieval tasks
 - **How it works**:
-   - The agent parses the `index_path` to determine the Qdrant collection and metadata filter
-   - Uses Azure OpenAI for both embedding and completion
-   - Queries Qdrant for relevant content using vector similarity and metadata filtering
-   - Handles structured JSON responses and robust error handling
+  - The agent parses the `index_path` to determine the Qdrant collection and metadata filter
+  - Uses Azure OpenAI for both embedding and completion
+  - Queries Qdrant for relevant content using vector similarity and metadata filtering
+  - Handles structured JSON responses and robust error handling
 
 ### Vector Index RAG Agent (Data store- Azure Blob) (`VectorIndexRAGAgent`)
 
@@ -49,7 +49,6 @@ The system supports multiple Retrieval-Augmented Generation (RAG) strategies for
   - Queries are embedded and matched against document vectors using cosine similarity
   - Most relevant content is retrieved based on semantic similarity
 
-
 ### Graph Index RAG Agent (Data store- Azure Blob) (`GraphIndexRAGAgent`)
 
 - **Strategy**: Property graph-based retrieval with entity and relationship awareness
@@ -59,7 +58,6 @@ The system supports multiple Retrieval-Augmented Generation (RAG) strategies for
   - Extracts entities and relationships from documents to create a knowledge graph
   - Enables sophisticated reasoning over interconnected concepts
   - Supports complex queries that require understanding of entity relationships
-
 
 #### RAG agents with Azure blob as data store inherit `BaseAzureBlobRAGAgent` which provides:
 
@@ -73,13 +71,13 @@ The `AgentPool` class manages singleton instances of all agent types, ensuring e
 
 - **Purpose**: Centralized factory and cache for all agent instances (GPT, RAG, Validator, etc.)
 - **Features**:
-   - Prevents duplicate instantiation of agents
-   - Supports multiple RAG agent types (Qdrant, Vector, Graph) based on identifier
-   - Provides methods to clear and reset agent resources
+  - Prevents duplicate instantiation of agents
+  - Supports multiple RAG agent types (Qdrant, Vector, Graph) based on identifier
+  - Provides methods to clear and reset agent resources
 - **Usage**:
-   - `AgentPool.get_rag_agent(identifier)`: Returns the correct RAG agent instance for the given index/identifier
-   - `AgentPool.get_gpt_agent()`: Returns the singleton GPT agent
-   - `AgentPool.clear_rag_agent_resources(identifier)`: Clears resources for a specific RAG agent
+  - `AgentPool.get_rag_agent(identifier)`: Returns the correct RAG agent instance for the given index/identifier
+  - `AgentPool.get_gpt_agent()`: Returns the singleton GPT agent
+  - `AgentPool.clear_rag_agent_resources(identifier)`: Clears resources for a specific RAG agent
 
 ## Lesson Plan Creation Flow
 
@@ -89,27 +87,27 @@ The lesson plan generation follows a sophisticated workflow orchestration patter
 graph TD
     A[HTTP Request] --> B[LessonPlanHttpTrigger]
     B --> |Validates input and starts orchestration| C[LessonPlanOrchestrator]
-    
+
     C --> D[Creates DAG from WorkflowDefinition]
     C --> E[Splits DAG into independent subgraphs]
     C --> F[Calls SectionsGraphOrchestrator for each subgraph]
-    
+
     F --> G[SectionsGraphOrchestrator]
     G --> H[Executes ready nodes in parallel]
     G --> I[Manages dependencies between sections]
     G --> J[Calls GenerateSectionActivity for each section]
-    
+
     J --> K[GenerateSectionActivity]
     K --> L{Determines generation mode}
-    
+
     L --> |RAG Mode| M[AgentPool.get_rag_agent]
     M --> P[QueryGenerator creates optimized prompts]
     P --> Q[Returns structured JSON content]
-    
+
     L --> |GPT Mode| R[AgentPool.get_gpt_agent]
     R --> S[GPTAgent with direct prompting]
     S --> T[Returns generated content]
-    
+
     Q --> U[WebhookStatusActivity]
     T --> U
     U --> V[Sends real-time status updates via HTTP webhooks]
@@ -125,7 +123,6 @@ graph TD
 - **`AgentPool`**: Singleton factory for managing agent instances
 
 #### Generation Agents
-
 
 - **`BaseAzureBlobRAGAgent`**: Abstract base class for RAG agents
 - **`QdrantRAGAgent`**: Qdrant vector database-based content retrieval (see details above)
@@ -151,6 +148,35 @@ graph TD
 - **`QueryGenerator`**: Creates optimized prompts for initial generation
 - **`RegenQueryGenerator`**: Handles regeneration with user feedback integration
 
+#### Learning Journey Integration
+
+The system now includes **pedagogical learning journey** guidance in section synthesis prompts to ensure coherent educational progression:
+
+**Key Features:**
+
+- **Complete Section Visibility**: Each section prompt includes a list of all sections in the lesson plan
+- **Learning Progression**: Sections are guided to create a structured journey from "UNKNOWN to KNOWN"
+- **Contextual Positioning**: Each section understands its role in the overall learning sequence
+- **Pedagogical Flow**: Ensures early sections engage and introduce, middle sections explore and explain, later sections apply and evaluate
+
+**Implementation:**
+
+- `BaseQueryGenerator.get_all_section_names_and_journey_context()`: Extracts all section names and provides learning journey guidance
+- Applied across all query generators: `QueryGenerator`, `RegenQueryGenerator`, and `QueryGeneratorTelanganaEnglishResourcePlan`
+- Integrated into synthesis prompts to provide pedagogical context for content generation
+
+**Example Learning Journey Guidance:**
+
+```
+=== LESSON PLAN STRUCTURE & LEARNING JOURNEY ===
+All sections in this lesson plan: Engage, Explore, Explain, Elaborate, Evaluate, Checklist
+
+IMPORTANT: This lesson plan should take students on a structured learning journey from the UNKNOWN to the KNOWN...
+- Early sections should introduce foundational concepts and engage student curiosity
+- Middle sections should explore, explain, and elaborate on key concepts
+- Later sections should help students apply, evaluate, and consolidate their learning
+```
+
 ## Workflow Orchestration & Parallel Execution
 
 The system uses a **Directed Acyclic Graph (DAG)** to optimize lesson plan generation through parallel execution of independent sections.
@@ -175,14 +201,14 @@ graph TD
             Ep1 --> El1[Elaborate]
             El1 --> C1[Checklist]
         end
-        
-        subgraph "Subgraph 2" 
+
+        subgraph "Subgraph 2"
             Ev1[Evaluate] --> C1
         end
     end
     subgraph "Original DAG"
         E[Engage] --> Ex[Explore]
-        Ex --> Ep[Explain] 
+        Ex --> Ep[Explain]
         Ep --> El[Elaborate]
         Ev[Evaluate]
         El --> C[Checklist]
@@ -209,7 +235,7 @@ When regenerating with user feedback, previously generated sections are added as
 ```mermaid
 graph TD
     UF["User Feedback: 'Change the starting scenario'"] -.-> B
-    
+
     subgraph "Previous Content (Completed)"
         A["other_section_engage: ✓"]
         C["other_section_explore: ✓"]
@@ -217,7 +243,7 @@ graph TD
         G["other_section_elaborate: ✓"]
         I["other_section_evaluate: ✓"]
     end
-    
+
     subgraph "Sequential Regeneration Chain"
         B["section_engage: Regenerate"]
         D["section_explore: Regenerate"]
@@ -226,18 +252,18 @@ graph TD
         J["section_elvaluate: Regenerate"]
         L["section_checklist: Regenerate"]
     end
-    
+
     subgraph "Final Output"
         M["Complete Regenerated Lesson Plan"]
     end
-    
+
     A --> B
     B --> D
     C --> D
-    
+
     D --> F
     E --> F
-    
+
     F --> H
     G --> H
     H --> J

@@ -30,6 +30,49 @@ class BaseQueryGenerator(ABC):
             synthesis_query += f"\n=== ADDITIONAL CONTEXT ===\n{self.lp_gen_input.additional_context.strip()}\n===\n"
         return synthesis_query
 
+    def get_all_section_names_and_journey_context(self) -> str:
+        """
+        Extract all section names from the workflow and provide learning journey context.
+
+        Returns:
+            A formatted string containing all section names and learning journey guidance.
+        """
+        if not self.lp_gen_input or not self.lp_gen_input.workflow:
+            return ""
+
+        # Extract all section titles from the workflow
+        section_names = [
+            section.title for section in self.lp_gen_input.workflow.sections
+        ]
+
+        if not section_names:
+            return ""
+
+        # Format the section names list
+        section_list = ", ".join(section_names)
+
+        # Get current section name for context
+        current_section = self.section.title if self.section else "Current Section"
+
+        journey_context = f"""=== LESSON PLAN STRUCTURE & LEARNING JOURNEY ===
+All sections in this lesson plan: {section_list}
+
+IMPORTANT: This lesson plan should take students on a structured learning journey from the UNKNOWN to the KNOWN with respect to the topic. Each section should build upon previous sections and contribute to this progression:
+
+- Early sections should introduce foundational concepts and engage student curiosity
+- Middle sections should explore, explain, and elaborate on key concepts  
+- Later sections should help students apply, evaluate, and consolidate their learning
+
+The current section '{current_section}' should fit logically into this learning progression, considering:
+1. What students should already know from previous sections
+2. What new knowledge/skills this section should develop
+3. How this section prepares students for subsequent sections
+4. The overall journey from unfamiliarity to mastery of the topic
+
+==="""
+
+        return journey_context
+
     @abstractmethod
     def generate_synthesis_query(
         self, dependencies: Optional[Dict[str, Any]] = None

@@ -93,6 +93,11 @@ class RegenQueryGenerator(BaseQueryGenerator):
                 f"{retrieval_query}"
             )
 
+        # Add section names and learning journey context
+        journey_context = self.get_all_section_names_and_journey_context()
+        if journey_context:
+            synthesis_query += f"\n{journey_context}\n"
+
         # Add additional context if available
         synthesis_query = self.add_additional_context_if_present(synthesis_query)
 

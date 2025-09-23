@@ -55,6 +55,11 @@ class QueryGenerator(BaseQueryGenerator):
                 f"Focus on the given learning outcomes.\n"
             )
 
+        # Add section names and learning journey context
+        journey_context = self.get_all_section_names_and_journey_context()
+        if journey_context:
+            synthesis_query += f"\n{journey_context}\n"
+
         # Optional: show LOs to the LLM for grounding (kept compact).
         # This is NOT used for retrieval; retrieval will use QueryBundle.embedding_strs.
         retrieval_seed = self.generate_retrieval_query().strip()
