@@ -6,6 +6,7 @@ import re
 
 from core.models.workflow_models import SectionDefinition, Mode
 from core.models.requests import LessonPlanGenerationInput, LPLevel
+from core.logger import LoggerFactory
 
 
 class BaseQueryGenerator(ABC):
@@ -20,6 +21,7 @@ class BaseQueryGenerator(ABC):
     ):
         self.lp_gen_input = lp_gen_input
         self.section = section
+        self.logger = LoggerFactory.get_logger(self.__class__.__name__)
 
     def add_additional_context_if_present(self, synthesis_query: str) -> str:
         if (
@@ -136,3 +138,64 @@ The current section '{current_section}' should fit logically into this learning 
             )
 
         return dedent(retrieval_query)
+
+    async def generate_intelligent_retrieval_query(self) -> str:
+        """
+        Generate an intelligent retrieval query using GPT-based query generator.
+        Falls back to the default retrieval query if GPT generation fails.
+
+        Returns:
+            An optimized retrieval query for vector store search
+        """
+        try:
+            # Import here to avoid circular imports
+            from core.gpt_retrieval_query_generator_vector_store import (
+                GPTRetrievalQueryGeneratorVectorStore,
+            )
+
+            if not self.section:
+                self.logger.warning(
+                    "No section available for intelligent retrieval query generation"
+                )
+                return self.generate_retrieval_query()
+
+            # Initialize the GPT-based retrieval query generator
+            retrieval_query_generator = GPTRetrievalQueryGeneratorVectorStore()
+
+            # Extract topics from input
+            topics = None
+            if (
+                self.lp_gen_input.lp_level == LPLevel.SUBTOPIC
+                and self.lp_gen_input.subtopics
+            ):
+                topics = self.lp_gen_input.subtopics
+            elif (
+                self.lp_gen_input.chapter_info
+                and self.lp_gen_input.chapter_info.chapter_title
+            ):
+                topics = [self.lp_gen_input.chapter_info.chapter_title]
+
+            # Generate intelligent retrieval query
+            intelligent_query = (
+                await retrieval_query_generator.generate_retrieval_query(
+                    section_description=self.section.description,
+                    topics=topics,
+                    learning_outcomes=(
+                        self.lp_gen_input.learning_outcomes
+                        if self.lp_gen_input.learning_outcomes
+                        else None
+                    ),
+                )
+            )
+
+            self.logger.info(
+                f"Generated intelligent retrieval query for section '{self.section.title}'"
+            )
+            return intelligent_query
+
+        except Exception as e:
+            self.logger.warning(
+                f"Failed to generate intelligent retrieval query: {str(e)}"
+            )
+            self.logger.info("Falling back to default retrieval query")
+            return self.generate_retrieval_query()

@@ -85,7 +85,6 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
         synthesis_query = query_generator.generate_synthesis_query(
             dependencies=dependencies
         )
-        retrieval_query = query_generator.generate_retrieval_query()
 
         logger.info(
             "---------------- Query:\n%s\n---------------",
@@ -94,6 +93,16 @@ async def main(inputData: Dict[str, Any]) -> Dict[str, Any]:
 
         # Generate the section based on the mode
         if mode.lower() == Mode.RAG.value:
+            # Generate intelligent retrieval query using the base query generator
+            retrieval_query = (
+                await query_generator.generate_intelligent_retrieval_query()
+            )
+
+            logger.info(
+                "---------------- Generated Retrieval Query:\n%s\n---------------",
+                retrieval_query,
+            )
+
             # Initialize the RAG agent
             rag_agent = AgentPool.get_rag_agent(lp_gen_input.chapter_info.index_path)
 
