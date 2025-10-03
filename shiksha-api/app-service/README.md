@@ -83,8 +83,9 @@ AZURE_OPENAI_API_VERSION=2024-02-15-preview
 AZURE_OPENAI_DEPLOYMENT_NAME=your_completion_model_deployment
 AZURE_OPENAI_EMBED_MODEL=your_embedding_model_deployment
 
-# Bing Search Configuration (Optional)
-BING_API_KEY=your_bing_search_api_key
+# Azure AI Project Configuration (Required for Chat)
+AZURE_PROJECT_ENDPOINT=https://your-project.eastus2.ai.azure.com
+AZURE_BING_GROUNDING_CONNECTION_ID=your_bing_connection_id
 
 # Azure Blob Storage Configuration (Required for RAG)
 BLOB_STORE_CONNECTION_STRING=your_azure_storage_connection_string
@@ -101,11 +102,12 @@ QDRANT_API_KEY=your_qdrant_api_key
 - `AZURE_OPENAI_ENDPOINT`: Azure OpenAI service endpoint URL
 - `AZURE_OPENAI_DEPLOYMENT_NAME`: Completion model deployment name
 - `AZURE_OPENAI_EMBED_MODEL`: Embedding model deployment name
+- `AZURE_PROJECT_ENDPOINT`: Azure AI Foundry project endpoint URL
 - `BLOB_STORE_CONNECTION_STRING`: Azure Storage connection string (for RAG index files)
 
 **Optional Environment Variables:**
 
-- `BING_API_KEY`: Bing Search API key (for general chat web search)
+- `AZURE_BING_GROUNDING_CONNECTION_ID`: Azure AI Foundry Bing connection ID (for web search capabilities)
 - `QDRANT_URL`: Qdrant vector database URL (if using QdrantRagOpsAdapter)
 - `QDRANT_API_KEY`: Qdrant API key (if authentication required)
 
@@ -175,10 +177,13 @@ The general chat endpoint handles educational queries with AI assistance and web
 
 **Features:**
 
-- Processes general educational queries using AI assistant
+- Processes general educational queries using Azure AI Project agents
 - Supports conversational context with message history
-- Integrates with Bing search for real-time information
+- Integrates with Bing Grounding tool for real-time web search capabilities
+- Uses Azure AI Foundry project endpoint for enhanced AI capabilities
 - Handles user, assistant, and system message roles
+- Automatic agent lifecycle management (creation and cleanup)
+- Thread-based conversation management
 - Comprehensive error handling with detailed error responses
 
 **Error Responses:**
@@ -485,6 +490,68 @@ Generate predefined question paper templates for quick prototyping and standard 
 
 - `GET /` - Root endpoint
 - `GET /health` - Health check
+
+## Azure AI Project Client Integration
+
+The application leverages Azure AI Foundry's project client for advanced AI capabilities and agent-based conversations.
+
+### Azure AI Agents Architecture
+
+The general chat service uses Azure AI Project client with the following features:
+
+- **Agent-based Conversations**: Creates dedicated AI agents with custom instructions and capabilities
+- **Thread Management**: Manages conversation threads for context continuity
+- **Bing Grounding Tool**: Integrates web search capabilities through Azure connections
+- **Automatic Lifecycle Management**: Handles agent creation, thread management, and cleanup
+
+### Key Components
+
+#### AIProjectClient Configuration
+
+```python
+project_client = AIProjectClient(
+    endpoint=settings.azure_project_endpoint,
+    credential=DefaultAzureCredential()
+)
+```
+
+#### Agent Creation
+
+```python
+agent = await project_client.agents.create_agent(
+    model=settings.azure_openai_deployment_name,
+    name="shiksha-copilot-agent",
+    instructions=assistant_system_prompt,
+    tools=bing_tools,  # Optional Bing Grounding tools
+)
+```
+
+#### Thread-based Communication
+
+```python
+# Create conversation thread
+thread = await project_client.agents.create_thread()
+
+# Add message to thread
+message = await project_client.agents.messages.create(
+    thread_id=thread.id,
+    role=MessageRole.USER,
+    content=message_content,
+)
+
+# Run agent and get response
+run = await project_client.agents.runs.create_and_process(
+    thread_id=thread.id,
+    agent_id=agent.id,
+)
+```
+
+### Benefits
+
+- **Enhanced AI Capabilities**: Access to latest Azure AI Foundry features
+- **Built-in Tool Integration**: Seamless integration with Bing search and other tools
+- **Scalable Architecture**: Production-ready agent management
+- **Automatic Resource Management**: Handles threading and cleanup automatically
 
 ## RAG (Retrieval-Augmented Generation) Architecture
 
@@ -797,3 +864,47 @@ Enable debug mode for detailed logging:
 ```bash
 DEBUG=true poetry run uvicorn app.main:app --reload
 ```
+
+## Recent Changes and Improvements
+
+### Version 1.1.0 - Azure AI Project Client Integration
+
+**Major Updates:**
+
+- **Migrated from AutoGen to Azure AI Project Client**: Complete rewrite of the general chat service to use Azure AI Foundry's agent-based architecture
+- **Enhanced Tool Integration**: Seamless integration with Bing Grounding tool for improved web search capabilities
+- **Agent-based Conversations**: Implemented dedicated AI agents with custom instructions and automated lifecycle management
+- **Thread Management**: Added conversation thread management for better context continuity
+
+**New Features:**
+
+- **Azure AI Project Client**: Leverages latest Azure AI Foundry capabilities
+- **Bing Grounding Tool**: Optional web search integration through Azure connections
+- **Automatic Resource Management**: Handles agent creation, thread cleanup, and connection management
+- **Enhanced Error Handling**: Improved error handling and fallback mechanisms
+
+**Configuration Changes:**
+
+- **New Environment Variables**:
+  - `AZURE_PROJECT_ENDPOINT`: Required for Azure AI Project client
+  - `AZURE_BING_GROUNDING_CONNECTION_ID`: Optional for Bing search capabilities
+
+**Benefits:**
+
+- **Improved Performance**: Better response times and reliability
+- **Enhanced Capabilities**: Access to latest Azure AI features and tools
+- **Scalable Architecture**: Production-ready agent management
+- **Better Integration**: Seamless Azure service integration
+
+**Migration Notes:**
+
+- Existing Azure OpenAI configuration remains unchanged
+- RAG functionality and question paper generation unaffected
+- Backward compatible API endpoints
+- No changes required for existing clients
+
+### Dependencies Updated
+
+- **Added**: `azure-ai-projects` - Azure AI Project client library
+- **Added**: `azure-ai-agents` - Azure AI agents models and tools
+- **Maintained**: All existing dependencies for RAG and other features

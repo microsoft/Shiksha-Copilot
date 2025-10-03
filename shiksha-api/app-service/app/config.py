@@ -19,8 +19,9 @@ class Settings(BaseSettings):
     azure_openai_deployment_name: Optional[str] = None
     azure_openai_embed_model: Optional[str] = None
 
-    # Bing Search Configuration
-    bing_api_key: Optional[str] = None
+    # Azure AI Project Configuration
+    azure_project_endpoint: Optional[str] = None
+    azure_bing_grounding_connection_id: Optional[str] = None
 
     # Blob Store Configuration
     blob_store_connection_string: Optional[str] = None
