@@ -45,7 +45,7 @@ jsonpointer==3.0.0
 langchain==0.2.14
 langchain-community==0.2.12
 langchain-core==0.2.35
-langchain-text-splitters==0.2.2
+langchain-text-splitters==1.0.0a1
 langcodes==3.4.0
 language_data==1.2.0
 Levenshtein==0.25.1
