@@ -40,12 +40,9 @@ class RegenQueryGenerator(BaseQueryGenerator):
             The retrieval query string
         """
         if self.lp_gen_input.lp_level == LPLevel.SUBTOPIC:
-            retrieval_query = "\n\n".join(
-                [
-                    f"Topic Title: {subtopic_info.name}\n"
-                    f"Learning Outcomes: {chr(10).join(subtopic_info.learning_outcomes)}"
-                    for subtopic_info in self.lp_gen_input.subtopics
-                ]
+            retrieval_query = (
+                f"Topic Titles: {'; '.join(self.lp_gen_input.subtopics)}\n\n"
+                f"Learning Outcomes: {chr(10).join(self.lp_gen_input.learning_outcomes)}"
             )
         else:
             retrieval_query = (

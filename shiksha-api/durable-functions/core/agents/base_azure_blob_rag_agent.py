@@ -1,4 +1,5 @@
 import abc
+import asyncio
 import json
 import logging
 import os
@@ -109,8 +110,9 @@ class BaseAzureBlobRAGAgent(abc.ABC):
         """
         Generates content using Retrieval-Augmented Generation (RAG).
 
-        Downloads the required RAG index if not present locally, performs retrieval and synthesis
-        using the provided queries, and returns the generated content as a string or JSON object.
+        Waits for any ongoing blob downloads to complete, then downloads the required RAG index
+        if not present locally, performs retrieval and synthesis using the provided queries,
+        and returns the generated content as a string or JSON object.
 
         Args:
             rag_input (RAGInput): Input containing the index path, retrieval query, and synthesis query.
@@ -123,6 +125,11 @@ class BaseAzureBlobRAGAgent(abc.ABC):
             Exception: For other unexpected errors during generation.
         """
         try:
+            # Wait for blob store download to complete if in progress
+            while self._blob_store.is_download_in_progress():
+                self.logger.info("Waiting for blob store download to complete...")
+                await asyncio.sleep(1)  # Wait 1 second before checking again
+
             # Check if the RAG index exists locally
             index_exists = await self._rag_ops.index_exists()
 
