@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     app_name: str = "Shiksha Copilot API"
-    version: str = "1.0.0"
+    version: str = "1.0.1"
     debug: bool = False
     host: str = "0.0.0.0"
     port: int = 8000
