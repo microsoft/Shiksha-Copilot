@@ -244,8 +244,8 @@ class QuestionPaperService:
                 )
 
             # Format learning outcomes for this specific unit
-            unit_los_text = f"{unit_name}:\n" + "\n".join(
-                [f"- {lo}" for lo in learning_outcomes]
+            unit_los_text = f"Unit Name: {unit_name}:\n" + "\n".join(
+                [f"  - {lo}" for lo in learning_outcomes]
             )
 
             # Format the prompt for this specific unit
@@ -301,6 +301,14 @@ class QuestionPaperService:
 
             # Build chat history with system message only (as per requirement)
             chat_history = [ChatMessage(role="system", content=system_prompt)]
+
+            print(
+                "********************* SYSTEM PROMPT *********************",
+                system_prompt,
+            )
+            print(
+                "********************* USER MESSAGE *********************", user_message
+            )
 
             # Use RAG adapter to chat with index
             response_content = await rag_adapter.chat_with_index(
