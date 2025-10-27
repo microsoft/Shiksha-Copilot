@@ -7,6 +7,7 @@ import { Subscription, forkJoin } from 'rxjs';
 import { LessonDocxGeneratorService } from 'src/app/shared/services/lesson-docx-generator.service';
 import { LessonPPTGeneratorService } from 'src/app/shared/services/lesson-ppt-generator.service';
 import { IdleService } from 'src/app/shared/services/idle.service';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 interface LessonPlanTabs {
   info: InfoType[];
@@ -163,7 +164,8 @@ export class InspectLessonPlanComponent implements OnInit, OnDestroy {
     private activatedRoute: ActivatedRoute,
     private lessonDocxGeneratorService: LessonDocxGeneratorService,
     private lessonPPTGeneratorService: LessonPPTGeneratorService,
-    private idleService:IdleService
+    private idleService:IdleService,
+    private logger: LoggerService
   ) {
     this.lessonId = this.activatedRoute.snapshot.paramMap.get('id');
     this.modeSubscription = this.activatedRoute.data.subscribe((data: any) => {
@@ -205,11 +207,11 @@ export class InspectLessonPlanComponent implements OnInit, OnDestroy {
     this.contentGenService.getRegenerationLimit().
     subscribe({
       next:(val:any)=>{
-        console.log(val);
+        this.logger.debug('Regeneration limit data:', val);
         this.regenerationLimitReached = val?.data?.regenerationLimitReached
       },
       error:(err)=>{
-        console.log(err);
+        this.logger.error('Error fetching regeneration limit:', err);
       }
     })
   }

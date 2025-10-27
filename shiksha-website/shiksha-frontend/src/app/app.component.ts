@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthorizationService } from './core/services/authorization.service';
 import { IdleService } from './shared/services/idle.service';
 import { IDLE_START_THRESHOLD, IDLE_WARNING_THRESHOLD } from './shared/utility/constant.util';
+import { LoggerService } from './shared/services/logger.service';
 
 @Component({
   selector: 'app-root',
@@ -29,7 +30,8 @@ export class AppComponent implements OnDestroy {
     private utilityService: UtilityService,
     private router: Router,
     private authorizationService: AuthorizationService,
-    private idleService:IdleService
+    private idleService:IdleService,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -51,7 +53,7 @@ export class AppComponent implements OnDestroy {
   }
 
   handleBeforeUnload(event: BeforeUnloadEvent): void {
-    console.log('User is about to close the tab or navigate away.');
+    this.logger.debug('User is about to close the tab or navigate away.');
     this.idleService.stopWatching()
   }
 

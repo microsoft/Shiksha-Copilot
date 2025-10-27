@@ -22,6 +22,7 @@ import { MasterService } from 'src/app/shared/services/master.service';
 import { DatePipe } from '@angular/common';
 import { DropDownConfig } from 'src/app/shared/interfaces/dropdown.interface';
 import { Subscription } from 'rxjs';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 interface MinMaxDate{
   currentYearMin:Date,
@@ -266,7 +267,8 @@ export class SchoolAddEditComponent implements OnInit, AfterViewInit, OnDestroy 
     public modalService: ModalService,
     private masterService: MasterService,
     private router: Router,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -1107,8 +1109,8 @@ export class SchoolAddEditComponent implements OnInit, AfterViewInit, OnDestroy 
    */
   upload(isUpload: boolean) {
     if (isUpload) {
-      console.log('upload file logic here');
-      console.log(this.fileToUpload);
+      this.logger.debug('Upload file logic triggered');
+      this.logger.debug('File to upload:', this.fileToUpload);
     }
   }
 

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ModalService } from '../modal/modal.service';
 import { UtilityService } from 'src/app/core/services/utility.service';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-disable-popup',
@@ -27,9 +28,9 @@ export class DisablePopupComponent implements OnInit {
    * Class constructor
    * @param modalService ModalService
    */
-  constructor(private modalService: ModalService, public toast:UtilityService){}
+  constructor(private modalService: ModalService, public toast:UtilityService, private logger: LoggerService){}
   ngOnInit(): void {
-    console.log('tabledata frm disable popup',this.tableData);
+    this.logger.debug('Table data from disable popup:', this.tableData);
     
   }
 
