@@ -156,6 +156,44 @@ class QuestionBankResponse(BaseModel):
 
 
 # ============================
+# SERVICE INTERNAL MODELS
+# ============================
+
+
+class QuestionInfo(BaseModel):
+    """Individual question specification within a generation slot."""
+
+    type: QuestionType
+    objective: str
+    marks_per_question: int
+    schema_hint: str
+
+    @computed_field
+    @property
+    def type_description(self) -> str:
+        return self.type.description
+
+
+class GenerationSlot(BaseModel):
+    """A batch of questions to be generated together for a specific unit."""
+
+    unit_name: str
+    learning_outcomes: List[str]
+    questions: List[QuestionInfo]
+    index_path: str
+
+    @computed_field
+    @property
+    def question_count(self) -> int:
+        return len(self.questions)
+
+    @computed_field
+    @property
+    def unique_question_types(self) -> List[QuestionType]:
+        return list(set(q.type for q in self.questions))
+
+
+# ============================
 # REQUEST MODELS
 # ============================
 

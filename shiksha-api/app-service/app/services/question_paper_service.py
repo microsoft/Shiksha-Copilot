@@ -20,8 +20,12 @@ from app.models.question_paper import (
     QuestionTypeResponse,
     QuestionType,
     Template,
+    # Service internal models
+    QuestionInfo,
+    GenerationSlot,
 )
 from app.config import settings
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +135,7 @@ class QuestionPaperService:
 
     def _build_generation_slots(
         self, request: QuestionBankPartsGenerationRequest
-    ) -> List[Dict[str, Any]]:
+    ) -> List[GenerationSlot]:
         """Build generation slots from template distributions, grouped by unit with max 20 questions per slot."""
         units_dict = self._get_unit_los_dict(request)
         units_index_path_dict = self._get_unit_index_path_dict(request)
@@ -152,12 +156,12 @@ class QuestionPaperService:
                             f"Unit Name `{dist.unit_name}` is not present in the `chapters` attribute in request"
                         )
 
-                    question_info = {
-                        "type": template.type,
-                        "objective": dist.objective,
-                        "marks_per_question": template.marks_per_question,
-                        "schema_hint": template.type.schema_dict(),
-                    }
+                    question_info = QuestionInfo(
+                        type=template.type,
+                        objective=dist.objective,
+                        marks_per_question=template.marks_per_question,
+                        schema_hint=template.type.schema_dict(),
+                    )
 
                     if dist.unit_name not in unit_questions:
                         unit_questions[dist.unit_name] = []
@@ -175,12 +179,12 @@ class QuestionPaperService:
             for i in range(0, len(questions), self.max_questions_per_slot):
                 batch = questions[i : i + self.max_questions_per_slot]
                 slots.append(
-                    {
-                        "unit_name": unit_name,
-                        "learning_outcomes": unit_los,  # Same for all questions in unit
-                        "questions": batch,
-                        "index_path": index_path,
-                    }
+                    GenerationSlot(
+                        unit_name=unit_name,
+                        learning_outcomes=unit_los,  # Same for all questions in unit
+                        questions=batch,
+                        index_path=index_path,
+                    )
                 )
 
         return slots
@@ -225,7 +229,7 @@ class QuestionPaperService:
         self,
         request: QuestionBankPartsGenerationRequest,
         existing_questions: List[str],
-        slot: Dict[str, Any],
+        slot: GenerationSlot,
     ) -> str:
         """Format the system prompt using YAML templates for a specific unit slot."""
         try:
@@ -233,8 +237,8 @@ class QuestionPaperService:
             template = self.prompts.get("question_bank_parts_gen", "")
 
             # Get unit-specific information from the slot
-            unit_name = slot["unit_name"]
-            learning_outcomes = slot["learning_outcomes"]
+            unit_name = slot.unit_name
+            learning_outcomes = slot.learning_outcomes
 
             # Get Bloom's taxonomy guide
             blooms_guide = self.prompts.get("blooms-taxonomy", {}).get("general", "")
@@ -275,37 +279,42 @@ class QuestionPaperService:
         return f"- For {qtype}: {qtype.description}. Use format: {qtype.schema_dict()}"
 
     async def _generate_questions_batch(
-        self, system_prompt: str, slot: Dict[str, Any], rag_adapter: BaseRagAdapter
+        self, system_prompt: str, slot: GenerationSlot, rag_adapter: BaseRagAdapter
     ) -> List[Dict[str, Any]]:
         """Generate questions for a batch of slots using RAG adapter."""
         # Build slot directives from the new slot structure
-        slot_questions = slot["questions"]
+        slot_questions = slot.questions
 
         # Generate dynamic format rules from QuestionType enum
-        unique_types = set(q["type"] for q in slot_questions)
+        unique_types = slot.unique_question_types
         format_rules = [
             self._get_format_instruction_for_type(qtype) for qtype in unique_types
         ]
         format_rules_text = "\n".join(format_rules)
 
+        # Convert QuestionInfo objects to dict for JSON serialization
+        slot_questions_dict = [
+            {
+                "type": q.type,
+                "objective": q.objective,
+                "marks_per_question": q.marks_per_question,
+                "schema_hint": q.schema_hint,
+            }
+            for q in slot_questions
+        ]
+
         user_message = (
             "Generate questions for the following slots in a SINGLE JSON object with an `items` array. "
             "For each slot, return exactly ONE object with the following fields:\n "
-            "`unit_name`, `type`, `objective`, `marks_per_question` and `item`\n"
+            "`type`, `objective`, `marks_per_question` and `item`\n"
             "`item` field should adhere to the question's `schema_hint`.\n\n"
             "Format rules by question type:\n"
             f"{format_rules_text}\n"
-            f"Question slots:\n{json.dumps(slot_questions, ensure_ascii=False)}"
+            f"Question slots:\n{json.dumps(slot_questions_dict, ensure_ascii=False)}"
         )
 
         # Build chat history with system message only (as per requirement)
         chat_history = [ChatMessage(role="system", content=system_prompt)]
-
-        print(
-            "********************* SYSTEM PROMPT *********************",
-            system_prompt,
-        )
-        print("********************* USER MESSAGE *********************", user_message)
 
         # Use RAG adapter to chat with index
         response_content = await rag_adapter.chat_with_index(
@@ -318,7 +327,7 @@ class QuestionPaperService:
         # Parse response
         response_data = json.loads(content)
 
-        print(
+        logger.info(
             "********************** RESPONSE DATA **********************",
             json.dumps(response_data, indent=2),
         )
@@ -329,12 +338,16 @@ class QuestionPaperService:
             logger.warning("No items found in completion response")
             return []
 
+        # Add unit_name to each generated item for proper key generation
+        for item in items:
+            item["unit_name"] = slot.unit_name
+
         return items
 
     async def _generate_questions_batch_async(
         self,
         system_prompt: str,
-        slot: Dict[str, Any],
+        slot: GenerationSlot,
         rag_adapter: BaseRagAdapter,
         delay_seconds: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -356,16 +369,29 @@ class QuestionPaperService:
             # Create a question directory to organize questions by their specification
             question_directory = {}
 
+            def normalize_key_component(text: str) -> str:
+                """Normalize text by removing invisible chars, extra spaces, and converting to lowercase."""
+                if not text:
+                    return ""
+                # Remove invisible characters (control chars, zero-width spaces, etc.)
+                # Remove control characters except tab, newline, carriage return
+                text = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]", "", str(text))
+                # Remove zero-width characters
+                text = re.sub(r"[\u200B-\u200D\uFEFF]", "", text)
+                # Normalize whitespace and strip
+                text = re.sub(r"\s+", " ", text).strip()
+                return text.lower()
+
             # Organize generated questions by (type, marks, unit_name, objective)
             for i, generated in enumerate(all_generated):
                 qtype = QuestionType(generated.get("type"))
-                unit_name = generated.get("unit_name")
-                objective = generated.get("objective")
-                marks_per_question = generated.get("marks_per_question")
+                unit_name = normalize_key_component(generated.get("unit_name", ""))
+                objective = normalize_key_component(generated.get("objective", ""))
+                marks_per_question = generated.get("marks_per_question", 0)
                 item = generated.get("item")
 
-                # Normalize key to lowercase to avoid case sensitivity issues
-                key = f"{qtype.value}|{marks_per_question}|{unit_name}|{objective}".lower()
+                # Create normalized key
+                key = f"{qtype.value.lower()}|{marks_per_question}|{unit_name}|{objective}"
                 if key not in question_directory:
                     question_directory[key] = []
 
@@ -387,8 +413,10 @@ class QuestionPaperService:
 
                 # Add questions in the order specified by question_distribution
                 for q_dist in template.question_distribution or []:
-                    # Normalize key to lowercase to match the question_directory keys
-                    key = f"{template.type.value}|{template.marks_per_question}|{q_dist.unit_name}|{q_dist.objective}".lower()
+                    # Create normalized key to match the question_directory keys
+                    normalized_unit = normalize_key_component(q_dist.unit_name)
+                    normalized_objective = normalize_key_component(q_dist.objective)
+                    key = f"{template.type.value.lower()}|{template.marks_per_question}|{normalized_unit}|{normalized_objective}"
 
                     if key in question_directory and len(question_directory[key]) > 0:
                         question = question_directory[key].pop(0)
@@ -400,6 +428,10 @@ class QuestionPaperService:
                     else:
                         logger.warning(
                             f"--\nNo question found for Normalized key: {key}"
+                        )
+                        # Debug: show all available keys for troubleshooting
+                        logger.warning(
+                            f"Available keys: {list(question_directory.keys())}"
                         )
 
                 response_questions.append(question_type_resp)
@@ -453,9 +485,7 @@ class QuestionPaperService:
                 tasks = []
                 for j, slot in enumerate(batch_slots):
                     # Get or create cached RAG adapter instance
-                    rag_adapter = await self._get_or_create_rag_adapter(
-                        slot["index_path"]
-                    )
+                    rag_adapter = await self._get_or_create_rag_adapter(slot.index_path)
                     # Initiate the index (download files for InMem, no-op for Qdrant)
                     await rag_adapter.initiate_index()
 
@@ -475,6 +505,9 @@ class QuestionPaperService:
 
                 # Add all generated questions from this batch
                 for raw_items in batch_results:
+                    if isinstance(raw_items, Exception):
+                        logger.error(f"Error in batch generation: {raw_items}")
+                        continue
                     if raw_items:
                         all_generated.extend(raw_items)
 
