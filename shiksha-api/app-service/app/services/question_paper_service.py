@@ -278,65 +278,58 @@ class QuestionPaperService:
         self, system_prompt: str, slot: Dict[str, Any], rag_adapter: BaseRagAdapter
     ) -> List[Dict[str, Any]]:
         """Generate questions for a batch of slots using RAG adapter."""
-        try:
-            # Build slot directives from the new slot structure
-            slot_questions = slot["questions"]
+        # Build slot directives from the new slot structure
+        slot_questions = slot["questions"]
 
-            # Generate dynamic format rules from QuestionType enum
-            unique_types = set(q["type"] for q in slot_questions)
-            format_rules = [
-                self._get_format_instruction_for_type(qtype) for qtype in unique_types
-            ]
-            format_rules_text = "\n".join(format_rules)
+        # Generate dynamic format rules from QuestionType enum
+        unique_types = set(q["type"] for q in slot_questions)
+        format_rules = [
+            self._get_format_instruction_for_type(qtype) for qtype in unique_types
+        ]
+        format_rules_text = "\n".join(format_rules)
 
-            user_message = (
-                "Generate questions for the following slots in a SINGLE JSON object with an `items` array. "
-                "For each slot, return exactly ONE object with the following fields:\n "
-                "`unit_name`, `type`, `objective`, `marks_per_question` and `item`\n"
-                "`item` field should adhere to the question's `schema_hint`.\n\n"
-                "Format rules by question type:\n"
-                f"{format_rules_text}\n"
-                f"Question slots:\n{json.dumps(slot_questions, ensure_ascii=False)}"
-            )
+        user_message = (
+            "Generate questions for the following slots in a SINGLE JSON object with an `items` array. "
+            "For each slot, return exactly ONE object with the following fields:\n "
+            "`unit_name`, `type`, `objective`, `marks_per_question` and `item`\n"
+            "`item` field should adhere to the question's `schema_hint`.\n\n"
+            "Format rules by question type:\n"
+            f"{format_rules_text}\n"
+            f"Question slots:\n{json.dumps(slot_questions, ensure_ascii=False)}"
+        )
 
-            # Build chat history with system message only (as per requirement)
-            chat_history = [ChatMessage(role="system", content=system_prompt)]
+        # Build chat history with system message only (as per requirement)
+        chat_history = [ChatMessage(role="system", content=system_prompt)]
 
-            print(
-                "********************* SYSTEM PROMPT *********************",
-                system_prompt,
-            )
-            print(
-                "********************* USER MESSAGE *********************", user_message
-            )
+        print(
+            "********************* SYSTEM PROMPT *********************",
+            system_prompt,
+        )
+        print("********************* USER MESSAGE *********************", user_message)
 
-            # Use RAG adapter to chat with index
-            response_content = await rag_adapter.chat_with_index(
-                curr_message=user_message, chat_history=chat_history
-            )
+        # Use RAG adapter to chat with index
+        response_content = await rag_adapter.chat_with_index(
+            curr_message=user_message, chat_history=chat_history
+        )
 
-            # Clean up response content
-            content = response_content.strip("```json").strip("```")
+        # Clean up response content
+        content = response_content.strip("```json").strip("```")
 
-            # Parse response
-            response_data = json.loads(content)
+        # Parse response
+        response_data = json.loads(content)
 
-            print(
-                "********************** RESPONSE DATA **********************",
-                json.dumps(response_data, indent=2),
-            )
+        print(
+            "********************** RESPONSE DATA **********************",
+            json.dumps(response_data, indent=2),
+        )
 
-            items = response_data.get("items")
+        items = response_data.get("items")
 
-            if not items:
-                logger.warning("No items found in completion response")
-                return []
-
-            return items
-
-        except Exception as e:
-            logger.exception(f"Error in batch generation: {e}")
+        if not items:
+            logger.warning("No items found in completion response")
             return []
+
+        return items
 
     async def _generate_questions_batch_async(
         self,
@@ -478,7 +471,7 @@ class QuestionPaperService:
                     tasks.append(task)
 
                 # Wait for all tasks in the current batch to complete
-                batch_results = await asyncio.gather(*tasks)
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
                 # Add all generated questions from this batch
                 for raw_items in batch_results:

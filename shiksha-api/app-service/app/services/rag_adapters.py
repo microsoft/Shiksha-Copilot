@@ -116,7 +116,7 @@ class InMemRagOpsAdapter(BaseRagAdapter):
         self.index_path = index_path
         self._blob_store = BlobStore()
         self.persist_dir = os.path.join(
-            tempfile.gettempdir(), index_path.replace("/", "_")
+            tempfile.gettempdir(), index_path.replace("/", "_").replace(" ", "_")
         )
 
     async def initialize(self) -> InMemRagOps:
@@ -152,6 +152,23 @@ class InMemRagOpsAdapter(BaseRagAdapter):
                 )
 
             logger.info(f"Downloaded {len(downloaded_file_paths)} index files")
+
+            # Check if vector_store.json was downloaded and rename it, backward compatibility with older versions of llama_index
+            for file_path in downloaded_file_paths:
+                if os.path.basename(file_path) == "vector_store.json":
+                    new_file_path = os.path.join(
+                        os.path.dirname(file_path), "default__vector_store.json"
+                    )
+                    os.rename(file_path, new_file_path)
+                    # Update the list to reflect the new filename
+                    downloaded_file_paths[downloaded_file_paths.index(file_path)] = (
+                        new_file_path
+                    )
+                    logger.info(
+                        f"Renamed vector_store.json to default__vector_store.json"
+                    )
+                    break
+
             file_paths_str = "\n".join(downloaded_file_paths)
             logger.info(f"Downloaded RAG index files: {file_paths_str}")
         else:
