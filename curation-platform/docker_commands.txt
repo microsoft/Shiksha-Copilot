@@ -1,0 +1,17 @@
+az login
+
+az acr login --name srivarsiregistry
+
+docker build -t srivarsiregistry.azurecr.io/lpcurationwebapp:latest .
+
+docker build -t srivarsiregistry.azurecr.io/lpcurationwebapp:new_book .
+
+docker run -p 8501:8501 srivarsiregistry.azurecr.io/lpcurationwebapp:latest
+
+docker push srivarsiregistry.azurecr.io/lpcurationwebapp:latest
+
+docker push srivarsiregistry.azurecr.io/lpcurationwebapp:new_book
+
+fuser -k 8000/tcp
+
+docker system prune -a --volumes

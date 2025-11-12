@@ -1,0 +1,96 @@
+from enum import Enum
+
+
+class StateKeys:
+    ALL_REGISTERED_USERS = "ALL_REGISTERED_USERS"
+    USER_NAME = "USER_NAME"
+    USER_EMAIL = "USER_EMAIL"
+    USER = "USER"
+    
+    LP_LIST_KN = "LP_LIST_KN"
+    UNEDITED_LP_LIST_KN = "UNEDITED_LP_LIST_KN"
+    EDITED_LP_LIST_KN = "EDITED_LP_LIST_KN"
+    CHOSEN_LP_KN = "CHOSEN_LP_KN"
+    CHOSEN_LP_KN_ENG = 'CHOSEN_LP_KN_ENG'
+
+    GEN_HISTORY_ITEMS = "GEN_HISTORY_ITEMS"
+    LP_LIST = "LP_LIST"
+    UNEDITED_LP_LIST = "UNEDITED_LP_LIST"
+    EDITED_LP_LIST = "EDITED_LP_LIST"
+    SUBTOPIC_EDIT_EXPANDER_OPEN = "SUBTOPIC_EDIT_EXPANDER_OPEN"
+    SUBTOPOC_GROUP_EXPANDER_OPEN = "SUBTOPOC_GROUP_EXPANDER_OPEN"
+    CHAPTER_SUMMARY = "CHAPTER_SUMMARY"
+    CHOSEN_LP_ITEM = "CHOSEN_LP_ITEM"
+    CHOSEN_GEN_HISTORY_ITEM = "CHOSEN_GEN_HISTORY_ITEM"
+    CHOSEN_LP = "CHOSEN_LP"
+    CHOSEN_LP_FEEDBACK = "CHOSEN_LP_FEEDBACK"
+    CHOSEN_CHAPTER_ID = "CHOSEN_CHAPTER_ID"
+    CHOSEN_CHAPTER_NAME = "CHOSEN_CHAPTER_NAME"
+    CHOSEN_CHAPTER_LO_LIST = "CHOSEN_CHAPTER_LO_LIST"
+    CHOSEN_CHAPTER_SUBTOPIC_LIST = "CHOSEN_CHAPTER_SUBTOPIC_LIST"
+    CHOSEN_CHAPTER_SUBTOPIC_GROUP_LIST = "CHOSEN_CHAPTER_SUBTOPIC_GROUP_LIST"
+    CHOSEN_CHAPTER_DETAILS = "CHOSEN_CHAPTER_DETAILS"
+    CHOSEN_CHAPTER_DETAILS_IN_DB = "CHOSEN_CHAPTER_DETAILS_IN_DB"
+    CHOSEN_UNEDITED_CHAPTER_DETAILS = "CHOSEN_UNEDITED_CHAPTER_DETAILS"
+    IS_ADDING_SUBTOPIC_GROUP = "IS_ADDING_SUBTOPIC_GROUP"
+    ADDING_SUBTOPIC_GROUP_TOPIC_INDEXES = "ADDING_SUBTOPIC_GROUP_TOPIC_INDEXES"
+    CURRENT_LP = "CURRENT_LP"
+    CURRENT_LP_V2 = "CURRENT_LP_V2"
+    CURRENT_LP_V2_FEEDBACK = "CURRENT_LP_V2_FEEDBACK"
+    CURRENT_PHASE_INDEX = "CURRENT_PHASE_INDEX"
+    CURRENT_MOT_INDEX = "CURRENT_MOT_INDEX"
+    IS_EDITING_LO = "IS_EDITING_LO"
+    HAS_CHOSEN_PREFERRED_TEACHING_MODEL = "HAS_CHOSEN_PREFERRED_TEACHING_MODEL"
+    FINISHED_LP_EDITS = "FINISHED_LP_EDITS"
+    VIDEO_CHAPTER_SUMMARY = "VIDEO_CHAPTER_SUMMARY"
+    CHOSEN_VIDEO_CHAPTER_NAME = "CHOSEN_VIDEO_CHAPTER_NAME"
+    CHOSEN_VIDEO_CHAPTER_ID = "CHOSEN_VIDEO_CHAPTER_ID"
+    CHOSEN_VIDEO_CHAPTER_DETAILS = "CHOSEN_VIDEO_CHAPTER_DETAILS"
+    CURRENT_VIDEO_BEING_ADDED = "CURRENT_VIDEO_BEING_ADDED"
+
+class Language(Enum):
+    ENGLISH = "english"
+    KANNADA = "kannada"
+    
+class MethodsOfTeaching:
+    JUST_IN_TIME: str = "Just-in-Time Teaching"
+    INT_LECTURE: str = "Interactive Lecture"
+    EXP_LEARNING: str = "Experiential Learning"
+    CASE_BASED: str = "Case-Based Learning"
+    
+    @staticmethod
+    def get_all() -> list[str]: 
+        return [
+            MethodsOfTeaching.JUST_IN_TIME,
+            MethodsOfTeaching.INT_LECTURE,
+            MethodsOfTeaching.EXP_LEARNING,
+            MethodsOfTeaching.CASE_BASED
+        ]
+
+class LPItemStatus:
+    NOT_STARTED = "Not Started"
+    GENERATING = "Generating..."
+    FAILED = "Failed"
+    GENERATED = "Generated"
+    EDITED = "Edited"
+
+class DurableFunctionsStatus:
+    STATUS_URI_KEY = "statusQueryGetUri"
+    STATUS_KEY = "runtimeStatus"
+    RUNNING_STATUS = "Running"
+    PENDING_STATUS = "Pending"
+    FAILED_STATUS = "Failed"
+    COMPLETED_STATUS = "Completed"
+    UNDEFINED_STATUS = "Undefined"
+    
+    @staticmethod
+    def get_status(resp_status: str):
+        if resp_status == DurableFunctionsStatus.RUNNING_STATUS:
+            return DurableFunctionsStatus.RUNNING_STATUS
+        elif resp_status == DurableFunctionsStatus.COMPLETED_STATUS:
+            return DurableFunctionsStatus.COMPLETED_STATUS
+        elif resp_status == DurableFunctionsStatus.FAILED_STATUS:
+            return DurableFunctionsStatus.FAILED_STATUS
+        elif resp_status == DurableFunctionsStatus.PENDING_STATUS:
+            return DurableFunctionsStatus.PENDING_STATUS    
+        return DurableFunctionsStatus.UNDEFINED_STATUS
