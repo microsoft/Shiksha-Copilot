@@ -63,8 +63,8 @@ router.post(
 	)
 );
 
-router.get(
-	"/master-lesson/list/:chapterId",
+router.post(
+	"/master-lesson/learning-outcomes",
 	asyncMiddleware(
 		masterLessonController.getLessonOutcomes.bind(masterLessonController)
 	)
@@ -95,13 +95,33 @@ router.get(
 	)
 );
 
+// router.post(
+// 	"/master-lesson-and-resource/script-lp-dump",
+// 	isAuthenticated,
+// 	isAdmin,
+// 	MulterUploadMiddleware,
+// 	asyncMiddleware(
+// 		masterLessonController.scriptLpDump.bind(masterLessonController)
+// 	)
+// );
+
 router.post(
-	"/master-lesson-and-resource/script-lp-dump",
+	"/master-lesson/upload",
 	isAuthenticated,
 	isAdmin,
 	MulterUploadMiddleware,
 	asyncMiddleware(
-		masterLessonController.scriptLpDump.bind(masterLessonController)
+		masterLessonController.uploadMasterLesson.bind(masterLessonController)
+	)
+);
+
+router.post(
+	"/master-lesson/old-version-upload",
+	isAuthenticated,
+	isAdmin,
+	MulterUploadMiddleware,
+	asyncMiddleware(
+		masterLessonController.uploadMasterLessonOlderVersion.bind(masterLessonController)
 	)
 );
 

@@ -9,6 +9,7 @@ const schoolAggregation = require("../aggregation/school.aggregation");
 const { Worker } = require("worker_threads");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
+const { normalizeMultiValueFilter, buildMongoInQuery } = require("../helper/filter.helper.js");
 
 class SchoolManager extends BaseManager {
   constructor() {
@@ -432,6 +433,34 @@ class SchoolManager extends BaseManager {
       
     }
     catch(err){
+      return formatApiReponse(false, err.message, err);
+    }
+  }
+
+  async getAll(
+    page = 1,
+    limit,
+    filters = {},
+    sort = {},
+    status,
+    userId
+  ) {
+    try {
+      // Only for School: advanced filter normalization for zone/district
+      let processedFilters = { ...filters, ...status };
+      processedFilters = normalizeMultiValueFilter(processedFilters, ["zone", "district"]);
+      processedFilters = buildMongoInQuery(processedFilters, ["zone", "district"]);
+      // Call DAO getAll with processed filters
+      let data = await this.dao.getAll(
+        page,
+        limit,
+        processedFilters,
+        sort,
+        {}, // status already merged
+        userId
+      );
+      return formatApiReponse(true, "", data);
+    } catch (err) {
       return formatApiReponse(false, err.message, err);
     }
   }

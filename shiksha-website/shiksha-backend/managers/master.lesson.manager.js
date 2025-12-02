@@ -11,7 +11,7 @@ const ChapterDao = require("../dao/chapter.dao");
 const MasterSubjectDao = require("../dao/master.subject.dao");
 const MasterResourceDao = require("../dao/master.resource.dao");
 const Chapter = require("../models/chapter.model");
-const { sortDataBySubTopics, restructureCheckListforLLM, getSemester, formatSubject } = require("../helper/formatter");
+const { sortDataBySubTopics, restructureCheckListforLLM, getSemester, formatSubject, formatSections, oldFormatStructuredData } = require("../helper/formatter");
 const logger = require("../config/loggers"); 
 const { post5ETables } = require("../services/copilot.bot.service");
 const {
@@ -22,6 +22,7 @@ const {
 	orderNumberRegex,
 	standardRegex,
 	titleRegex,
+	getTemplateWorkflowId,
 } = require("../helper/data.helper");
 const {
 	restructureInstructionSet,
@@ -29,6 +30,7 @@ const {
 	restructureResources,
 } = require("../helper/formatter");
 const compareChapter = require("../helper/chapter.helper");
+const LessonPlanTemplate = require("../models/lesson.plan.template.model");
 
 
 class MasterLessonManger extends BaseManager {
@@ -284,10 +286,11 @@ class MasterLessonManger extends BaseManager {
 		}
 	}
 
-	async getLessonOutcomes(chapterId, filters) {
+	async getLessonOutcomes(chapterId,templateIds, filters) {
 		try {
 			let result = await this.masterLessonDao.getLessonOutcomes(
 				chapterId,
+				templateIds,
 				filters
 			);
 
@@ -453,16 +456,16 @@ class MasterLessonManger extends BaseManager {
         }
 
         if (result) {
-            let filteredQuestionBank = await this.getFilteredQuestionBank(lessonId, filters);
+            // let filteredQuestionBank = await this.getFilteredQuestionBank(lessonId, filters);
 
-            let instructionSet = result[0].instructionSet.map((is) => {
-                if (is.type === "Evaluate") {
-                    is.info[0].content.main = filteredQuestionBank.data;    // Private methods
-                }
-                return is;
-            });
+            // let instructionSet = result[0].instructionSet.map((is) => {
+            //     if (is.type === "Evaluate") {
+            //         is.info[0].content.main = filteredQuestionBank.data;    // Private methods
+            //     }
+            //     return is;
+            // });
 
-            result[0].instructionSet = instructionSet;
+            // result[0].instructionSet = instructionSet;
 
             return formatApiReponse(true, "", result);
         }
@@ -560,7 +563,8 @@ class MasterLessonManger extends BaseManager {
 					chapterId: chapter._id,
 					subTopics: lessonPlans[i].subtopics,
 					isRegenerated:false,
-					isAll:lessonPlans[i].lp_level === 'CHAPTER'
+					isAll:lessonPlans[i].lp_level === 'CHAPTER',
+					templateId:lessonPlans[i].lessonTemplateId
 				}
 
 				const existingLp = await this.masterLessonDao.getOne(queryingObj);
@@ -611,7 +615,7 @@ class MasterLessonManger extends BaseManager {
 						isRegenerated:false
 					};
 
-					lesson = await this.masterLessonDao.create(lessonPlanObj);
+					lesson = await this.masterLessonDao.create({...lessonPlanObj,templateId:lessonPlans[i].lessonTemplateId});
 
 					let resourcePlanObj = {
 						...lessonPlanObj,
@@ -623,7 +627,358 @@ class MasterLessonManger extends BaseManager {
 							: [],
 						checkList: restructureCheckList(lessonPlans[i].checklist),
 					};
-					await this.masterResourceDao.create(resourcePlanObj);
+					await this.masterResourceDao.create({...resourcePlanObj,templateId:lessonPlans[i].resourceTemplateId});
+					createCount+=1
+				}
+			}
+
+			return {
+				success: true,
+				message: "Data Added!",
+				data: {
+					createCount,
+					updateCount,
+					failCount: failedLessonPlan.length,
+					failedLessonPlan,
+				},
+			};
+		} catch (err) {
+			return formatApiReponse(false, err?.message, err);
+		}
+	}
+
+	async uploadMasterLesson(req) {
+		try {
+			let lessonPlans = req.body;
+			let failedLessonPlan = [];
+			let createCount=0;
+			let updateCount=0
+
+			if (typeof lessonPlans === 'object' && !Array.isArray(lessonPlans)) {
+                lessonPlans = [lessonPlans];
+            }
+
+			for (let i = 0; i < lessonPlans.length; i++) {
+				let subjectName = lessonPlans[i].chapter_id.match(subjectRegex)[1];
+				let title = lessonPlans[i].chapter_id.match(titleRegex)[1];
+				let medium = lessonPlans[i].chapter_id.match(mediumRegex)[1];
+				let board = lessonPlans[i].chapter_id.match(boardRegex)[1];
+				let standard = lessonPlans[i].chapter_id.match(standardRegex)[1];
+				let orderNumber = lessonPlans[i].chapter_id.match(orderNumberRegex)[1];
+				let learningOutcomes = lessonPlans[i].learning_outcomes;
+				let templateDetails = await LessonPlanTemplate.find({workFlowId:lessonPlans[i]?.workflow_id});
+				let templateId = templateDetails[0]?._id || null;
+				if (typeof learningOutcomes[0] === 'string' && learningOutcomes[0].includes('\n')) {
+				  learningOutcomes = learningOutcomes[0].split('\n').map(outcome => outcome.trim());
+				}
+
+				if(!templateId){
+					failedLessonPlan.push(lessonPlans[i]);
+					continue;
+				}
+
+				let chapter = await this.chapterDao.getOne({
+					board,
+					medium,
+					orderNumber,
+					topics: title,
+					standard: Number(standard),
+				});
+
+				if (chapter && lessonPlans[i]?.index_path) {
+                    chapter.indexPath= lessonPlans[i]?.index_path
+                    await chapter.save();
+                }
+				let subject = await this.masterSubjectDao.getByNameAndBoard(
+						subjectName,
+						board
+					);
+				if (!chapter?._id) {
+					if (!subject) {
+						let subjectData = await this.masterSubjectDao.getOne({subjectName});
+						if (subjectData && !subjectData.boards.includes(board)) {
+							subjectData.boards.push(board);
+							subjectData.applicableClasses.push(
+								{
+										board: board,
+										Classes: [standard]
+									}
+							)
+							subject = await subjectData.save(); 
+						  }else{
+							subject = await this.masterSubjectDao.create({
+								subjectName,
+								boards: [board],
+								sem:getSemester(subjectName),
+								name:formatSubject(subjectName),
+								 applicableClasses: [
+									{
+										board: board,
+										Classes: [standard]
+									}
+									],
+							});
+						  }
+					}
+	 
+					let chapterObj = {
+						subjectId: subject._id,
+						topics: title,
+						subTopics: lessonPlans[i].subtopics,
+						medium: medium,
+						board: board,
+						standard: Number(standard),
+						orderNumber: Number(orderNumber),
+						indexPath:lessonPlans[i]?.index_path
+					};
+	 
+					chapter = await this.chapterDao.create(chapterObj);
+				}
+
+				  let boardEntry = subject.applicableClasses.find(
+    				(entry) => entry.board === board
+  					);
+
+				if (boardEntry) {
+					if (!boardEntry.classes.includes(standard)) {
+					boardEntry.classes.push(standard);
+					await subject.save();
+					}
+				} else {
+					subject.applicableClasses.push({
+					board: board,
+					classes: [standard],
+					});
+
+					if (!subject.boards.includes(board)) {
+					subject.boards.push(board);
+					}
+					await subject.save();
+				}
+
+				let queryingObj = {
+					name: `${subjectName}-${board} Class${standard} ${title}`,
+					class: Number(standard),
+					board,
+					medium,
+					subject: subjectName,
+					chapterId: chapter._id,
+					subTopics: lessonPlans[i].subtopics,
+					isRegenerated:false,
+					isAll:lessonPlans[i].lp_level === 'CHAPTER',
+					templateId
+				}
+
+				const existingLp = await this.masterLessonDao.getOne(queryingObj);
+
+				let lesson;
+				if(existingLp && compareChapter(lessonPlans[i]._id,chapter,existingLp)){
+					const lpQuery = {
+						_id: existingLp._id,	
+                        isDeleted: false,
+					}
+
+					const lpData = {
+						sections:formatSections(lessonPlans[i]?.sections,templateDetails[0]?.sections),
+						learningOutcomes:lessonPlans[i]?.learning_outcomes,
+						videos:lessonPlans[i]?.videos?.length ? lessonPlans[i]?.videos : []
+					}
+					lesson = await this.masterLessonDao.updateByFilter(lpQuery,lpData)
+					updateCount+=1
+				} else {
+					let lessonPlanObj = {
+						name: `${subjectName}-${board} Class${standard} ${title}`,
+						class: Number(standard),
+						isAll: lessonPlans[i].lp_level === "CHAPTER",
+						board,
+						medium,
+						semester: "1",
+						subject: subjectName,
+						chapterId: chapter._id, //fetch id
+						subTopics: lessonPlans[i].subtopics,
+						teachingModel: [],
+						sections:formatSections(lessonPlans[i]?.sections,templateDetails[0]?.sections),
+						videos: lessonPlans[i]?.videos?.length ? lessonPlans[i]?.videos : [],
+						documents: [],
+						learningOutcomes,
+						interactOutput: lessonPlans[i]?.interact_output,
+						preferredMot: lessonPlans[i]?.preferred_mot,
+						isRegenerated:false,
+						templateId
+					};
+
+					lesson = await this.masterLessonDao.create(lessonPlanObj);
+					createCount+=1
+				}
+			}
+
+			return {
+				success: true,
+				message: "Data Added!",
+				data: {
+					createCount,
+					updateCount,
+					failCount: failedLessonPlan.length,
+					failedLessonPlan,
+				},
+			};
+		} catch (err) {
+			return formatApiReponse(false, err?.message, err);
+		}
+	}
+
+
+		async uploadMasterLessonOlderVersion(req) {
+		try {
+			let lessonPlans = req.body;
+			let failedLessonPlan = [];
+			let createCount=0;
+			let updateCount=0
+
+			if (typeof lessonPlans === 'object' && !Array.isArray(lessonPlans)) {
+                lessonPlans = [lessonPlans];
+            }
+
+			for (let i = 0; i < lessonPlans.length; i++) {
+				let subjectName = lessonPlans[i].chapter_id.match(subjectRegex)[1];
+				let title = lessonPlans[i].chapter_id.match(titleRegex)[1];
+				let medium = lessonPlans[i].chapter_id.match(mediumRegex)[1];
+				let board = lessonPlans[i].chapter_id.match(boardRegex)[1];
+				let standard = lessonPlans[i].chapter_id.match(standardRegex)[1];
+				let orderNumber = lessonPlans[i].chapter_id.match(orderNumberRegex)[1];
+				let learningOutcomes = lessonPlans[i].learning_outcomes;
+
+				if(board !== 'KSEEB'){
+					failedLessonPlan.push(lessonPlans[i]);
+					continue;
+				}
+
+				const workFlowId = getTemplateWorkflowId(subjectName,lessonPlans[i]?.lp_level);
+
+				let templateDetails = await LessonPlanTemplate.find({workFlowId});
+				let templateId = templateDetails[0]?._id || null;
+
+				if (typeof learningOutcomes[0] === 'string' && learningOutcomes[0].includes('\n')) {
+				  learningOutcomes = learningOutcomes[0].split('\n').map(outcome => outcome.trim());
+				}
+
+				if(!templateId){
+					failedLessonPlan.push(lessonPlans[i]);
+					continue;
+				}
+
+
+				let chapter = await this.chapterDao.getOne({
+					board,
+					medium,
+					orderNumber,
+					topics: title,
+					standard: Number(standard),
+				});
+
+
+				if (chapter && lessonPlans[i]?.index_path) {
+                    chapter.indexPath= lessonPlans[i]?.index_path
+                    await chapter.save();
+                }
+
+				if (!chapter?._id) {
+					let subject = await this.masterSubjectDao.getByNameAndBoard(
+						subjectName,
+						board
+					);
+	
+					if (!subject) {
+						let subjectData = await this.masterSubjectDao.getOne({subjectName});
+						if (subjectData && !subjectData.boards.includes(board)) {
+							subjectData.boards.push(board);
+							subject = await subjectData.save(); 
+						  }else{
+							subject = await this.masterSubjectDao.create({
+								subjectName,
+								boards: [board],
+								sem:getSemester(subjectName),
+								name:formatSubject(subjectName)
+							});
+						  }
+					}
+	 
+					let chapterObj = {
+						subjectId: subject._id,
+						topics: title,
+						subTopics: lessonPlans[i].subtopics,
+						medium: medium,
+						board: board,
+						standard: Number(standard),
+						orderNumber: Number(orderNumber),
+						indexPath:lessonPlans[i]?.index_path
+					};
+	 
+					chapter = await this.chapterDao.create(chapterObj);
+				}
+
+				let queryingObj = {
+					name: `${subjectName}-${board} Class${standard} ${title}`,
+					class: Number(standard),
+					board,
+					medium,
+					subject: subjectName,
+					chapterId: chapter._id,
+					subTopics: lessonPlans[i].subtopics,
+					isRegenerated:false,
+					isAll:lessonPlans[i].lp_level === 'CHAPTER',
+					templateId
+				}
+				
+				const existingLp = await this.masterLessonDao.getOne(queryingObj);
+
+				let lesson;
+
+				let instructionSet;
+					if(lessonPlans[i].lp_level === "CHAPTER"){
+						instructionSet = lessonPlans[i]?.instruction_set;
+					}else{
+						instructionSet = lessonPlans[i]?.crisp_instruction_set;
+					}
+				if(existingLp && compareChapter(lessonPlans[i]._id,chapter,existingLp)){
+					const lpQuery = {
+						_id: existingLp._id,	
+                        isDeleted: false,
+					}
+
+					const lpData = {
+						sections:oldFormatStructuredData(instructionSet,lessonPlans[i]?.checklist,templateDetails[0]?.sections),
+						learningOutcomes:lessonPlans[i]?.learning_outcomes,
+						videos:lessonPlans[i]?.videos?.length ? lessonPlans[i]?.videos : [],
+					}
+
+					
+					lesson = await this.masterLessonDao.updateByFilter(lpQuery,lpData)
+					updateCount+=1
+				} 
+				else {
+					let lessonPlanObj = {
+						name: `${subjectName}-${board} Class${standard} ${title}`,
+						class: Number(standard),
+						isAll: lessonPlans[i].lp_level === "CHAPTER",
+						board,
+						medium,
+						semester: "1",
+						subject: subjectName,
+						chapterId: chapter._id, //fetch id
+						subTopics: lessonPlans[i].subtopics,
+						teachingModel: [],
+						sections:oldFormatStructuredData(instructionSet,lessonPlans[i]?.checklist,templateDetails[0]?.sections),
+						videos: lessonPlans[i]?.videos?.length ? lessonPlans[i]?.videos : [],
+						documents: [],
+						learningOutcomes,
+						interactOutput: lessonPlans[i]?.interact_output,
+						preferredMot: lessonPlans[i]?.preferred_mot,
+						isRegenerated:false,
+						templateId
+					};
+
+					lesson = await this.masterLessonDao.create(lessonPlanObj);
 					createCount+=1
 				}
 			}

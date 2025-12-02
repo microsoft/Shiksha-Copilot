@@ -74,7 +74,7 @@ class MasterResourceDao extends BaseDao {
 			const result = await MasterResource.findOneAndUpdate(
 				filter,
 				{ $set: updateData },
-				{ new: true }
+				{ new: true, timestamps:true }
 			);
 			return result;
 		} catch (err) {
@@ -83,11 +83,12 @@ class MasterResourceDao extends BaseDao {
 		}
 	}
 
-	async getSubtopicResourceList(chapterId) {
+	async getSubtopicResourceList(chapterId,templateIds) {
 		try {
 			const results =
 				await masterResourceAggregation.getSubtopicResourceListByChapterId(
-					chapterId
+					chapterId,
+					templateIds
 				);
 			return results;
 		} catch (err) {

@@ -4,6 +4,9 @@ const ObjectId = mongoose.Types.ObjectId;
 class UserAggregation {
   async getUserList(page, limit, processedFilters, sort) {
     try {
+      // Extract trainingStatus filter and remove it from processedFilters
+      const { trainingStatus, ...otherFilters } = processedFilters;
+      
       const pipeline = [
         {
           $lookup: {
@@ -14,16 +17,51 @@ class UserAggregation {
           },
         },
         { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
-        { $match: processedFilters },
+        {
+          $lookup: {
+            from: "teachertrainingbatches",
+            let: { userId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$isSubmitted", true] },
+                      { $in: ["$$userId", "$attendance"] }
+                    ]
+                  }
+                }
+              },
+              { $limit: 1 }
+            ],
+            as: "trainingAttendance"
+          }
+        },
+        // Apply other filters first (before trainingStatus is calculated)
+        { $match: otherFilters },
+        {
+          $addFields: {
+            trainingStatus: {
+              $cond: {
+                if: { $gt: [{ $size: "$trainingAttendance" }, 0] },
+                then: "trained",
+                else: "untrained"
+              }
+            }
+          }
+        },
+        // Apply trainingStatus filter after the field is calculated
+        ...(trainingStatus ? [{ $match: { trainingStatus: trainingStatus } }] : []),
         {
           $project: {
             otp: 0,
+            trainingAttendance: 0
           },
         },
         {
           $facet: {
             data: [
-              { $sort: sort },
+              { $sort: Object.keys(sort).length > 0 ? sort : { _id: 1 } },
               ...(limit > 0
                 ? [{ $skip: (page - 1) * limit }, { $limit: limit }]
                 : []),

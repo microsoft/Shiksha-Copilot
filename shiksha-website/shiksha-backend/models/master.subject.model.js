@@ -1,6 +1,13 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
+const applicableClassesSchema = new mongoose.Schema(
+  {
+        board: { type: String },
+        classes: [{ type: Number }]
+      }
+) 
+
 const subjectSchema = new mongoose.Schema(
   {
     subjectName: {
@@ -20,6 +27,12 @@ const subjectSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+    ],
+    applicableClasses:[
+      {
+        type:applicableClassesSchema,
+        default:[]
+      }
     ],
     isDeleted: {
       type: Boolean,

@@ -43,7 +43,8 @@ async function postToChatBot(payload) {
 }
 
 async function postToLessonChatBot(payload) {
-	const apiUrl = `${llmBaseUrl}/chatwithindex`;
+	const apiUrl = `${llmBaseUrl}/chat/lesson`;
+
 	try {
 	  logger.info('Sending request to Chat Bot API');
 	  const response = await axios.post(apiUrl, payload);

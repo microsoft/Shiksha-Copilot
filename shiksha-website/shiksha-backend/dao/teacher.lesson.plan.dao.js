@@ -144,6 +144,10 @@ class TeacherLessonPlanDao extends BaseDao {
 				}
 			}
 
+			if (processedFilters['lesson.chapter.medium'] === "kannada" && processedFilters['lesson.subject']?.startsWith("english")) {
+				delete processedFilters['lesson.chapter.medium']
+			}
+
 			let results =
 				await teacherLessonPlanAggregation.getByTeacherAndPagination(
 					teacherId,

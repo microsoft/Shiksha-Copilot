@@ -3,17 +3,31 @@ const Joi = require("joi");
 const roleValidator = (value, helpers) => {
 	if (typeof value === "string") {
 		return value.split("|").map((role) => role.trim());
+	} else if (Array.isArray(value)) {
+		// Validate each role in the array
+		for (let role of value) {
+			if (!["manager", "admin"].includes(role)) {
+				return helpers.error('any.invalid');
+			}
+		}
+		return value;
 	}
-	return value;
+	return helpers.error('any.invalid');
 };
 const shape = {
 	name: Joi.string().required(),
-	email: Joi.string().email(),
+	email: Joi.string().email().required(),
 	phone: Joi.string().required(),
 	password: Joi.string().min(8),
-	role: Joi.custom(roleValidator, "role validator").required(),
+	role: Joi.custom(roleValidator, "role validator").required().messages({
+		'any.invalid': 'Role must be either "admin" or "manager"',
+		'any.required': 'Role is required'
+	}),
 	address: Joi.string().optional(),
 	isDeleted: Joi.boolean().optional(),
+	state: Joi.string().when('role', { is: Joi.array().has(Joi.string().valid('manager')), then: Joi.required(), otherwise: Joi.optional() }),
+	zones: Joi.array().items(Joi.string()).when('role', { is: Joi.array().has(Joi.string().valid('manager')), then: Joi.required(), otherwise: Joi.optional() }),
+	districts: Joi.array().items(Joi.string()).when('role', { is: Joi.array().has(Joi.string().valid('manager')), then: Joi.required(), otherwise: Joi.optional() }),
 };
 
 const adminUserSchemaCreate = Joi.object({
@@ -35,6 +49,7 @@ const validateAdminUserCreate = (req, res, next) => {
 			success: false,
 			data: false,
 			error: isValid.error.details.map((i) => i.message),
+			message: "Validation failed"
 		});
 	}
 	next();

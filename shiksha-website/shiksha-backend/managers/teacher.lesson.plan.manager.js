@@ -11,11 +11,12 @@ const logger = require("../config/loggers");
 const RegeneratedLessonResourceDao = require("../dao/regenerate.log.dao");
 const LessonFeedbackDao = require("../dao/feedback.lesson.dao");
 const {
-	restructureInstructionSet,
-	restructureResources,
-	restructureCheckList
+	formatTemplate,
+	formatSections
 } = require("../helper/formatter");
 const { REGENERATION_LIMIT } = require("../config/constants.js");
+const LessonPlanTemplateDao = require("../dao/lesson.plan.template.dao.js");
+const LessonPlanTemplate = require("../models/lesson.plan.template.model.js");
 
 class TeacherLessonPlanManager extends BaseManager {
 	constructor() {
@@ -23,6 +24,7 @@ class TeacherLessonPlanManager extends BaseManager {
 		this.teacherLessonPlanDao = new TeacherLessonPlanDao();
 		this.chapterDao = new ChapterDao();
 		this.masterLessonDao = new MasterLessonDao();
+		this.lessonPlanTemplateDao = new LessonPlanTemplateDao();
 		this.subjectDao = new MasterSubjectDao();
 		this.regeneratedLessonResource = new RegeneratedLessonResourceDao();
 		this.lessonFeedbackDao = new LessonFeedbackDao();
@@ -49,7 +51,7 @@ class TeacherLessonPlanManager extends BaseManager {
 				return formatApiReponse(
 					true,
 					"",
-					lessons.results.sort((a, b) => b.createdAt - a.createdAt)
+					lessons.results.sort((a, b) => b.updatedAt - a.updatedAt)
 				);
 			} else {
 				let lessons = await this.teacherLessonPlanDao.getByTeacherAndPagination(
@@ -75,7 +77,7 @@ class TeacherLessonPlanManager extends BaseManager {
 					true,
 					"",
 					[...lessons.results, ...resources.results].sort(
-						(a, b) => b.createdAt - a.createdAt
+						(a, b) => b.updatedAt - a.updatedAt
 					)
 				);
 			}
@@ -148,6 +150,9 @@ class TeacherLessonPlanManager extends BaseManager {
 			if (!masterLesson) {
 				throw new Error(`Master lesson with ID ${payload.lessonId} not found`);
 			  }
+			
+			const template = await this.lessonPlanTemplateDao.getById(masterLesson?.templateId) 
+			  
 			const chapter = await this.chapterDao.getById(masterLesson.chapterId);
 			if (!chapter) {
 				throw new Error(`Chapter with ID ${masterLesson.chapterId} not found`);
@@ -164,13 +169,14 @@ class TeacherLessonPlanManager extends BaseManager {
 			const version = highestVersionEntry
 				? highestVersionEntry._version + 1
 				: 1;
-			const requestData = this._createBotPayload(chapter, subject, payload);
+			const requestData = this._createBotPayload(chapter, subject, payload, template);
 			const result = await postToCopilotBot(requestData);
 
 			if (result.status !== 202) {
 				logger.error(`Unexpected status code from Copilot bot: ${result.status}`);
 				throw new Error(`Unexpected status code from Copilot bot: ${result.status}`);
 			  }
+
 			  logger.info(`Successfully received expected response from Copilot bot ${result.data.instance_id}`);
 			const lesson = await this.masterLessonDao.create({
 				name: `Version-${version} ${masterLesson.name}`,
@@ -183,6 +189,7 @@ class TeacherLessonPlanManager extends BaseManager {
 				subject: subject.subjectName,
 				learningOutcomes: payload.learningOutcomes,
 				isRegenerated: true,
+				templateId:masterLesson?.templateId
 			});
 			if (!lesson) {
 				throw new Error("Failed to create new teacher master lesson");
@@ -263,6 +270,8 @@ class TeacherLessonPlanManager extends BaseManager {
 			if (!masterLesson) {
 				throw new Error(`Master lesson with ID ${payload.lessonId} not found`);
 			  }
+			const template = await this.lessonPlanTemplateDao.getById(masterLesson?.templateId) 
+
 			const chapter = await this.chapterDao.getById(masterLesson.chapterId);
 			if (!chapter) {
 				throw new Error(`Chapter with ID ${masterLesson.chapterId} not found`);
@@ -272,11 +281,11 @@ class TeacherLessonPlanManager extends BaseManager {
 				throw new Error(`Subject with ID ${chapter.subjectId} not found`);
 			  }
 			payload.lessonPlan = this._createLessonPlanPayload(
-				masterLesson.instructionSet,
+				masterLesson.sections,
 				payload.regenFeedback
 			);
 			payload.learningOutcomes = masterLesson.learningOutcomes;
-			let requestData = this._createBotPayload(chapter, subject, payload);
+			let requestData = this._createBotPayload(chapter, subject, payload,template);
 			const result = await postToCopilotBot(requestData);
 
 			  if (result.status !== 202) {
@@ -296,6 +305,7 @@ class TeacherLessonPlanManager extends BaseManager {
 				subject: subject.subjectName,
 				learningOutcomes: masterLesson.learningOutcomes,
 				isRegenerated: true,
+				templateId:masterLesson.templateId
 			});
 
 			const feedbackPayload = {
@@ -319,16 +329,12 @@ class TeacherLessonPlanManager extends BaseManager {
 					status: "running",
 					isGenerated: true,
 					learningOutcomes: masterLesson.learningOutcomes,
-					instructionSet: masterLesson.instructionSet,
+					sections: masterLesson.sections,
 					instanceId: result.data.instance_id,
 				};
 
 				const newTeacherLessonPlan = await this.teacherLessonPlanDao.create(
 					newTeacherLessonPlanData
-				);
-				await this._createRegeneratedLessonResource(
-					newTeacherLessonPlan,
-					masterLesson
 				);
 				await this.lessonFeedbackDao.create({
 					...feedbackPayload,
@@ -360,10 +366,6 @@ class TeacherLessonPlanManager extends BaseManager {
 						feedbackPayload
 					);
 				}
-				await this._createRegeneratedLessonResource(
-					existingLessonPlan,
-					masterLesson
-				);
 			}
 
 			return formatApiReponse(
@@ -397,15 +399,19 @@ class TeacherLessonPlanManager extends BaseManager {
 	}
 
 	async processWebhookData(webhookData) {
+		
 		try {
 			const { instance_id , status, output } = webhookData;
+
 			const existingLessonPlan = await this.teacherLessonPlanDao.getOne({
 				instanceId: instance_id,
 			});
+
 			const regeneratedLog = await this.regeneratedLessonResource.getOne({
 				genContentId: existingLessonPlan.lessonId,
 				recordId: existingLessonPlan._id
 			});
+
 			if (!existingLessonPlan) {
 				return formatApiReponse(false, "Lesson plan not found", null);
 			}
@@ -413,32 +419,20 @@ class TeacherLessonPlanManager extends BaseManager {
 				const masterLessonPlan = await this.masterLessonDao.getById(
 					existingLessonPlan.lessonId
 				);
-				const instructionSet = masterLessonPlan.isAll
-					? restructureInstructionSet(output.instruction_set)
-					: restructureInstructionSet(output.crisp_instruction_set);
-				const extractedResources = restructureResources(
-					output.extracted_resources
-				);
-				const checkList = restructureCheckList(output.checklist)
+
+				const lessonPlanTemplate = await LessonPlanTemplate.findById(masterLessonPlan?.templateId)
+
+				const sections = formatSections(output.sections,lessonPlanTemplate.sections);
+
 				const masterLessonUpdate = {
 					id: masterLessonPlan._id,
-					instructionSet,
-					extractedResources,
-					checkList
+					sections
 				};
+
 				await this.masterLessonDao.update(masterLessonUpdate);
-				const questionBank = extractedResources.find(
-					(resource) => resource.section === "questionbank"
-				);
-				let evaluatedinstructionSet = instructionSet.map((is) => {
-					if (is.type === "Evaluate") {
-						is.info[0].content.main = questionBank.data;
-					}
-					return is;
-				});
 				const updateTeacherLessonPlanData = {
 					status: status.toLowerCase(),
-					instructionSet: evaluatedinstructionSet,
+					sections
 				};
 
 				await this.teacherLessonPlanDao.updatePlan(
@@ -451,7 +445,8 @@ class TeacherLessonPlanManager extends BaseManager {
 						{ status: status.toLowerCase() }
 					);
 				}
-			} else {
+			} 
+			else {
 				const updateTeacherLessonPlanData = {
 					status: status.toLowerCase(),
 				};
@@ -560,23 +555,24 @@ class TeacherLessonPlanManager extends BaseManager {
         }
     }
 
-	_createLessonPlanPayload(instructionSet, regenFeedback) {
-		const lessonPlan = {};
+_createLessonPlanPayload(sections, regenFeedback) {
+const payloadSections =[]
+		 sections.forEach((e)=>{
+			const phaseFeedback = regenFeedback.find((ele)=> ele.type === e.title);
+			let section = {
+				section_id:e.id,
+				section_title:e.title,
+				content:e.content,
+				regen_feedback:phaseFeedback?.feedback ? phaseFeedback.feedback : 'None'
+			}
+			payloadSections.push(section)
 
-		instructionSet.forEach((phase) => {
-			const phaseType = phase.type.toLowerCase();
-			const phaseFeedback = regenFeedback.find((ele)=> ele.type === phaseType);
+		 })
 
-			lessonPlan[phaseType] = {
-				regen_feedback: phaseFeedback.feedback ? phaseFeedback.feedback : 'None',
-				content: phase.info[0].content.main,
-			};
-		});
-
-		return lessonPlan;
+		 return {sections:payloadSections}
 	}
 
-	_createBotPayload(chapter, subject, payload) {
+	_createBotPayload(chapter, subject, payload, template) {
 	const subjectString = subject.name.trim().toLowerCase();
     const pattern = /^english(?:\s+\d+(_\d+)?)?$/;
     const isEnglish = pattern.test(subjectString);
@@ -588,21 +584,22 @@ class TeacherLessonPlanManager extends BaseManager {
 	}
 
 		return {
+			user_id: "ADMIN",
+			workflow:formatTemplate(template),
+			lp_id: payload.lessonId,
+			lp_level: payload.isAll ? "CHAPTER" : "SUBTOPIC",
+			learning_outcomes: payload.learningOutcomes,
+			lp_type_english: isEnglish ? lp_type : 'NONE',
 			chapter_info: {
 				id: `Board=${chapter.board},Medium=${chapter.medium},Grade=${chapter.standard},Subject=${subject.subjectName},Number=${chapter.orderNumber},Title=${chapter.topics}`,
 				index_path: chapter.indexPath ?? `shiksha/data_new_book/${chapter.board}/${chapter.medium}/${chapter.standard}/${subject.subjectName}/pdf/${chapter.orderNumber}/index/pdf_idx`,
-				location_based_generation: false,
-				preferred_mot: "Observation model",
+				chapter_title:chapter.topics
 			},
-			subtopics: payload.subTopics,
-			learning_outcomes: payload.learningOutcomes,
-			user_id: "ADMIN",
-			lesson_plan: payload?.lessonPlan,
-			lp_level: payload.isAll ? "CHAPTER" : "SUBTOPIC",
-			teacher_location: "",
-			lp_type_english: isEnglish ? lp_type : 'NONE'
+			subtopics: payload.isAll ? [] : payload?.subTopics,
+			lesson_plan: payload?.lessonPlan || null,
 		};
 	}
+
 }
 
 module.exports = TeacherLessonPlanManager;

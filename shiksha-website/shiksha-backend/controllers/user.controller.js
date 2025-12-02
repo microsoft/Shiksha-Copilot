@@ -1,6 +1,7 @@
 const handleError = require("../helper/handleError.js");
 const UserManager = require("../managers/user.manager.js");
 const BaseController = require("./base.controller.js");
+const User = require("../models/user.model.js");
 
 class UserController extends BaseController {
   constructor() {
@@ -239,6 +240,94 @@ class UserController extends BaseController {
     } catch(err){
       return res.status(400).json(err);
 
+    }
+  }
+
+  async getAll(req, res) {
+    try {
+      const { 
+        page = 1, 
+        limit = 10, 
+        role, 
+        zone, 
+        district,
+        search,
+        includeDeleted,
+        filter = {}
+      } = req.query;
+      
+      let processedFilter = { ...filter };
+
+      if (role) {
+        processedFilter.role = role;
+      }
+
+      // Modernized: Default to manager's zones/districts if not provided or empty
+      const userZones = req.user?.zones;
+      const userDistricts = req.user?.districts;
+      const userRoles = req.user?.role || [];
+      const isManager = Array.isArray(userRoles) ? userRoles.includes('manager') : userRoles === 'manager';
+
+      // Normalize possible empty string/array
+      const zoneIsEmpty = !zone || (Array.isArray(zone) && zone.length === 0) || (typeof zone === 'string' && zone.trim() === '');
+      const districtIsEmpty = !district || (Array.isArray(district) && district.length === 0) || (typeof district === 'string' && district.trim() === '');
+
+      if (isManager) {
+        if (zoneIsEmpty && userZones && userZones.length > 0) {
+          processedFilter.zone = userZones;
+        } else if (zone) {
+          processedFilter.zone = zone;
+        }
+        if (districtIsEmpty && userDistricts && userDistricts.length > 0) {
+          processedFilter.district = userDistricts;
+        } else if (district) {
+          processedFilter.district = district;
+        }
+      } else {
+        if (zone) {
+          processedFilter.zone = zone;
+        }
+        if (district) {
+          processedFilter.district = district;
+        }
+      }
+
+      // Handle search filter
+      const searchFilter = {};
+      if (search) {
+        const searchFields = ["name", "phone", "zone", "district"];
+        const regexExpressions = searchFields.map((field) => ({
+          [field]: { $regex: new RegExp(search, "i") },
+        }));
+        searchFilter.$or = regexExpressions;
+      }
+
+      // Handle includeDeleted status
+      let status = {};
+      if (includeDeleted === '2') {
+        status = { isDeleted: true };
+      } else if (includeDeleted === '0') {
+        status = { isDeleted: false };
+      }
+
+      const mergedFilter = { ...processedFilter, ...searchFilter };
+
+      let result = await this.userManager.getAll(
+        parseInt(page), 
+        parseInt(limit), 
+        mergedFilter,
+        {}, // sort object
+        status
+      );
+
+      if (result.success) {
+        return res.status(200).json(result);
+      }
+
+      handleError(result, res);
+    } catch (err) {
+      console.log("Error --> UserController -> getAll()", err);
+      return res.status(400).json(err);
     }
   }
 }

@@ -64,7 +64,12 @@ const teacherLessonPlan = new Schema(
 		isVideoSelected :{
 			type: Boolean,
 			default: false,
-		}
+		},
+		sections: [
+			{
+			  type: Object,
+			},
+		  ],
 	},
 	{ timestamps: true }
 );
