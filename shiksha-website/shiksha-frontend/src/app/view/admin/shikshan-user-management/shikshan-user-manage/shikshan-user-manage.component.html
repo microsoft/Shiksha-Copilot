@@ -45,11 +45,31 @@
 							<small class="form-control-error" *ngIf="submitted && addForm.get('email')?.errors?.['email']">{{'Enter valid email' | translate}}.</small>
 					</div>
 					<div class="cursor-pointer">
-						<app-form-dropdown [dropDownControlName]="'role'" [mode]="mode"
+						<app-staff-form-dropdown [dropDownControlName]="'role'" [mode]="mode"
 							[dropDownCtrl]="convertToFormControl(f['role'])" [dropDownValues]="userRolesDropdownOptions"
-							[config]="userRoleDropdownconfig" [submitted]="submitted"></app-form-dropdown>
+							[config]="userRoleDropdownconfig" [submitted]="submitted"></app-staff-form-dropdown>
 					</div>
 				</div>
+
+				<!--manager drop down-->
+				<div class="grid grid-cols-2 gap-4 mt-8" *ngIf="addForm.get('role')?.value === 'manager'">
+					<div>
+						<app-staff-form-dropdown [dropDownControlName]="'state'" [mode]="mode"
+							[dropDownCtrl]="convertToFormControl(f['state'])" [dropDownValues]="stateDropdownOptions"
+							[config]="stateDropdownconfig" [submitted]="submitted"></app-staff-form-dropdown>
+					</div>
+					<div>
+						<app-staff-form-dropdown [dropDownControlName]="'zones'" [mode]="mode"
+							[dropDownCtrl]="convertToFormControl(f['zones'])" [dropDownValues]="zoneDropdownOptions"
+							[config]="zoneDropdownconfig" [submitted]="submitted"></app-staff-form-dropdown>
+					</div>
+				</div>
+				<div class="col-md-6 mt-8" *ngIf="addForm.get('role')?.value === 'manager'">
+					<app-staff-form-dropdown [dropDownControlName]="'districts'" [mode]="mode"
+						[dropDownCtrl]="convertToFormControl(f['districts'])" [dropDownValues]="districtDropdownOptions"
+						[config]="districtDropdownconfig" [submitted]="submitted"></app-staff-form-dropdown>
+				</div>
+				<!--manager drop down-->
 			</div>
 			<div class="mt-8">
 				<label class="form-control-label">{{'Status of staff' | translate}}</label>

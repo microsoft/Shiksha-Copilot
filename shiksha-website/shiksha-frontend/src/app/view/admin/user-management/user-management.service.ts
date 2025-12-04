@@ -31,10 +31,22 @@ export class UserManagementService extends BaseRestService {
           params = params.set('filter[state]', filters.state);
         }
         if (filters.district) {
-          params = params.set('filter[district]', filters.district);
+          if (Array.isArray(filters.district)) {
+            filters.district.forEach((item: any) => {
+              params = params.append('filter[district]', item);
+            });
+          } else {
+            params = params.set('filter[district]', filters.district);
+          }
         }
         if (filters.zone) {
-          params = params.set('filter[zone]', filters.zone);
+          if (Array.isArray(filters.zone)) {
+            filters.zone.forEach((item: any) => {
+              params = params.append('filter[zone]', item);
+            });
+          } else {
+            params = params.set('filter[zone]', filters.zone);
+          }
         }
         if (filters.block) {
           params = params.set('filter[block]', filters.block);

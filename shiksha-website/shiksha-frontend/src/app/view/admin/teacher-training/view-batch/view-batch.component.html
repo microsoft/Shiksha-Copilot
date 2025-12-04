@@ -1,0 +1,212 @@
+<div class="batch-table-container">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px]">
+      Teacher Training Batches 
+    </h1>
+    <div class="flex gap-2">
+              <button
+          class="btn-primary"
+          routerLink="/admin/teacher-training/create-batch"
+        >
+          <div class="flex items-center gap-2">
+            <img src="../../.././../../assets/icons/add.svg" alt="" />
+            <span class="text-nowrap">Create Batch</span>
+          </div>
+        </button>
+    </div>
+  </div>
+  <br>
+
+  <div *ngIf="teacherStats" class="stats-container">
+    <div class="stat-box stat-box-total">
+      <h4>Total Teachers</h4>
+      <p>{{ teacherStats.totalTeachers }}</p>
+    </div>
+    <div class="stat-box stat-box-trained">
+      <h4>Trained Teachers</h4>
+      <p>{{ teacherStats.trainedTeachers }}</p>
+    </div>
+    <div class="stat-box stat-box-untrained">
+      <h4>Untrained Teachers</h4>
+      <p>{{ teacherStats.untrainedTeachers }}</p>
+    </div>
+  </div>
+
+  <table class="batch-table" *ngIf="batches && batches.length > 0">
+    <thead>
+      <tr>
+        <th>Batch Name</th>
+        <th>Schedule Date</th>
+        <th>Mode of Training</th>
+        <th *ngIf="isAdmin">Manager</th>
+        <th>View Teacher</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let batch of batches">
+        <td>{{ batch.batchName }}</td>
+        <td>{{ batch.scheduleDate | date }}</td>
+        <td>{{ batch.trainingType }}</td>
+        <td *ngIf="isAdmin">{{ batch.createdBy?.name }}</td>
+        <td>
+          <button class="view-teachers-button" (click)="onViewTeachers(batch)">View Teachers</button>
+        </td>
+        <td>
+          <span [class]="batch.isSubmitted ? 'status-completed' : 'status-ongoing'">
+            {{ batch.isSubmitted ? 'Training Completed' : 'Training Ongoing' }}
+          </span>
+        </td>
+        <td>
+          <div class="actions-cell">
+            <button
+              type="button"
+              class="add-participants-wrapper"
+              (click)="toggleTeachersPanel(batch)"
+              [class.disabled]="batch.isSubmitted"
+              [disabled]="batch.isSubmitted"
+            >
+              <span class="plus-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="feather feather-plus-circle">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+              </span>
+              <span class="add-text">Add Participants</span>
+            </button>
+            <button
+              type="button"
+              class="delete-icon"
+              (click)="onDeleteBatch(batch._id)"
+              [class.disabled]="batch.isSubmitted"
+              [disabled]="batch.isSubmitted"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="feather feather-x-circle">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+                <span class="add-text">Delete Batch</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="!batches || batches.length === 0" class="no-batches-message">No batches found.</p>
+</div>
+
+<!-- Right-side sidebar for teachers -->
+<div class="teachers-sidebar" [class.open]="showTeachersPanel" [style.width.px]="teachersSidebarWidth">
+  <div class="sidebar-resizer" (mousedown)="startResizing($event)"></div>
+  <div class="sidebar-header">
+    <h3>Add Participants to Batch: {{ selectedBatch?.batchName }}</h3>
+    <button class="close-btn" (click)="closeAddParticipantsSidebar()">X</button>
+  </div>
+
+  <!-- Search Bar for Teachers -->
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search teachers by name, phone, zone, or district..."
+        [(ngModel)]="teacherSearchTerm"
+        (input)="onTeacherSearch()"
+        (keypress)="onSearchKeyPress($event)"
+        [disabled]="isLoadingTeachers">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </div>
+      <button 
+        *ngIf="teacherSearchTerm.trim()" 
+        class="clear-search-btn" 
+        (click)="clearSearch()"
+        type="button"
+        title="Clear search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Results Counter -->
+  <div class="search-results-counter" *ngIf="!isLoadingTeachers">
+    <span class="results-text">
+      {{ filteredTeachers.length }} of {{ teachersTotalItems }} teachers
+      <span *ngIf="teacherSearchTerm.trim()"> (searching "{{ teacherSearchTerm }}")</span>
+    </span>
+  </div>
+
+  <button class="assign-button" (click)="assignSelectedTeachersToBatch()">Assign to Batch</button>
+  <div class="sidebar-content">
+    <div *ngIf="isLoadingTeachers" class="loading-indicator">
+      <p>Loading teachers...</p>
+    </div>
+
+    <table class="sidebar-teacher-table" *ngIf="filteredTeachers && filteredTeachers.length > 0 && !isLoadingTeachers">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th>Zone</th>
+          <th>District</th>
+          <th>Block</th>
+          
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let teacher of filteredTeachers" [class.absent-teacher]="selectedBatch && isTeacherAbsent(selectedBatch, teacher)">
+          <td>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="selectedBatch && isTeacherAssigned(selectedBatch, teacher)"
+                (change)="selectedBatch && onTeacherCheckboxChange(selectedBatch, teacher, $event)"
+              >
+            </label>
+          </td>
+          <td>{{ teacher.name }}</td>
+          <td>{{ teacher.phone }}</td>
+           <td>{{ teacher.role }}</td>
+          <td>{{ teacher.zone }}</td>
+          <td>{{ teacher.district }}</td>
+          <td>{{teacher.block}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="!filteredTeachers || filteredTeachers.length === 0" class="no-teachers-message">
+      {{ isLoadingTeachers ? 'Loading teachers...' : 'No teachers found.' }}
+    </p>
+
+    <div class="teachers-pagination" *ngIf="teachersTotalItems > 0 && !isLoadingTeachers">
+      <app-pagination 
+        [totalItems]="teachersTotalItems" 
+        [pageSize]="teachersPageSize" 
+        [currentPage]="teachersCurrentPage"
+        (pageChange)="onTeachersPageChange($event)">
+      </app-pagination>
+    </div>
+
+    <div class="load-more-container" *ngIf="allTeachers.length < teachersTotalItems && !isLoadingTeachers">
+      <button class="load-more-btn" (click)="loadMoreTeachers()">
+        Load More Teachers ({{ allTeachers.length }} of {{ teachersTotalItems }})
+      </button>
+    </div>
+  </div>
+</div>

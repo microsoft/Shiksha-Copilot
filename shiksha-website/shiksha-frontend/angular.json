@@ -33,9 +33,13 @@
               "src/styles.scss",
               "node_modules/ngx-spinner/animations/ball-scale-multiple.css",
               "node_modules/ngx-toastr/toastr.css",
-             "node_modules/angular-calendar/css/angular-calendar.css"
+             "node_modules/angular-calendar/css/angular-calendar.css",
+             "node_modules/katex/dist/katex.min.css"
             ],
-            "scripts": []
+            "scripts": [
+               "node_modules/katex/dist/katex.min.js",
+               "node_modules/katex/dist/contrib/auto-render.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -58,8 +62,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "12kb",
-                  "maximumError": "24kb"
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
                 }
               ],
               "outputHashing": "all"
@@ -84,8 +88,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "12kb",
-                  "maximumError": "24kb"
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
                 }
               ],
               "outputHashing": "all"

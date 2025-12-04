@@ -1,93 +1,103 @@
-<div class="inspect-wrapper rounded-sm bg-shade-50 p-5">
-    <div class="flex items-center">
-        <img class="w-5 h-5 cursor-pointer" src="../../../../../assets/icons/Vector (3).svg"
-            routerLink="/admin/content-activity" alt="">
-        <h1 class="text-xl md:text-[30px] font-bold text-content leading-[48px] ml-4">
-            Lesson Plan
-        </h1>
+<div class="p-4 md:p-0">
+  <div class="flex justify-between items-center">
+    <div class="flex gap-2">
+      <img
+        src="../../../../../assets/icons/back-arrow.svg"
+        alt=""
+        class="cursor-pointer"
+      />
+      <h1 class="text-xl md:text-3xl font-bold text-content">Lesson Plan</h1>
     </div>
-
-
-    <section class="container mx-auto mt-5 bg-white">
-        <div class="w-full overflow-hidden rounded-lg">
-            <div class="w-full overflow-x-auto">
-                <table class="w-full text-content" aria-label="lesson-plan-list">
-                    <thead class="bg-white">
-                        <tr class="header font-bold text-left table-header border-b border-content-30">
-                            <th class="text-content px-4 py-5 border text-sm" *ngFor="let header of tableHeaders">
-                                {{header}}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white">
-                        <tr>
-                            <td class="px-4 py-6 text-sm border text-nowrap">
-                                {{data?.board }}
-                            </td>
-                            <td class="px-4 py-6 text-sm border text-nowrap">
-                                {{data?.medium | titlecase}}
-                            </td>
-                            <td class="px-4 py-6 text-sm border text-nowrap">
-                                Class {{data?.class}}
-                            </td>
-                            <td class="px-4 py-6 max-w-[220px] text-sm border text-nowrap">
-                                <span class="topic-chips text-[12px]">{{utilityService.getSubjectDisplayName(data?.subjects)}}</span>
-                            </td>
-                            <td class="px-4 py-6 text-sm border text-nowrap">
-                                {{data?.chapter.topics}}
-                            </td>
-                            <td class="px-4 py-6 w-[450px] text-sm border whitespace-normal">
-                                <span class="ms-2 inline-block" *ngFor="let item of data?.subTopics">{{item}}</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+  </div>
+  <div
+    class="flex flex-col md:flex-row main-container mt-4"
+    [ngClass]="expandedContainer ? 'gap-0' : 'gap-4'"
+  >
+    <div
+      class="flex flex-col transition-all duration-900 ease-in-out"
+      [ngClass]="expandedContainer ? 'w-0' : 'w-full md:w-1/5'"
+    >
+      <div
+        class="hidden md:block flex-[70%] overflow-y-auto bg-white border-r border-gray-200 rounded-t-md shadow-sm section-navigation"
+        *ngIf="!expandedContainer"
+      >
+        <div
+          class="flex items-center justify-between sticky top-0 bg-white z-10 font-semibold text-content p-4"
+        >
+          {{ activeTab() }}
+          <button *ngIf="!expandedContainer" (click)="expandedContainer = true">
+            <img src="../../../../../assets/icons/left-arrow.svg" alt="" />
+          </button>
+        </div>
+        <ng-container>
+          <ng-container *ngFor="let section of sections">
+            <div
+              *ngIf="!section?.isAdditional"
+              class="cursor-pointer px-4 py-2 border-b text-content"
+              (click)="scrollToSection(section.id)"
+              [ngClass]="{
+                'bg-primary-40 text-primary font-bold':
+                  activeSectionId === section.id
+              }"
+            >
+              {{ section.title }}
             </div>
-        </div>
-    </section>
-
-    <div class="tabs flex items-stretch justify-between my-4 overflow-auto sticky top-0 py-4 bg-shade-50">
-        <div class="h-[46px] p-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
-            [class.active]="selectedTab === 'Learning Outcomes'" (click)="selectTab('Learning Outcomes')">
-            <img [src]="selectedTab !== 'Learning Outcomes' ? 'assets/icons/learning_p.svg' : 'assets/icons/learning_l.svg'"
-                alt="">
-            <span class="text-sm ms-2">Learning Outcomes</span>
-        </div>
-        <div *ngFor="let tab of tabs"
-            class="h-[46px] ms-2 p-4 bg-white border border-primary text-primary w-full cursor-pointer rounded flex items-center justify-center"
-            [class.active]="selectedTab === tab.type" (click)="selectTab(tab.type)">
-            <img [src]="selectedTab !== tab.type ? 'assets/icons/' + tab.type + '_p.svg' : 'assets/icons/' + tab.type + '_l.svg'"
-                alt="" />
-            <span class="text-sm ms-2">{{tab.type}}</span>
-        </div>
-
-    </div>
-
-    <div class="tab-content text-sm">
-        <div *ngIf="selectedTab === 'Learning Outcomes'"
-            class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white">
-
-            <div class="learning-outcomes-section">
-                <div class="h-96 overflow-y-auto mb-3">
-                    <ul class="list-decimal space-y-2 text-content pl-3">
-                        <li *ngFor="let learningOutcome of learningOutcomes; let i = index">
-                            {{ learningOutcome }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <ng-container *ngFor="let tab of tabs">
-            <div *ngIf="selectedTab === tab.type">
-                <div class="border border-content-30 text-content rounded my-5 p-4 md:p-6 bg-white">
-                    <div *ngFor="let info of tab.info">
-                        <div class="h-96 overflow-y-auto mb-3" [innerHTML]="info.content.main | formatContent"></div>                        
-                    </div>
-                </div>
-            </div>
+          </ng-container>
         </ng-container>
-
+      </div>
+      <button
+        (click)="toggleAccordion()"
+        class="w-full text-left px-4 py-2 text-primary text-sm bg-primary-40 shadow-sm border-r border-gray-200"
+        *ngIf="!expandedContainer"
+      >
+        <div class="flex items-center justify-between">
+          <p class="font-semibold">Chapter Details</p>
+          <img
+            class="md:hidden"
+            src="{{
+              isOpen
+                ? '../../../../../assets/icons/up-drop.svg'
+                : '../../../../../assets/icons/down-drop.svg'
+            }}"
+            alt=""
+          />
+        </div>
+      </button>
+      <div
+        *ngIf="isOpen && !expandedContainer && subjectDetails"
+        class="flex-[30%] p-4 overflow-y-auto bg-white border-r border-gray-200 text-sm rounded-b-md shadow-sm section-navigation transition-all duration-1200 ease-in-out"
+      >
+        <app-lesson-plan-subject-details
+          [subjectDetails]="subjectDetails"
+        ></app-lesson-plan-subject-details>
+      </div>
     </div>
 
+    <div
+      class="pb-8 overflow-x-hidden overflow-y-auto scroll-smooth bg-white rounded-md content-container group relative transition-all duration-1200 ease-in-out"
+      #contentContainer
+      [ngClass]="expandedContainer ? 'w-full  md:w-full' : 'md:w-4/5'"
+    >
+      <div class="flex border-b border-gray-200 sticky top-0 bg-white z-10">
+        <button
+          class="px-4 py-2 -mb-px"
+          *ngIf="expandedContainer"
+          (click)="expandedContainer = false"
+        >
+          <img src="../../../../../assets/icons/menu.svg" alt="" />
+        </button>
+        <button
+          class="px-4 py-2 -mb-px border-b-2 border-primary text-primary font-bold"
+        >
+          Lesson Plan
+        </button>
+      </div>
+
+      <div>
+        <app-lesson-plan-formats
+          [sections]="sections"
+        ></app-lesson-plan-formats>
+      </div>
+    </div>
+  </div>
 </div>

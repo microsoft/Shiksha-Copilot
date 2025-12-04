@@ -1,13 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LessonContentListComponent } from './lesson-content-list/lesson-content-list.component';
-import { ChooseLessonPlanComponent } from './choose-lesson-plan/choose-lesson-plan.component';
-import { InspectLessonPlanComponent } from './inspect-lesson-plan/inspect-lesson-plan.component';
-import { InspectLessonResourcesComponent } from './inspect-lesson-resources/inspect-lesson-resources.component';
 import { LessonPlanResourceDetailsComponent } from 'src/app/shared/components/lesson-plan-resource-details/lesson-plan-resource-details.component';
 import { DraftGuard } from 'src/app/core/guards/draft.guard';
 import { ChatbotComponent } from '../chatbot/chatbot.component';
 import { PermissionGuard } from 'src/app/core/guards/permission.guard';
+import { LessonPlanViewEditComponent } from './lesson-plan-view-edit/lesson-plan-view-edit.component';
 
 const routes: Routes = [
   {
@@ -26,52 +24,24 @@ const routes: Routes = [
     component:LessonPlanResourceDetailsComponent
   },
   {
-    path:'choose-lesson-plan',
-    component:ChooseLessonPlanComponent
-  },
-  {
-    path:'inspect-lesson-plan',
-    component:InspectLessonPlanComponent,
+    path:'inspect/:planType',
+    component:LessonPlanViewEditComponent,
     canDeactivate:[DraftGuard],
     data:{
       mode:'generate'
     }
   },
   {
-    path:'lesson-plan/:id',
-    component:InspectLessonPlanComponent,
+    path:':planType/:id',
+    component:LessonPlanViewEditComponent,
     canDeactivate:[DraftGuard],
     data:{
       mode:'view'
     }
   },
   {
-    path:'lesson-plan/draft/:id',
-    component:InspectLessonPlanComponent,
-    canDeactivate:[DraftGuard],
-    data:{
-      mode:'draft'
-    }
-  },
-  {
-    path:'inspect-lesson-resources',
-    component:InspectLessonResourcesComponent,
-    canDeactivate:[DraftGuard],
-    data:{
-      mode:'generate'
-    }
-  },
-  {
-    path:'resource-plan/:id',
-    component:InspectLessonResourcesComponent,
-    canDeactivate:[DraftGuard],
-    data:{
-      mode:'view'
-    }
-  },
-  {
-    path:'resource-plan/draft/:id',
-    component:InspectLessonResourcesComponent,
+    path:':planType/draft/:id',
+    component:LessonPlanViewEditComponent,
     canDeactivate:[DraftGuard],
     data:{
       mode:'draft'

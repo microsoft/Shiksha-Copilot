@@ -76,7 +76,7 @@ const routes: Routes = [
     canActivate: [PermissionGuard, IsProfileCompleteGuard],
   },
   {
-    path:'help',
+    path: 'help',
     loadComponent:()=> import('./help/help.component').then((c)=>c.HelpComponent),
     data: {
       permissions: ['standard', 'power'],

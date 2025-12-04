@@ -26,13 +26,14 @@ export class IdleService {
   customIdleTrackerRoutes: any[] = [
     '/auth/signin',
     '/user/content-generation',
+    '/user/question-paper',
     '/user/content-generation/lesson-plan',
     '/user/content-generation/lesson-resources',
   ];
 
   skipIdleActivityRoutes: any[] = [
-    '/user/content-generation/inspect-lesson-plan',
-    '/user/content-generation/inspect-lesson-resources',
+    '/user/content-generation/inspect/lesson-plan',
+    '/user/content-generation/inspect/resource-plan',
   ];
 
   isCustom = false;
@@ -146,7 +147,7 @@ export class IdleService {
       'view-lp': /^\/user\/content-generation\/lesson-plan\/([a-f0-9]{24})$/,
       'view-lr': /^\/user\/content-generation\/resource-plan\/([a-f0-9]{24})$/,
       'lesson-chat': /^\/user\/content-generation\/lesson-chat/,
-      'view-question-bank': /^\/user\/question-bank\/view\/([a-f0-9]{24})$/
+      'view-question-bank': /^\/user\/question-paper\/view\/([a-f0-9]{24})$/
     };
 
     for (const [routeName, pattern] of Object.entries(routePatterns)) {

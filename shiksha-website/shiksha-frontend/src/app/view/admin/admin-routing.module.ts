@@ -71,6 +71,14 @@ const routes: Routes = [
     canActivate: [PermissionGuard],
   },
   {
+    path: 'teacher-training',
+    loadChildren: () => import('./teacher-training/teacher-training.module').then((m) => m.TeacherTrainingModule),
+    data: {
+      permissions: ['admin', 'manager'],
+    },
+    canActivate: [PermissionGuard],
+  },
+  {
     path:'audit-log',
     loadComponent:()=> import('./audit-log/audit-log.component').then((c)=>c.AuditLogComponent),
     data: {
