@@ -2,6 +2,21 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = mongoose.Types.ObjectId;
 
+const MediaSchema = new mongoose.Schema({
+  title: { type: String },
+  type: { type: String, enum: ["image", "video"], required: true },
+  link: { type: String, required: true },
+  uploadedAt: { type: Date, default: Date.now }
+});
+
+const SectionSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  content: { type: mongoose.Schema.Types.Mixed, default: "" },
+  outputFormat: { type: String },
+  media: { type: [MediaSchema], default: [] }
+});
+
 const teacherLessonPlan = new Schema(
 	{
 		teacherId: {
@@ -65,11 +80,7 @@ const teacherLessonPlan = new Schema(
 			type: Boolean,
 			default: false,
 		},
-		sections: [
-			{
-			  type: Object,
-			},
-		  ],
+		sections: { type: [SectionSchema], default: [] },
 	},
 	{ timestamps: true }
 );

@@ -31,6 +31,8 @@ const conditionalMorganMiddleware = require('./config/morgan');
 const useragent = require('express-useragent');
 const teacherTrainingBatchRoutes = require('./routes/teacher.training.batch.routes.js');
 const teacherAbsentRoutes = require('./routes/teacher.absent.routes.js');
+const helpVideosRoutes = require('./routes/help.videos.routes.js');
+const baselineSurveyRoutes = require('./routes/baselineSurvey.routes');
 
 dotenv.config();
 const app = express();
@@ -92,6 +94,8 @@ app.use("/api",questionBankCacheRoutes)
 app.use("/api",lessonPlanTemplateRoutes)
 app.use("/api", teacherTrainingBatchRoutes);
 app.use('/api', teacherAbsentRoutes);
+app.use('/api', helpVideosRoutes);
+app.use('/api', baselineSurveyRoutes);
 
 process.on('unhandledRejection',(reason,promise)=>{
 	console.log(promise,reason);
