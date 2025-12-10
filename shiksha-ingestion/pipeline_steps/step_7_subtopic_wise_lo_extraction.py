@@ -36,61 +36,63 @@ class ChapterMetadata(BaseModel):
 class SubtopicLearningOutcomes(BaseModel):
     """Structured metadata extracted from a textbook chapter."""
 
-    # learning_outcomes: List[str] = Field(
-    #     default_factory=list,
-    #     description=dedent(
-    #         """
-    #         A list of specific, measurable learning outcomes for the `{topic}` based on Bloom's Taxonomy.
-
-    #         Each learning outcome MUST begin with ONLY one of the following precise Bloom's Taxonomy action verbs:
-    #         Define, Describe, Identify, Explain, Summarize, Classify, Demonstrate, Apply, Calculate, Analyze, Differentiate, Compare, Evaluate, Justify, Design, Create, Develop
-
-    #         Each outcome should describe a distinct skill or knowledge that students should demonstrate after studying the topic `{topic}`.
-
-    #         Outcomes must span multiple cognitive levels—from remembering and understanding to applying, analyzing, evaluating, and creating—with each outcome standing independently.
-
-    #         **STRICT REQUIREMENT: Every learning outcome must start with one (and only one) of the approved action verbs listed above. Do NOT use any other verbs or introductory phrases.**
-
-    #         **Focus on measurable outcomes that reflect deep comprehension, practical application, critical analysis, thoughtful evaluation, or creative synthesis relevant to the topic `{topic}`.**
-    #         """
-    #     ),
-    # )
-
     learning_outcomes: List[str] = Field(
         default_factory=list,
         description=dedent(
             """
-            A list of specific, measurable learning outcomes for the {topic} based on Bloom's Taxonomy.
+            A list of specific, measurable learning outcomes for the `{topic}` based on Bloom's Taxonomy.
 
-            Each learning outcome MUST begin with ONLY one of the following precise Bloom's action verbs:
-            {action_verbs}
-            and describe a distinct skill or knowledge that students should demonstrate after studying the {topic}.
-            Outcomes should span multiple cognitive levels from remembering to creating, with each outcome standing on its own.
+            Each learning outcome MUST begin with ONLY one of the following precise Bloom's Taxonomy action verbs:
+            Define, Describe, Identify, Explain, Summarize, Classify, Demonstrate, Apply, Calculate, Analyze, Differentiate, Compare, Evaluate, Justify, Design, Create, Develop
 
-            STRICT REQUIREMENT: Every learning outcome must start with one (and only one) of the above action verbs.
-            Do NOT use any other verbs or introductory phrases.
+            Each outcome should describe a distinct skill or knowledge that students should demonstrate after studying the topic `{topic}`.
 
-            IMPORTANT: NO learning outcome should begin with any of these prohibited action verbs:
-            {prohibited_action_verbs}
+            Outcomes must span multiple cognitive levels—from remembering and understanding to applying, analyzing, evaluating, and creating—with each outcome standing independently.
 
-            Focus on measurable outcomes that reflect deep comprehension, practical application, critical analysis, evaluation, or creation relevant to the {topic}.
+            **STRICT REQUIREMENT: Every learning outcome must start with one (and only one) of the approved action verbs listed above. Do NOT use any other verbs or introductory phrases.**
+
+            **Focus on measurable outcomes that reflect deep comprehension, practical application, critical analysis, thoughtful evaluation, or creative synthesis relevant to the topic `{topic}`.**
             """
         ),
     )
 
+    # Specific to SCERT requirements
+    # learning_outcomes: List[str] = Field(
+    #     default_factory=list,
+    #     description=dedent(
+    #         """
+    #         A list of specific, measurable learning outcomes for the {topic} based on Bloom's Taxonomy.
 
-def get_action_verbs(grade, subject) -> List[str]:
-    with open("scert_action_verbs.json", "r", encoding="utf-8") as f:
-        action_verbs = json.load(f)
+    #         Each learning outcome MUST begin with ONLY one of the following precise Bloom's action verbs:
+    #         {action_verbs}
+    #         and describe a distinct skill or knowledge that students should demonstrate after studying the {topic}.
+    #         Outcomes should span multiple cognitive levels from remembering to creating, with each outcome standing on its own.
 
-    return action_verbs[grade][subject]
+    #         STRICT REQUIREMENT: Every learning outcome must start with one (and only one) of the above action verbs.
+    #         Do NOT use any other verbs or introductory phrases.
+
+    #         IMPORTANT: NO learning outcome should begin with any of these prohibited action verbs:
+    #         {prohibited_action_verbs}
+
+    #         Focus on measurable outcomes that reflect deep comprehension, practical application, critical analysis, evaluation, or creation relevant to the {topic}.
+    #         """
+    #     ),
+    # )
 
 
-def get_action_verbs_prohibited(grade, subject) -> List[str]:
-    with open("scert_action_verbs_prohibited.json", "r", encoding="utf-8") as f:
-        action_verbs = json.load(f)
+# Specific to SCERT requirements
+# def get_action_verbs(grade, subject) -> List[str]:
+#     with open("scert_action_verbs.json", "r", encoding="utf-8") as f:
+#         action_verbs = json.load(f)
 
-    return action_verbs[grade][subject]
+#     return action_verbs[grade][subject]
+
+
+# def get_action_verbs_prohibited(grade, subject) -> List[str]:
+#     with open("scert_action_verbs_prohibited.json", "r", encoding="utf-8") as f:
+#         action_verbs = json.load(f)
+
+#     return action_verbs[grade][subject]
 
 
 def azure_openai_credentials():
@@ -186,11 +188,12 @@ class SubtopicWiseLOExtractionStep(BasePipelineStep):
 
             logger.info("CREDENTIALS BEING USED: %s", json.dumps(credentials, indent=2))
 
+            # Specific to SCERT requirements
             # Get action verbs
-            action_verbs = "; ".join(get_action_verbs(grade, subject))
-            action_verbs_prohibited = "; ".join(
-                get_action_verbs_prohibited(grade, subject)
-            )
+            # action_verbs = "; ".join(get_action_verbs(grade, subject))
+            # action_verbs_prohibited = "; ".join(
+            #     get_action_verbs_prohibited(grade, subject)
+            # )
             original_description = SubtopicLearningOutcomes.model_fields[
                 "learning_outcomes"
             ].description
@@ -210,8 +213,9 @@ class SubtopicWiseLOExtractionStep(BasePipelineStep):
                     "learning_outcomes"
                 ].description = (
                     original_description.replace("{topic}", subtopic)
-                    .replace("{action_verbs}", action_verbs)
-                    .replace("{prohibited_action_verbs}", action_verbs_prohibited)
+                    # Specific to SCERT requirements
+                    # .replace("{action_verbs}", action_verbs)
+                    # .replace("{prohibited_action_verbs}", action_verbs_prohibited)
                 )
                 SubtopicLearningOutcomes.model_rebuild(force=True)
 

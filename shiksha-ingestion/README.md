@@ -58,6 +58,39 @@ shiksha-ingestion/
 - Python 3.11+
 - Poetry (for dependency management)
 - Azure OpenAI API access (for LLM-based steps)
+- **Poppler** (required for PDF to image conversion in TOC page finding)
+
+### System Dependencies
+
+#### Installing Poppler (Linux)
+
+The TOC page finding step uses `pdf2image` which requires Poppler to be installed on your system.
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get update
+sudo apt-get install -y poppler-utils
+```
+
+**Fedora:**
+```bash
+sudo dnf install poppler-utils
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S poppler
+```
+
+**Verify installation:**
+```bash
+pdftoppm -v
+```
+
+If Poppler is not installed, you will see this error when running the pipeline:
+```
+Error converting PDF to images: Unable to get page count. Is poppler installed and in PATH
+```
 
 ### Setup
 
