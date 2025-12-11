@@ -11,6 +11,7 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 
 from pipeline_steps.knowledge_graph.models import ChapterPageRange
 
@@ -50,27 +51,6 @@ class AllChapterPageRanges(BaseModel):
         ),
     )
 
-
-def azure_openai_credentials():
-    """Retrieve Azure OpenAI credentials from environment variables."""
-    credentials = {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
-    # Validate that all required credentials are present
-    missing_vars = [key for key, value in credentials.items() if not value]
-    if missing_vars:
-        raise ValueError(
-            f"Missing required environment variables: {', '.join(missing_vars)}. "
-            "Please ensure all Azure OpenAI credentials are set in your .env file."
-        )
-
-    return credentials
-
-
 class KarnatakaLBAPageRangeExtractionStep(BasePipelineStep):
     """Pipeline step for extracting chapter page ranges from Karnataka LBA textbook markdown files."""
 
@@ -105,7 +85,7 @@ class KarnatakaLBAPageRangeExtractionStep(BasePipelineStep):
             extractor = SimpleMetadataExtractor()
 
             try:
-                credentials = azure_openai_credentials()
+                credentials = get_azure_openai_credentials()
                 logger.debug("Successfully retrieved Azure OpenAI credentials")
             except ValueError as cred_error:
                 logger.error(f"Credential validation failed: {cred_error}")

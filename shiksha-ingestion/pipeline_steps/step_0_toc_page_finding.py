@@ -6,6 +6,7 @@ from enum import Enum, auto
 from typing import Dict, Any, Optional, Set, Type
 from dotenv import load_dotenv
 from ingestion_pipeline.utils.toc_page_finder import TOCPageFinder
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
 # Configure logging
@@ -15,23 +16,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
-
-
-def azure_openai_credentials():
-    """
-    Returns credentials for connecting to Azure OpenAI service.
-
-    Returns:
-        Dict[str, str]: A dictionary with Azure OpenAI credentials including API key, base URL,
-                       API version, and deployment name.
-    """
-    return {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
 
 class TOCPageFindingStep(BasePipelineStep):
     """Find table of contents page range in a PDF file.
@@ -73,7 +57,7 @@ class TOCPageFindingStep(BasePipelineStep):
             batch_size = self.config.get("batch_size", 3)
 
             # Get credentials for TOC page finding
-            credentials = azure_openai_credentials()
+            credentials = get_azure_openai_credentials()
 
             # Find TOC page range
             toc_finder = TOCPageFinder()

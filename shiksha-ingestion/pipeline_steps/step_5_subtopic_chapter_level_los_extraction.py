@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
 # Configure logging
@@ -97,23 +98,6 @@ def get_action_verbs_prohibited(grade, subject) -> List[str]:
 
     return action_verbs[grade][subject]
 
-
-def azure_openai_credentials():
-    """
-    Returns credentials for connecting to Azure OpenAI service.
-
-    Returns:
-        Dict[str, str]: A dictionary with Azure OpenAI credentials including API key, base URL,
-                       API version, and deployment name.
-    """
-    return {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
-
 class SubtopicChapterLOsExtractionStep(BasePipelineStep):
     """Extract subtopic and chapter level learning outcomes from textbook chapters."""
 
@@ -166,7 +150,7 @@ class SubtopicChapterLOsExtractionStep(BasePipelineStep):
             extractor = SimpleMetadataExtractor()
 
             # Get credentials for metadata extraction
-            credentials = azure_openai_credentials()
+            credentials = get_azure_openai_credentials()
             logger.info("CREDENTIALS BEING USED: %s", json.dumps(credentials, indent=2))
 
             # Prepare learning outcomes description with action verbs

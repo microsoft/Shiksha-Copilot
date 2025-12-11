@@ -7,6 +7,7 @@ from typing import Dict, List
 from dotenv import load_dotenv
 from ingestion_pipeline.text_extractors.llm_extractor import LLMTextExtractor
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 
 # Configure logging
 logging.basicConfig(
@@ -17,17 +18,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
-
-
-def azure_openai_credentials():
-    """Returns credentials for connecting to Azure OpenAI service."""
-    return {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
 
 class KarnatakaLBATextExtractionLLMStep(BasePipelineStep):
     """Extract text from a PDF file using LLM-based extractor."""
@@ -48,7 +38,7 @@ class KarnatakaLBATextExtractionLLMStep(BasePipelineStep):
             start_time = time.time()
 
             # Get credentials
-            credentials = azure_openai_credentials()
+            credentials = get_azure_openai_credentials()
 
             # Initialize the LLMTextExtractor
             extractor = LLMTextExtractor(**credentials)
