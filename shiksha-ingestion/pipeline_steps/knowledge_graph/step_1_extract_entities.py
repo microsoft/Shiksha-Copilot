@@ -12,6 +12,7 @@ from ingestion_pipeline.metadata_extractors.simple_metadata_extractor import (
     SimpleMetadataExtractor,
 )
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 from .models import GraphEntity, EntityType
 
 # Configure logging
@@ -135,26 +136,6 @@ class ExtractedChapterEntities(BaseModel):
         )
     )
 
-
-def azure_openai_credentials() -> Dict[str, Optional[str]]:
-    """Get Azure OpenAI credentials from environment variables."""
-    credentials = {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
-    # Validate that all required credentials are present
-    missing_vars = [key for key, value in credentials.items() if not value]
-    if missing_vars:
-        raise ValueError(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
-        )
-
-    return credentials
-
-
 class ExtractChapterEntitiesStep(BasePipelineStep):
     """Extracts structured chapter entities (headings, subheadings, content blocks) from markdown chapters."""
 
@@ -189,7 +170,7 @@ class ExtractChapterEntitiesStep(BasePipelineStep):
             extractor = SimpleMetadataExtractor()
 
             # Get and validate Azure OpenAI credentials
-            credentials = azure_openai_credentials()
+            credentials = get_azure_openai_credentials()
             logger.info("Azure OpenAI credentials validated successfully")
 
             # Load markdown content

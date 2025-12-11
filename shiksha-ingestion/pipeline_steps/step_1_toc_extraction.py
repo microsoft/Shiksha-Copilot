@@ -6,6 +6,7 @@ from enum import Enum, auto
 from typing import Dict, Any, Optional, Set, Type
 from dotenv import load_dotenv
 from ingestion_pipeline.utils.toc_extractor import TableOfContentsExtractor
+from ingestion_pipeline.utils.credentials_helper import get_azure_openai_credentials
 from ingestion_pipeline.base.pipeline import BasePipelineStep, StepResult, StepStatus
 
 # Configure logging
@@ -15,23 +16,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 load_dotenv(".env")
-
-
-def azure_openai_credentials():
-    """
-    Returns credentials for connecting to Azure OpenAI service.
-
-    Returns:
-        Dict[str, str]: A dictionary with Azure OpenAI credentials including API key, base URL,
-                       API version, and deployment name.
-    """
-    return {
-        "api_key": os.getenv("AZURE_OPENAI_API_KEY"),
-        "api_base": os.getenv("AZURE_OPENAI_ENDPOINT"),
-        "api_version": os.getenv("AZURE_OPENAI_API_VERSION"),
-        "deployment_name": os.getenv("AZURE_OPENAI_MODEL"),
-    }
-
 
 class TOCExtractionStep(BasePipelineStep):
     """Extract table of contents from a PDF file."""
@@ -70,7 +54,7 @@ class TOCExtractionStep(BasePipelineStep):
             logger.info(f"Using TOC page range: {start_page}-{end_page}")
 
             # Get credentials for TOC extraction
-            credentials = azure_openai_credentials()
+            credentials = get_azure_openai_credentials()
 
             # Get document hints
             general_document_hint = self.config.get(

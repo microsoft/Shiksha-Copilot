@@ -62,7 +62,7 @@ shiksha-ingestion/
 
 ### System Dependencies
 
-#### Installing Poppler (Linux)
+#### Installing Poppler
 
 The TOC page finding step uses `pdf2image` which requires Poppler to be installed on your system.
 
@@ -80,6 +80,13 @@ sudo dnf install poppler-utils
 **Arch Linux:**
 ```bash
 sudo pacman -S poppler
+```
+
+**Windows:**
+```
+Download Windows binaries: https://github.com/oschwartz10612/poppler-windows/releases/
+Extract to a folder, e.g., C:\tools\poppler-XX\
+Add C:\tools\poppler-XX\Library\bin (or ...\bin) to PATH:
 ```
 
 **Verify installation:**
