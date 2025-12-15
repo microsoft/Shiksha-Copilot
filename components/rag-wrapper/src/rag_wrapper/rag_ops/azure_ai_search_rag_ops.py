@@ -49,7 +49,7 @@ class AzureAISearchRagOps(BaseVectorIndexRagOps):
             vector_store_kwargs: Additional vector store configuration
             **kwargs: Additional arguments passed to BaseRagOps (similarity_top_k, response_mode)
         """
-        super().__init__(emb_llm, completion_llm, **kwargs)
+        super().__init__(completion_llm, emb_llm, **kwargs)
         self.search_service_endpoint = (
             f"https://{search_service_name}.search.windows.net"
         )
