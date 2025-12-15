@@ -58,6 +58,7 @@ def setup_registry() -> PipelineRegistry:
     registry.register_step(SubtopicChapterLOsExtractionStep)
     registry.register_step(SubtopicCleaningStep)
     registry.register_step(SubtopicWiseLOExtractionStep)
+    registry.register_step(CreateIndexStep)
 
     return registry
 
