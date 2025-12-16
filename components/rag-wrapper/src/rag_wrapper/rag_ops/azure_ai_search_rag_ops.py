@@ -81,19 +81,19 @@ class AzureAISearchRagOps(BaseVectorIndexRagOps):
 
     async def initiate_index(self):
         """Initialize Azure AI Search vector store and load the RAG index only if it already exists."""
-        # Check if index exists
-        index_exists = await self.index_exists()
-        if not index_exists:
-            self.logger.info(
-                f"Index {self.index_name} does not exist. Use create_index() to create a new index."
-            )
-            # Set up storage context but don't create an index
-            client = SearchIndexClient(
-                endpoint=self.search_service_endpoint,
-                credential=self._get_credentials(),
-            )
+        try:
+            # Check if index exists
+            index_exists = await self.index_exists()
+            if not index_exists:
+                self.logger.info(
+                    f"Index {self.index_name} does not exist. Use create_index() to create a new index."
+                )
+                # Set up storage context but don't create an index
+                client = SearchIndexClient(
+                    endpoint=self.search_service_endpoint,
+                    credential=self._get_credentials(),
+                )
 
-            try:
                 vector_store_config = {
                     "search_or_index_client": client,
                     "id_field_key": "id",
@@ -115,24 +115,18 @@ class AzureAISearchRagOps(BaseVectorIndexRagOps):
                     vector_store=self.vector_store
                 )
                 return
-            except Exception as e:
-                self.logger.error(f"Error initializing Azure AI Search vector store: {e}")
-                raise
-            finally:
-                await client.close()
 
-        # If index exists, connect to it
-        client = SearchClient(
-            endpoint=self.search_service_endpoint,
-            index_name=self.index_name,
-            credential=self._get_credentials(),
-        )
+            # If index exists, connect to it
+            client = SearchClient(
+                endpoint=self.search_service_endpoint,
+                index_name=self.index_name,
+                credential=self._get_credentials(),
+            )
 
-        self.logger.info(
-            "Connecting to existing index with client type: %s", type(client)
-        )
+            self.logger.info(
+                "Connecting to existing index with client type: %s", type(client)
+            )
 
-        try:
             # Initialize the Azure AI Search vector store
             vector_store_config = {
                 "search_or_index_client": client,
@@ -164,11 +158,12 @@ class AzureAISearchRagOps(BaseVectorIndexRagOps):
             self.logger.info(
                 f"Successfully connected to existing Azure AI Search index: {self.index_name}"
             )
+
         except Exception as e:
-            self.logger.error(f"Error connecting to Azure AI Search index: {e}")
+            self.logger.error(
+                f"Failed to initialize Azure AI Search RAG operations: {e}"
+            )
             raise
-        finally:
-            await client.close()
 
     async def persist_index(self):
         """No-op as Azure AI Search automatically persists the index."""
