@@ -117,7 +117,7 @@ tenacity==8.5.0
 thinc==8.2.5
 threadpoolctl==3.5.0
 tokenizers==0.19.1
-torch==2.4.0
+torch==2.7.1
 tqdm==4.66.5
 transformers==4.44.2
 triton==3.0.0
