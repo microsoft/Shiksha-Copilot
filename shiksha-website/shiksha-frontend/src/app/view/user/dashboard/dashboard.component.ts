@@ -18,6 +18,7 @@ import { CustomDateFormatter } from './custom-date-formatter.provider';
 import { startOfMinute } from 'date-fns';
 import { dashboardColors } from 'src/app/shared/utility/scheduleClassColors.util';
 import { Subject } from 'rxjs';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 import { DatePipe } from '@angular/common';
 import { ChartOptions } from 'chart.js';
 import { TranslateService } from '@ngx-translate/core';
@@ -147,6 +148,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     public utiltyService: UtilityService,
     private datePipe: DatePipe,
     private translateService: TranslateService,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -195,7 +197,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.recentPlans = [...plans];
       },
       error: (err) => {
-        console.log(err);
+        this.logger.error('Error fetching recent lesson plans:', err);
       },
     });
   }
@@ -242,7 +244,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         };
       },
       error: (err) => {
-        console.log(err);
+        this.logger.error('Error fetching chart data:', err);
       },
     });
   }
@@ -294,7 +296,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
         this.refresh.next();
       },
       error: (err) => {
-        console.log(err);
+        this.logger.error('Error fetching schedule data:', err);
       },
     });
   }

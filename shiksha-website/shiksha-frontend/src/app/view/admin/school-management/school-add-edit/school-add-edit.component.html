@@ -3,19 +3,23 @@
     <img
       src="../../../../../assets/icons/back-arrow.svg"
       routerLink="/admin/school-management"
-      alt=""
+      alt="Back to school management"
       class="cursor-pointer"
     />
     <h1 class="ml-3 text-[32px] leading-[48px] font-bold text-content">
-      {{'School Management' | translate}}
+      {{ "School Management" | translate }}
     </h1>
   </div>
-  <div
-    class="school-container p-8 bg-white mt-6 rounded border-content-30"
-  >
+  <div class="school-container p-8 bg-white mt-6 rounded border-content-30">
     <div class="flex justify-between content-center">
-      <p class="text-content text-[32px] leading-[48px] font-bold tracking-tight">
-        {{ (mode === "view" ? "View" : mode === "edit" ? "Edit" : "Add") | translate }} {{'School Profile' | translate}}
+      <p
+        class="text-content text-[32px] leading-[48px] font-bold tracking-tight"
+      >
+        {{
+          (mode === "view" ? "View" : mode === "edit" ? "Edit" : "Add")
+            | translate
+        }}
+        {{ "School Profile" | translate }}
       </p>
 
       <button
@@ -24,8 +28,8 @@
         (click)="blukUpload()"
       >
         <div class="flex content-center">
-          <img src="../../.././../../assets/icons/add.svg" alt="" />
-          <span class="ml-[6px]">{{'Bulk Upload' | translate}}</span>
+          <img src="../../.././../../assets/icons/add.svg" alt="Bulk upload" />
+          <span class="ml-[6px]">{{ "Bulk Upload" | translate }}</span>
         </div>
       </button>
     </div>
@@ -34,12 +38,17 @@
       <form [formGroup]="schoolAddEditForm" (ngSubmit)="onSubmit()">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label class="form-control-label" for="school-name"> {{'Name' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></label>
+            <label class="form-control-label" for="school-name">
+              {{ "Name" | translate }}
+              <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                >*</span
+              ></label
+            >
             <input
               class="form-control"
               id="school-name"
               type="text"
-              placeholder="{{'Enter name' | translate}}"
+              placeholder="{{ 'Enter name' | translate }}"
               autocomplete="off"
               formControlName="name"
               maxlength="255"
@@ -47,25 +56,30 @@
             <small
               class="form-control-error"
               *ngIf="submitted && f['name'].errors?.['required']"
-              >{{'School name is required' | translate}}</small
+              >{{ "School name is required" | translate }}</small
             >
             <small
               class="form-control-error"
               *ngIf="submitted && f['name'].errors?.['minlength']"
-              >{{'School name should have atleast 5 characters' | translate}}</small
+              >{{
+                "School name should have atleast 5 characters" | translate
+              }}</small
             >
           </div>
 
           <div class="number-type">
             <label class="form-control-label" for="school-id">
-              {{'DISE Code' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+              {{ "DISE Code" | translate }}
+              <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                >*</span
+              >
             </label>
             <input
               class="form-control"
               id="school-id"
               type="text"
               oninput="this.value=this.value.replace(/(?![0-9])./gmi,'')"
-              placeholder="{{'Enter DISE Code' | translate}}"
+              placeholder="{{ 'Enter DISE Code' | translate }}"
               autocomplete="off"
               formControlName="schoolId"
               (keypress)="checkLimit($event)"
@@ -74,13 +88,13 @@
             <small
               class="form-control-error"
               *ngIf="submitted && f['schoolId'].errors?.['required']"
-              >{{'DISE Code is required' | translate}}</small
+              >{{ "DISE Code is required" | translate }}</small
             >
 
             <small
               class="form-control-error"
               *ngIf="submitted && !f['schoolId'].errors?.['required'] && schoolIdError"
-              >{{'DISE Code should be of 11 digits' | translate}}</small
+              >{{ "DISE Code should be of 11 digits" | translate }}</small
             >
           </div>
 
@@ -130,7 +144,6 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-
           <div>
             <app-form-dropdown
               [dropDownControlName]="'boards'"
@@ -154,28 +167,34 @@
           </div>
           <div>
             <label class="form-control-label" for="academic-start-date">
-              {{'Academic year start date' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+              {{ "Academic year start date" | translate }}
+              <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                >*</span
+              >
             </label>
             <input
               class="form-control"
               id="academic-start-date"
               type="date"
-              [min]="minMaxDateValues.currentYearMin | date:'yyyy-MM-dd'"
-              [max]="minMaxDateValues.currentYearMax | date:'yyyy-MM-dd'"
-              placeholder="{{'Select date' | translate}}"
+              [min]="minMaxDateValues.currentYearMin | date : 'yyyy-MM-dd'"
+              [max]="minMaxDateValues.currentYearMax | date : 'yyyy-MM-dd'"
+              placeholder="{{ 'Select date' | translate }}"
               autocomplete="off"
               formControlName="academicYearStartDate"
             />
             <small
               class="form-control-error"
               *ngIf="submitted && f['academicYearStartDate'].errors?.['required']"
-              >{{'Academic year start date is required' | translate}}</small
+              >{{ "Academic year start date is required" | translate }}</small
             >
           </div>
 
           <div>
             <label class="form-control-label" for="academic-end-date">
-              {{'Academic year end date' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span>
+              {{ "Academic year end date" | translate }}
+              <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                >*</span
+              >
             </label>
             <input
               class="form-control"
@@ -183,35 +202,47 @@
               type="date"
               placeholder="Select date"
               autocomplete="off"
-              [min]="minMaxDateValues.nextYearMin | date:'yyyy-MM-dd'"
-              [max]="minMaxDateValues.nextYearMax | date:'yyyy-MM-dd'"
+              [min]="minMaxDateValues.nextYearMin | date : 'yyyy-MM-dd'"
+              [max]="minMaxDateValues.nextYearMax | date : 'yyyy-MM-dd'"
               formControlName="academicYearEndDate"
             />
             <small
               class="form-control-error"
               *ngIf="submitted && f['academicYearEndDate'].errors?.['required']"
-              >{{'Academic year end date is required' | translate}}</small
+              >{{ "Academic year end date is required" | translate }}</small
             >
             <small
-            class="form-control-error"
-            *ngIf="submitted && this.schoolAddEditForm.errors?.['lessThanStart']"
-            >{{'Academic year end date must be greater than start date' | translate}}</small
-          >
+              class="form-control-error"
+              *ngIf="submitted && this.schoolAddEditForm.errors?.['lessThanStart']"
+              >{{
+                "Academic year end date must be greater than start date"
+                  | translate
+              }}</small
+            >
           </div>
         </div>
 
         <div class="mt-7">
-          <p class="text-lg font-bold text-content">{{'Holiday List' | translate}}</p>
+          <p class="text-lg font-bold text-content">
+            {{ "Holiday List" | translate }}
+          </p>
           <ng-container formArrayName="holidayList">
             <table class="w-full" aria-label="holiday-list">
               <thead>
                 <tr
                   class="header font-semibold text-center text-content table-header border-b border-shade"
                 >
-                  <th class="px-4 py-3 border text-sm text-content">{{'Date' | translate}} </th>
-                  <th class="px-4 py-3 border text-sm text-content">{{'Reason' | translate}} </th>
-                  <th class="px-4 py-3 border text-sm text-content" *ngIf="mode !== 'view'">
-                    {{'Action' | translate}}
+                  <th class="px-4 py-3 border text-sm text-content">
+                    {{ "Date" | translate }}
+                  </th>
+                  <th class="px-4 py-3 border text-sm text-content">
+                    {{ "Reason" | translate }}
+                  </th>
+                  <th
+                    class="px-4 py-3 border text-sm text-content"
+                    *ngIf="mode !== 'view'"
+                  >
+                    {{ "Action" | translate }}
                   </th>
                 </tr>
               </thead>
@@ -223,16 +254,22 @@
                   <ng-container [formGroupName]="i">
                     <td class="px-4 py-4 text-sm border w-[40%]">
                       <p *ngIf="mode === 'view'">
-                        {{ holiday.get("date")?.value ||  '-'}}
+                        {{ holiday.get("date")?.value || "-" }}
                       </p>
                       <div *ngIf="mode !== 'view'">
                         <div>
-                          <input 
+                          <input
                             class="form-control h-9 focus:outline-none"
                             type="date"
-                            [min]="schoolAddEditForm.get('academicYearStartDate')?.value | date:'yyyy-MM-dd'"
-                            [max]="schoolAddEditForm.get('academicYearEndDate')?.value | date:'yyyy-MM-dd'"
-                            placeholder="{{'Select date' | translate}}"
+                            [min]="
+                              schoolAddEditForm.get('academicYearStartDate')
+                                ?.value | date : 'yyyy-MM-dd'
+                            "
+                            [max]="
+                              schoolAddEditForm.get('academicYearEndDate')
+                                ?.value | date : 'yyyy-MM-dd'
+                            "
+                            placeholder="{{ 'Select date' | translate }}"
                             autocomplete="off"
                             formControlName="date"
                             [required]="holiday.get('reason')?.value !== ''"
@@ -240,14 +277,14 @@
                           <small
                             class="form-control-error"
                             *ngIf="submitted && holiday.get('date')?.errors?.['required']"
-                            >{{'Date is required' | translate}}</small
+                            >{{ "Date is required" | translate }}</small
                           >
                         </div>
                       </div>
                     </td>
                     <td class="px-4 py-4 text-sm border w-[40%]">
                       <p *ngIf="mode === 'view'">
-                        {{ holiday.get("reason")?.value ||  '-' }}
+                        {{ holiday.get("reason")?.value || "-" }}
                       </p>
 
                       <div *ngIf="mode !== 'view'">
@@ -255,7 +292,7 @@
                           <input
                             class="form-control h-9"
                             type="text"
-                            placeholder="{{'Reason' | translate}}"
+                            placeholder="{{ 'Reason' | translate }}"
                             autocomplete="off"
                             formControlName="reason"
                             [required]="holiday.get('date')?.value !== ''"
@@ -264,7 +301,7 @@
                             class="form-control-error"
                             *ngIf="submitted && holiday.get('reason')?.errors?.['required']"
                           >
-                            {{'Reason is required' | translate}}
+                            {{ "Reason is required" | translate }}
                           </p>
                         </div>
                       </div>
@@ -288,7 +325,9 @@
                               src="../../.././../../assets/icons/delete.svg"
                               alt=""
                             />
-                            <span class="ml-[6px]">{{'Delete' | translate}}</span>
+                            <span class="ml-[6px]">{{
+                              "Delete" | translate
+                            }}</span>
                           </div>
                         </button>
                         <button
@@ -302,7 +341,9 @@
                               src="../../.././../../assets/icons/add.svg"
                               alt=""
                             />
-                            <span class="ml-[6px]">{{'Add' | translate}}</span>
+                            <span class="ml-[6px]">{{
+                              "Add" | translate
+                            }}</span>
                           </div>
                         </button>
                       </div>
@@ -315,17 +356,26 @@
         </div>
 
         <div class="mt-7">
-          <p class="text-lg font-bold text-content">{{'Resources' | translate}}</p>
+          <p class="text-lg font-bold text-content">
+            {{ "Resources" | translate }}
+          </p>
           <ng-container formArrayName="facilities">
             <table class="w-full" aria-label="resource">
               <thead>
                 <tr
                   class="header font-semibold text-center text-content table-header border-b border-shade"
                 >
-                  <th class="px-4 py-3 border text-sm text-content">{{'Resource Type' | translate}}</th>
-                  <th class="px-4 py-3 border text-sm text-content">{{'Resource details' | translate}}</th>
-                  <th class="px-4 py-3 border text-sm text-content" *ngIf="mode !== 'view'">
-                    {{'Action' | translate}}
+                  <th class="px-4 py-3 border text-sm text-content">
+                    {{ "Resource Type" | translate }}
+                  </th>
+                  <th class="px-4 py-3 border text-sm text-content">
+                    {{ "Resource details" | translate }}
+                  </th>
+                  <th
+                    class="px-4 py-3 border text-sm text-content"
+                    *ngIf="mode !== 'view'"
+                  >
+                    {{ "Action" | translate }}
                   </th>
                 </tr>
               </thead>
@@ -340,7 +390,7 @@
                         {{
                           resource.get("otherType")?.value
                             ? resource.get("otherType")?.value
-                            : resource.get("type")?.value  ||  '-' 
+                            : resource.get("type")?.value || "-"
                         }}
                       </p>
                       <ng-container *ngIf="mode !== 'view'">
@@ -366,7 +416,7 @@
                           *ngIf="!resource.get('typeChipSet')?.value"
                           class="form-control h-9 mt-4"
                           type="text"
-                          placeholder="{{'Enter resource type' | translate}}"
+                          placeholder="{{ 'Enter resource type' | translate }}"
                           autocomplete="off"
                           formControlName="otherType"
                         />
@@ -375,13 +425,17 @@
                           class="form-control-error"
                           *ngIf="!resource.get('typeChipSet')?.value && submitted && resource.get('otherType')?.errors?.['required']"
                         >
-                          {{'Resource type is required' | translate}}
+                          {{ "Resource type is required" | translate }}
                         </p>
                       </ng-container>
                     </td>
                     <td class="px-4 py-4 text-sm border w-[40%] content-start">
                       <p *ngIf="mode === 'view'">
-                        {{ resource.get("details")?.value?.length ? resource.get("details")?.value : '-' }}
+                        {{
+                          resource.get("details")?.value?.length
+                            ? resource.get("details")?.value
+                            : "-"
+                        }}
                       </p>
 
                       <div *ngIf="mode !== 'view'">
@@ -403,7 +457,9 @@
                             <input
                               class="form-control h-9"
                               type="text"
-                              placeholder="{{'Enter resource details' | translate}}"
+                              placeholder="{{
+                                'Enter resource details' | translate
+                              }}"
                               autocomplete="off"
                               [(ngModel)]="resourceOtherValue[i]"
                               [ngModelOptions]="{ standalone: true }"
@@ -430,7 +486,7 @@
                             class="form-control-error"
                             *ngIf="!resource.get('detailsChipSet')?.value && submitted && resource.get('details')?.errors?.['required']"
                           >
-                            {{'Resource details are required' | translate}}
+                            {{ "Resource details are required" | translate }}
                           </p>
                         </div>
                       </div>
@@ -472,7 +528,9 @@
                               src="../../.././../../assets/icons/delete.svg"
                               alt=""
                             />
-                            <span class="ml-[6px]">{{'Delete' | translate}}</span>
+                            <span class="ml-[6px]">{{
+                              "Delete" | translate
+                            }}</span>
                           </div>
                         </button>
                         <button
@@ -486,7 +544,9 @@
                               src="../../.././../../assets/icons/add.svg"
                               alt=""
                             />
-                            <span class="ml-[6px]">{{'Add' | translate}}</span>
+                            <span class="ml-[6px]">{{
+                              "Add" | translate
+                            }}</span>
                           </div>
                         </button>
                       </div>
@@ -498,18 +558,23 @@
           </ng-container>
         </div>
 
-        <p class="text-lg font-bold mt-7 text-content" *ngIf="!(mode === 'view' && classes.length === 0)">{{'Add Board/Class Details' | translate}}</p>
+        <p
+          class="text-lg font-bold mt-7 text-content"
+          *ngIf="!(mode === 'view' && classes.length === 0)"
+        >
+          {{ "Add Board/Class Details" | translate }}
+        </p>
 
-        <div class="py-6 border rounded flex items-center justify-center" *ngIf="classes.length === 0 && mode === 'edit'">
+        <div
+          class="py-6 border rounded flex items-center justify-center"
+          *ngIf="classes.length === 0 && mode === 'edit'"
+        >
           <button class="btn-primary" (click)="createBoard()">
             <div class="flex items-center gap-2">
-              <img
-                src="../../.././../../assets/icons/add.svg"
-                alt=""
-              />
+              <img src="../../.././../../assets/icons/add.svg" alt="" />
               <span>Add Board/Class Details</span>
             </div>
-            </button>
+          </button>
         </div>
 
         <div
@@ -524,12 +589,12 @@
                 [(ngModel)]="board.board"
                 [ngModelOptions]="{ standalone: true }"
                 [mode]="mode"
-                (valueUpdate)="boardMediumUpdate(i,'board')"
+                (valueUpdate)="boardMediumUpdate(i, 'board')"
               ></app-common-dropdown>
               <small
                 class="form-control-error"
                 *ngIf="submitted && !board.board"
-                >{{'Board is required' | translate}}</small
+                >{{ "Board is required" | translate }}</small
               >
             </div>
 
@@ -540,12 +605,12 @@
                 [(ngModel)]="board.medium"
                 [ngModelOptions]="{ standalone: true }"
                 [mode]="mode"
-                (valueUpdate)="boardMediumUpdate(i,'medium')"
+                (valueUpdate)="boardMediumUpdate(i, 'medium')"
               ></app-common-dropdown>
               <small
                 class="form-control-error"
                 *ngIf="submitted && !board.medium"
-                >{{'Medium is required' | translate}}</small
+                >{{ "Medium is required" | translate }}</small
               >
             </div>
 
@@ -558,8 +623,10 @@
                 (valueUpdate)="classRangeUpdate(i, 'start', $event)"
                 [mode]="mode"
               ></app-common-dropdown>
-              <small class="form-control-error" *ngIf="submitted && !board.start"
-                >{{'Class min value is required' | translate}}</small
+              <small
+                class="form-control-error"
+                *ngIf="submitted && !board.start"
+                >{{ "Class min value is required" | translate }}</small
               >
             </div>
 
@@ -579,15 +646,25 @@
           </div>
 
           <ng-container *ngIf="board.classDetails.length">
-            <p class="font-bold mt-4">{{'Class Details' | translate}}</p>
+            <p class="font-bold mt-4">{{ "Class Details" | translate }}</p>
 
             <table class="w-full mt-2 number-type" aria-label="class List">
               <tr
                 class="header font-semibold text-center text-content table-header border-b border-shade"
               >
-                <th class="border px-4 py-2">{{'Standard' | translate}}</th>
-                <th class="border px-4 py-2">{{'Boys' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></th>
-                <th class="border px-4 py-2">{{'Girls' | translate}} <span *ngIf="mode!='view'" class="text-[16px] text-error">*</span></th>
+                <th class="border px-4 py-2">{{ "Standard" | translate }}</th>
+                <th class="border px-4 py-2">
+                  {{ "Boys" | translate }}
+                  <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                    >*</span
+                  >
+                </th>
+                <th class="border px-4 py-2">
+                  {{ "Girls" | translate }}
+                  <span *ngIf="mode != 'view'" class="text-[16px] text-error"
+                    >*</span
+                  >
+                </th>
               </tr>
               <ng-container>
                 <tr *ngFor="let class of board.classDetails; let j = index">
@@ -597,7 +674,7 @@
                       class="form-control"
                       disabled="true"
                       type="text"
-                      placeholder="{{'class' | translate}}"
+                      placeholder="{{ 'class' | translate }}"
                       [(ngModel)]="class.standard"
                       [ngModelOptions]="{ standalone: true }"
                     />
@@ -610,7 +687,7 @@
                       class="form-control"
                       type="text"
                       maxlength="3"
-                      placeholder="{{'No. of boys' | translate}}"
+                      placeholder="{{ 'No. of boys' | translate }}"
                       oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                       [(ngModel)]="class.boysStrength"
                       [ngModelOptions]="{ standalone: true }"
@@ -626,7 +703,7 @@
                     <small
                       class="form-control-error"
                       *ngIf="submitted && !class.boysStrength"
-                      >{{'No. of boys is required' | translate}}</small
+                      >{{ "No. of boys is required" | translate }}</small
                     >
                     <p *ngIf="mode === 'view'">{{ class.boysStrength }}</p>
                   </td>
@@ -636,7 +713,7 @@
                       class="form-control"
                       type="text"
                       maxlength="3"
-                      placeholder="{{'No. of girls' | translate}}"
+                      placeholder="{{ 'No. of girls' | translate }}"
                       oninput="this.value=this.value.replace(/[^0-9]/g, '').slice(0, 3)"
                       [(ngModel)]="class.girlsStrength"
                       [ngModelOptions]="{ standalone: true }"
@@ -670,7 +747,7 @@
             >
               <div class="flex content-center">
                 <img src="../../.././../../assets/icons/delete.svg" alt="" />
-                <span class="ml-[6px]">{{'Delete' | translate}}</span>
+                <span class="ml-[6px]">{{ "Delete" | translate }}</span>
               </div>
             </button>
             <button
@@ -681,7 +758,9 @@
             >
               <div class="flex content-center">
                 <img src="../../.././../../assets/icons/add.svg" alt="" />
-                <span class="ml-[6px]">{{'Add Board/Class' | translate}}</span>
+                <span class="ml-[6px]">{{
+                  "Add Board/Class" | translate
+                }}</span>
               </div>
             </button>
           </div>
@@ -694,7 +773,7 @@
             routerLink="/admin/school-management"
             type="button"
           >
-            {{'Close' | translate}}
+            {{ "Close" | translate }}
           </button>
 
           <button
@@ -705,7 +784,7 @@
             [hasPermission]="['admin']"
           >
             <div class="flex content-center">
-              <span class="mr-[6px]">{{'Edit' | translate}}</span>
+              <span class="mr-[6px]">{{ "Edit" | translate }}</span>
               <img src="../../../../../assets/icons/edit-light.svg" alt="" />
             </div>
           </button>
@@ -716,12 +795,16 @@
             routerLink="/admin/school-management"
             type="button"
           >
-            {{'Cancel' | translate}}
+            {{ "Cancel" | translate }}
           </button>
 
-          <button class="btn-primary h-9 ml-2" *ngIf="mode !== 'view'" [hasPermission]="['admin']" >
+          <button
+            class="btn-primary h-9 ml-2"
+            *ngIf="mode !== 'view'"
+            [hasPermission]="['admin']"
+          >
             <div class="flex content-center">
-              <span class="mr-[6px]">{{'Save' | translate}}</span>
+              <span class="mr-[6px]">{{ "Save" | translate }}</span>
               <img src="../../../../../assets/icons/check.svg" alt="" />
             </div>
           </button>
@@ -739,12 +822,12 @@
   ></app-upload-popup>
 </app-modal>
 
-
 <app-delete-detail
   *ngIf="showFacilityDeleteConfirm"
   [config]="{
     heading: 'Delete Resource',
-    confirmationText: 'Deleting the resource may affect the teachers who are currently using it.',
+    confirmationText:
+      'Deleting the resource may affect the teachers who are currently using it.',
     primaryButtonLabel: 'Delete',
     primaryButtonType: 'delete'
   }"

@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { HasPermissionDirective } from 'src/app/core/directives/has-permission.directive';
 import { PaginationComponent } from 'src/app/shared/components/pagination/pagination.component';
 import { AuditLogList } from 'src/app/shared/interfaces/auditlog.interface';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 @Component({
   selector: 'app-audit-log',
@@ -39,7 +40,7 @@ export class AuditLogComponent implements OnInit {
    * Class constructor
    * @param auditLogService AuditLogService
    */
-  constructor(private auditLogService: AuditLogService) {}
+  constructor(private auditLogService: AuditLogService, private logger: LoggerService) {}
 
   /**
    * OnInit lifecycle hook for initialization
@@ -63,7 +64,7 @@ export class AuditLogComponent implements OnInit {
           }
         },
         error: (err) => {
-          console.error('Error while fetching list', err);
+          this.logger.error('Error while fetching audit log list', err);
         },
       });
   }

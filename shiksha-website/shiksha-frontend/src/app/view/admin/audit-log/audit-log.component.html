@@ -18,7 +18,10 @@
             (click)="refresh()"
           >
             <div class="flex items-center gap-2">
-              <img src="../../../../assets/icons/Replay_light.svg" alt="" />
+              <img
+                src="../../../../assets/icons/Replay_light.svg"
+                alt="Refresh data"
+              />
               <span class="text-nowrap">{{ "Refresh" | translate }}</span>
             </div>
           </button>
@@ -66,7 +69,7 @@
                 >{{ auditLogData?.logUrl }}</a
               >
               <p *ngIf="!auditLogData?.logUrl">
-                {{auditLogData?.eventType}} Failed
+                {{ auditLogData?.eventType }} Failed
               </p>
             </td>
             <td class="p-4 text-sm border">
