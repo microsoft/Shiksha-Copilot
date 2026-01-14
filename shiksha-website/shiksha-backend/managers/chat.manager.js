@@ -210,7 +210,7 @@ class ChatManager extends BaseManager {
 			await this.chatDao.createLessonChats({
 				teacherId: userId,
 				recordId : lessonDetails._id,
-				message: { question : message,	answer: response.data.response }
+				message: { question : message,	answer: response.data.response, version:2 }
 			});
 
 			return formatApiResponse(true, "Lesson chat response", response.data.response);

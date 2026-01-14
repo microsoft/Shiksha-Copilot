@@ -4,6 +4,8 @@ const logger = require("../config/loggers");
 require("dotenv").config();
 const llmBaseUrl = process.env.LLM_API_BASE_URL
 const embeddingsUrl = process.env.LLM_EMBEDDING_URL
+const duralbleUrl = process.env.LLM_DURABLE_URL
+
 
 try {
   axiosRetry(axios, {
@@ -30,8 +32,9 @@ try {
 }
 
 async function postToQuestionBankTemplate(payload) {
-  const apiUrl =
-    `${llmBaseUrl}/questionpaper/template`;
+
+      const apiUrl =
+    `${llmBaseUrl}/question-paper/template`;
   try {
     logger.info("Sending request to Question Bot API");
     const response = await axios.post(apiUrl, payload);
@@ -56,7 +59,7 @@ async function postToQuestionBankTemplate(payload) {
 
 async function postToQuestionBankBluePrint(payload) {
   const apiUrl =
-    `${llmBaseUrl}/questionpaper/questiondistribution`;
+       `${llmBaseUrl}/question-paper/questiondistribution`;
   try {
     logger.info("Sending request to Question Bot API");
     const response = await axios.post(apiUrl, payload);
@@ -80,8 +83,8 @@ async function postToQuestionBankBluePrint(payload) {
 }
 
 async function postToQuestionBank(payload) {
-  const apiUrl =
-    `${llmBaseUrl}/questionpaper`;
+    const apiUrl =
+    `${duralbleUrl}/api/questionpaper`;
   try {
     logger.info("Sending request to Question Bot API");
     const response = await axios.post(apiUrl, payload);
@@ -105,7 +108,7 @@ async function postToQuestionBank(payload) {
 }
 
 async function postToEmbedding(payload) {
-  const apiUrl = embeddingsUrl;
+   const apiUrl = embeddingsUrl;
   try {
     logger.info("Sending request to Question Bot API");
     const response = await axios.post(apiUrl, payload);
@@ -129,6 +132,7 @@ async function postToEmbedding(payload) {
 }
 
 async function postToEmbeddings(payloads) {
+
   const apiUrl = embeddingsUrl;
   const batchSize = 5;
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -166,8 +170,8 @@ async function postToEmbeddings(payloads) {
 }
 
 async function postToQuestionBankParts(payload) {
-  const apiUrl =
-    `${llmBaseUrl}/questionpaper/getparts`;
+      const apiUrl =
+    `${llmBaseUrl}/question-paper/by-parts`;
   try {
     logger.info("Sending request to Question Bot API");
     const response = await axios.post(apiUrl, payload);

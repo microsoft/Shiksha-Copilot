@@ -1,0 +1,30 @@
+<div class="font-semibold text-sm text-content">
+  {{ subjectDetails?.chapter?.topics }}
+</div>
+
+<div class="flex flex-wrap gap-2 mt-2 text-xs">
+  <span
+    class="bg-success-50 text-success font-medium px-2 py-0.5 rounded-full"
+    >{{ subjectDetails?.chapter?.board }}</span
+  >
+  <span class="bg-warn-50 text-warn font-medium px-2 py-0.5 rounded-full">{{
+    subjectDetails?.chapter?.medium | titlecase
+  }}</span>
+  <span class="bg-error-50 text-error font-medium px-2 py-0.5 rounded-full">{{
+    subjectDetails?.class
+  }}</span>
+  <span
+    class="bg-primary-40 text-primary font-medium px-2 py-0.5 rounded-full"
+    >{{ utilityService.getSubjectDisplayName(subjectDetails?.subjects) }}</span
+  >
+</div>
+
+<div
+  class="flex flex-wrap mt-2 gap-2"
+  *ngFor="let subTopic of subjectDetails?.subTopics"
+>
+  <span
+    class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md text-xs w-fit"
+    >{{ subTopic }}</span
+  >
+</div>

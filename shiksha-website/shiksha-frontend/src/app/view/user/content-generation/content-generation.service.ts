@@ -93,6 +93,13 @@ export class ContentGenerationService extends BaseRestService {
     );
   }
 
+  getTemplates(params:HttpParams) {
+    const options = {
+      params: params,
+    };
+    return this.http.get(`${this.baseUrl}/lesson-plan-template/list`, options);
+  }
+
   getLessonPlan(formValue: any): Observable<any> {
     let params = new HttpParams();
 
@@ -236,11 +243,11 @@ export class ContentGenerationService extends BaseRestService {
     );
   }
 
-  getSubtopics(chapterId: any, type: any) {
+  getSubtopics(body:any, type: any) {
     if (type === 'lesson') {
-      return this.http.get(`${this.baseUrl}/master-lesson/list/${chapterId}`);
+      return this.http.post(`${this.baseUrl}/master-lesson/learning-outcomes`,body);
     } else {
-      return this.http.get(`${this.baseUrl}/resource-plan/list/${chapterId}`);
+      return this.http.post(`${this.baseUrl}/resource-plan/learning-outcomes`,body);
     }
   }
 

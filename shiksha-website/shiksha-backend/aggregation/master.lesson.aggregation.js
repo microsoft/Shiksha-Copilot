@@ -42,11 +42,16 @@ class MasterLessonAggregation {
 		}
 	}
 
-	async getLessonOutcomes(chapterId, filters = {}) {
+	async getLessonOutcomes(chapterId,templateIds, filters = {}) {
 		try {
 			let pipeline = [
 				{
-					$match: { chapterId: new ObjectId(chapterId), ...filters , isRegenerated : false },
+					$match: { 
+						chapterId: new ObjectId(chapterId),
+						templateId: { $in: templateIds.map(id => new ObjectId(id)) },
+						 ...filters ,
+						  isRegenerated : false 
+						},
 				},
 
 				{
@@ -102,6 +107,17 @@ class MasterLessonAggregation {
 				},
 				{
 					$unwind: "$subjects",
+				},
+				{
+					$lookup: {
+						from: "lessonplantemplates",
+						localField: "templateId",
+						foreignField: "_id",
+						as: "template",
+					},
+				},
+				{
+					$unwind: "$template",
 				},
 				{
 					$addFields: {

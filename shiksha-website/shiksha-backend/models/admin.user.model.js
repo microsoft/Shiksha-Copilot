@@ -31,6 +31,15 @@ const adminUserSchema = new mongoose.Schema(
 			type: Boolean,
 			default: false,
 		},
+		state: {
+			type: String,
+		},
+		zones: {
+			type: [String],
+		},
+		districts: {
+			type: [String],
+		},
 		otp: {
 			type: String,
 		},

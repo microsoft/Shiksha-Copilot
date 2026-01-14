@@ -1,0 +1,72 @@
+.main-container {
+  height: calc(100vh - 200px);
+}
+
+.content-container {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--primary-40);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-80);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-DEFAULT);
+  }
+
+  ::ng-deep ul {
+    list-style-type: disc;
+    padding-left: theme("padding.4");
+    margin-bottom: 1em;
+    line-height: 1.5;
+  }
+
+  ::ng-deep ol {
+    list-style-type: decimal;
+    padding-left: theme("padding.4");
+    margin-bottom: 1em;
+    line-height: 1.5;
+  }
+
+  ::ng-deep p {
+    margin-bottom: 1em;
+    line-height: 1.5;
+  }
+
+  ::ng-deep h3 {
+    margin-bottom: 1em;
+  }
+}
+
+.section-navigation {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--primary-40);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary-80);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-DEFAULT);
+  }
+
+  ::ng-deep ul {
+    list-style-type: disc;
+    padding-left: theme("padding.4");
+  }
+
+  ::ng-deep ol {
+    list-style-type: decimal;
+    padding-left: theme("padding.4");
+  }
+}

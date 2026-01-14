@@ -190,7 +190,14 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
         'state',
         selectedStateValue
       );
-      this.zoneDropdownOptions = this.selectedStateObj.zones;
+      // Only show manager's zones if role is manager
+      const loggedInUser = this.utilityService.loggedInUserData;
+      const role = this.addForm.get('role')?.value || (loggedInUser && loggedInUser.role);
+      if (role && (Array.isArray(role) ? role.includes('manager') : role === 'manager') && loggedInUser && loggedInUser.zones) {
+        this.zoneDropdownOptions = this.utilityService.getZonesForManager(this.regionsData, loggedInUser);
+      } else {
+        this.zoneDropdownOptions = this.selectedStateObj.zones;
+      }
     } else {
       this.f.zone?.reset();
     }

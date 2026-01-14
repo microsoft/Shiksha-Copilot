@@ -34,7 +34,7 @@ exports.isAuthenticated = function (req, res, next) {
 			if (isAdmin) {
 				user = await AdminUser.findById(_id).select("-otp");
 			} else {
-				user = await User.findById(_id).populate("school", "name medium board").select("-otp");;
+				user = await User.findById(_id).populate("school", "name medium board").select("-otp -zone -district");
 			}
 
 			if (!user) {
@@ -87,5 +87,23 @@ exports.isAdmin = function (req, res, next) {
 	} catch (err) {
 		console.log(err);
 		res.status(500).json({ message: "Something went wrong" });
+	}
+};
+
+exports.isAdminOrManager = function (req, res, next) {
+	try {
+		if (
+			req.user &&
+			(req.user.role.includes('admin') || req.user.role.includes('manager'))
+		) {
+			return next();
+		}
+		return res.status(401).json({
+			success: false,
+			message: 'Access Denied!',
+		});
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({ message: 'Something went wrong' });
 	}
 };

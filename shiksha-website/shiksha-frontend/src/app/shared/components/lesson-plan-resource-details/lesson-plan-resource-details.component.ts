@@ -65,6 +65,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   subtopicsDropdownOptions: any[] = [];
   mediumDropdownOptions: any[] = [];
   boardDropdownOptions: any[] = [];
+  lpTemplatedownOptions: any[] = [];
 
   mediumDropdownconfig: FormDropDownConfig = {
     isBackground: true,
@@ -116,6 +117,17 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     required: true,
   };
 
+  lpTemplatedownconfig: FormDropDownConfig = {
+    isBackground: true,
+    placeHolderTxt: 'Select Template',
+    height: 'auto',
+    fieldName: 'Select Template',
+    bindLable: 'model',
+    bindValue: 'value',
+    required: true,
+    clearableOff:true,
+  };
+
   topicsDropdownconfig: FormDropDownConfig = {
     isBackground: true,
     placeHolderTxt: 'Select Chapter',
@@ -163,11 +175,11 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   lessonTypeConfig: LessonTypeConfig = {
     '/user/content-generation/lesson-plan': {
       type: 'plan',
-      inspectUrl: '/user/content-generation/inspect-lesson-plan',
+      inspectUrl: '/user/content-generation/inspect/lesson-plan',
     },
     '/user/content-generation/lesson-resources': {
       type: 'resource',
-      inspectUrl: '/user/content-generation/inspect-lesson-resources',
+      inspectUrl: '/user/content-generation/inspect/resource-plan',
     },
   };
 
@@ -187,6 +199,8 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   selectedMedium:any;
 
   regenerationLimitReached = false;
+
+  templateDetails:any;
 
   constructor(
     private fb: FormBuilder,
@@ -225,6 +239,49 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     return this.boardDropdownOptions.map((item) => item.board).join(', ');
   }
 
+  getTemplates(){
+    let {board,medium,subject} = this.lessonForm.value;
+    let params = new HttpParams()
+      params = params.set('filter[boards]', board);
+      params = params.set('filter[mediums]', medium);
+      params = params.set('filter[classes]',  this.lessonForm.value.class);
+      params = params.set('filter[subjects]', subject);
+      params = params.set('filter[type]', this.getLessonType()?.type === 'plan' ? 'lesson_plan' : 'lesson_resource');
+
+      this.contentGenService.getTemplates(params).
+      subscribe({
+        next:(val:any)=>{
+          this.groupTemplate(val.data)
+        },
+        error:(err)=>{
+          console.log(err);
+        }
+      })
+  }
+
+  groupTemplate(templates:any[]){
+    let groupedTemplates:any[] = Object.values(templates.reduce((acc:any, item:any) => {
+      if (!acc[item.model]) {
+        acc[item.model] = {
+          name: item.name,
+          description: item.description,
+          model: item.model,
+          value: []
+        };
+      }
+      acc[item.model].value.push(item._id);
+      return acc;
+    }, {}));
+
+    if(groupedTemplates.length === 1){
+      this.templateDetails = groupedTemplates[0].description;
+      this.f.template.setValue(groupedTemplates[0].value)
+      this.getTopicsSubtopicsOptions()
+    }
+    this.lpTemplatedownOptions = groupedTemplates;
+
+  }
+
   getBoardsList(userDetails: any) {
     let classList = [];
     classList = this.utilityservice.formatResponse(userDetails.classes);
@@ -248,7 +305,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
               classList[0].mediums[0].classes[0].data[0].subject
             );
             this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(classList[0].mediums[0].classes[0].data);
-            this.getTopicsSubtopicsOptions();
+            this.getTemplates()
           } else {
             this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(classList[0].mediums[0].classes[0].data);
           }
@@ -279,7 +336,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
           if (val.mediums[0].classes[0].data.length === 1) {
             this.f.subject.setValue(val.mediums[0].classes[0].data[0].subject);
             this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(val.mediums[0].classes[0].data);
-            this.getTopicsSubtopicsOptions();
+            this.getTemplates();
           } else {
             this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(val.mediums[0].classes[0].data);
           }
@@ -308,7 +365,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
           this.idleService.startWatching();
           this.f.subject.setValue(val.classes[0].data[0].subject);
           this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(val.classes[0].data);
-          this.getTopicsSubtopicsOptions();
+          this.getTemplates()
         } else {
           this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(val.classes[0].data);
         }
@@ -324,7 +381,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
       if (val.data.length === 1) {
         this.f.subject.setValue(val.data[0].subject);
         this.subjectDropdownOptions = this.utilityservice.formatSubjectDropdown(val.data);
-        this.getTopicsSubtopicsOptions();
+        this.getTemplates()
       }
     }
   }
@@ -332,7 +389,15 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   onSubjectChange(val: any) {
     this.resetSubjectChange();
     if (val) {
-      this.getTopicsSubtopicsOptions();
+      this.getTemplates()
+    }
+  }
+
+  onTemplateChange(val:any){
+    this.resetTemplateChange()
+    if(val){
+      this.getTopicsSubtopicsOptions()
+      this.templateDetails = val.description
     }
   }
 
@@ -342,14 +407,18 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
 
     let subTopicSubscriber;
 
+    const reqBody = {
+      chapterId:val?._id,
+      templateIds:this.f.template.value
+    }
     if (this.getLessonType()?.type === 'plan') {
       subTopicSubscriber = this.contentGenService.getSubtopics(
-        val._id,
+        reqBody,
         'lesson'
       );
     } else {
       subTopicSubscriber = this.contentGenService.getSubtopics(
-        val._id,
+        reqBody,
         'resource'
       );
     }
@@ -364,6 +433,10 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   setSubtopicDropdownOptions(rawOptions: any[]) {
     const formatedOptions = this.getFormatedSubtopics(rawOptions);
     this.subtopicsDropdownOptions = formatedOptions;
+    if(this.subtopicsDropdownOptions.length === 1){
+      this.onsubTopicSelected(this.subtopicsDropdownOptions[0]);
+      this.f.subtopics.setValue(this.subtopicsDropdownOptions[0]?.label)
+    }
   }
 
   getFormatedSubtopics(rawOptions: any[]) {
@@ -484,6 +557,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
       board: [null, [Validators.required]],
       class: [null, [Validators.required]],
       subject: [null, [Validators.required]],
+      template: [null, [Validators.required]],
       topics: [null, [Validators.required]],
       subtopics: [null, [Validators.required]],
     });
@@ -537,12 +611,13 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
 
   generatePlan() {
     const comprehensionLevel = this.checkboxOptions
-      .filter((opt) => opt.checked)
-      .map((val) => val.value);
-
+    .filter((opt) => opt.checked)
+    .map((val) => val.value);
+    if(this.getLessonType()?.type !== 'plan'){
     if (comprehensionLevel.length === 0) {
       this.utilityservice.showError('Please select comprehension level');
       return;
+    }
     }
     if (this.getLessonType()?.type === 'plan') {
       let params = new HttpParams();
@@ -550,10 +625,10 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
         'filters[includeVideos]',
         this.lessonForm.get('videos')?.value
       );
-      params = params.append(
-        'filters[levels]',
-        JSON.stringify(comprehensionLevel)
-      );
+      // params = params.append(
+      //   'filters[levels]',
+      //   JSON.stringify(comprehensionLevel)
+      // );
       const formvalues = this.lessonForm.value;
       this.contentGenService
         .getLessonPlanDetails(this.planId, params)
@@ -634,6 +709,8 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     this.classDropdownOptions = [];
     this.lessonForm.get('subject')?.reset();
     this.subjectDropdownOptions = [];
+    this.lessonForm.get('template')?.reset();
+    this.lpTemplatedownOptions = [];
     this.lessonForm.get('topics')?.reset();
     this.topicsDropdownOptions = [];
     this.lessonForm.get('subtopics')?.reset();
@@ -646,6 +723,8 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     this.classDropdownOptions = [];
     this.lessonForm.get('subject')?.reset();
     this.subjectDropdownOptions = [];
+    this.lessonForm.get('template')?.reset();
+    this.lpTemplatedownOptions = [];
     this.lessonForm.get('topics')?.reset();
     this.topicsDropdownOptions = [];
     this.lessonForm.get('subtopics')?.reset();
@@ -656,6 +735,8 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     this.idleService.resetIdler();
     this.lessonForm.get('subject')?.reset();
     this.subjectDropdownOptions = [];
+    this.lessonForm.get('template')?.reset();
+    this.lpTemplatedownOptions = [];
     this.lessonForm.get('topics')?.reset();
     this.topicsDropdownOptions = [];
     this.lessonForm.get('subtopics')?.reset();
@@ -663,6 +744,15 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
   }
 
   resetSubjectChange() {
+    this.lessonForm.get('template')?.reset();
+    this.lpTemplatedownOptions = [];
+    this.lessonForm.get('topics')?.reset();
+    this.topicsDropdownOptions = [];
+    this.lessonForm.get('subtopics')?.reset();
+    this.subtopicsDropdownOptions = [];
+  }
+
+  resetTemplateChange(){
     this.lessonForm.get('topics')?.reset();
     this.topicsDropdownOptions = [];
     this.lessonForm.get('subtopics')?.reset();

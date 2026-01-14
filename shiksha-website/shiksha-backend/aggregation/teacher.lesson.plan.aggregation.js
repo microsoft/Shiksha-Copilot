@@ -57,6 +57,7 @@ class TeacherLessonPlanAggregation {
 											else: "$videos"  
 										}
 									},
+							templateId:1,
 							"chapter._id": 1,
 							"chapter.topics": 1,
 							"chapter.subTopics": 1,
@@ -120,6 +121,7 @@ class TeacherLessonPlanAggregation {
 							checkList:1,
 							learningOutcomes:1,
 							isAll: 1,
+							templateId:1,
 							"chapter._id": 1,
 							"chapter.topics": 1,
 							"chapter.subTopics": 1,
@@ -131,27 +133,27 @@ class TeacherLessonPlanAggregation {
 							subTopics: 1,
 						},
 					},
-					{
-						$lookup:{
-						  from: "masterlessons",
-										localField: "lessonId",
-										foreignField: "_id",
-										as: "lesson",
-						}
-					  },
-					  {
-						$unwind:"$lesson"
-					  },
-					  {
-						$addFields:{
-						  videos:"$lesson.videos"
-						}
-					  },
-					  {
-						$project:{
-						  lesson:0
-						}
-					  }
+					// {
+					// 	$lookup:{
+					// 	  from: "masterlessons",
+					// 					localField: "lessonId",
+					// 					foreignField: "_id",
+					// 					as: "lesson",
+					// 	}
+					//   },
+					//   {
+					// 	$unwind:"$lesson"
+					//   },
+					//   {
+					// 	$addFields:{
+					// 	  videos:"$lesson.videos"
+					// 	}
+					//   },
+					//   {
+					// 	$project:{
+					// 	  lesson:0
+					// 	}
+					//   }
 				],
 			},
 		};
@@ -436,6 +438,14 @@ class TeacherLessonPlanAggregation {
 				},
 				this._lessonLookupStage(),
 				{
+				$lookup: {
+						from: "lessonplantemplates",
+						localField: "lesson.templateId",
+						foreignField: "_id",
+						as: "template"
+						}
+				},
+				{
 					$lookup: {
 						from: "lessonfeedbacks",
 						let: { lessonId: "$lessonId" },
@@ -476,6 +486,12 @@ class TeacherLessonPlanAggregation {
 						preserveNullAndEmptyArrays: true,
 					},
 				},
+				{
+					$unwind:
+					  {
+						path: "$template"
+					  }
+				}
 			];
 
 			const lessonPlan = await TeacherLessonPlan.aggregate(pipeline);
@@ -500,6 +516,14 @@ class TeacherLessonPlanAggregation {
 					},
 				},
 				this._resourceLookupStage(),
+				{
+					$lookup: {
+							from: "lessonplantemplates",
+							localField: "resource.templateId",
+							foreignField: "_id",
+							as: "template"
+							}
+				},
 				{
 					$lookup: {
 						from: "teacherresourcefeedbacks",
@@ -540,6 +564,12 @@ class TeacherLessonPlanAggregation {
 						preserveNullAndEmptyArrays: true,
 					},
 				},
+				{
+					$unwind:
+					  {
+						path: "$template"
+					  }
+				}
 			];
 
 			const resourcePlan = await TeacherLessonPlan.aggregate(pipeline);

@@ -13,7 +13,7 @@
 						<img src="../../../../../assets/icons/Vector (1).svg" alt="">
 						<span class="text-nowrap">{{'Bulk Upload' | translate}}</span>
 				</button>
-				<button [hasPermission]="['admin']"
+				<button [hasPermission]="['admin', 'manager']"
 						class="btn-primary flex items-center gap-2" (click)="openAddUserFormComp()">
 						<img src="../../../../../assets/icons/E add.svg" alt="">
 						<span class="text-nowrap">{{(getType()?.type === 'user' ? 'Add New Teacher' : 'Add New Staff') | translate}}</span>						
@@ -49,6 +49,11 @@
 								<app-common-dropdown [dropDownValues]="userStatusDropdownOptions" (valueUpdate)="onStatusChange($event)"
 										[config]="userStatusDropdownconfig"></app-common-dropdown>
 						</div>
+
+						<div class="w-full cursor-pointer" *ngIf="getType()?.type === 'user'">
+							<app-common-dropdown [dropDownValues]="trainingStatusDropdownOptions" (valueUpdate)="onTrainingStatusChange($event)"
+									[config]="trainingStatusDropdownconfig"></app-common-dropdown>
+					</div>
 
 						<button 
 						*ngIf="getType()?.type === 'user'"
@@ -120,7 +125,7 @@
 							</thead>
 							<tbody>                 
 									<tr *ngIf="!usersList || usersList.length === 0">
-											<td colspan="6" class="text-center text-content-60 py-2">{{'No items found' | translate}}</td>
+											<td [attr.colspan]="getType()?.type === 'user' ? 7 : 5" class="text-center text-content-60 py-2">{{'No items found' | translate}}</td>
 									</tr>
 									<ng-container>
 									<tr *ngFor="let item of usersList; let i = index" class="border-b">
@@ -131,6 +136,12 @@
 											<td class="text-sm p-4 border-r whitespace-nowrap w-36 text-center"><span class="px-3 py-2 rounded-full"
 															[ngClass]="{'text-green bg-success-50': !item.isDeleted, 'text-error bg-error-50': item.isDeleted}">{{!item.isDeleted
 															? 'Active' : 'Inactive'}}</span>
+											</td>
+											<td class="text-sm p-4 border-r whitespace-nowrap w-36 text-center" *ngIf="getType()?.type === 'user'">
+												<span class="px-3 py-2 rounded-full"
+													[ngClass]="{'text-green bg-success-50': item.trainingStatus === 'trained', 'text-orange bg-orange-50': item.trainingStatus === 'untrained'}">
+													{{item.trainingStatus === 'trained' ? 'Trained' : 'Untrained'}}
+												</span>
 											</td>
 	
 											<td class="text-sm p-4 relative #dropdownContainer whitespace-nowrap w-32">

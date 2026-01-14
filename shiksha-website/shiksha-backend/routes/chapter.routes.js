@@ -38,13 +38,13 @@ router.delete(
 	asyncMiddleware(chapterController.delete.bind(chapterController))
 );
 
-router.post(
-	"/chapter/script-from-lp",
-	isAuthenticated,
-	isAdmin,
-	MulterUploadMiddleware,
-	asyncMiddleware(chapterController.scriptFromLp.bind(chapterController))
-);
+// router.post(
+// 	"/chapter/script-from-lp",
+// 	isAuthenticated,
+// 	isAdmin,
+// 	MulterUploadMiddleware,
+// 	asyncMiddleware(chapterController.scriptFromLp.bind(chapterController))
+// );
 
 router.post(
 	"/chapter/update",

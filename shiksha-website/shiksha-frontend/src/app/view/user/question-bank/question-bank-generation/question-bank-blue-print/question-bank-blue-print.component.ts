@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { DropDownConfig } from 'src/app/shared/interfaces/dropdown.interface';
+import { QUESTION_TYPE_MAPPER } from 'src/app/shared/utility/constant.util';
 
 @Component({
   selector: 'app-question-bank-blue-print',
@@ -23,6 +24,8 @@ export class QuestionBankBluePrintComponent implements OnInit {
   objectivesChartData!: ChartData<'doughnut'>;
 
   totalSteps: number = 3;
+
+  questionTypeMapper = QUESTION_TYPE_MAPPER;
 
   bluePrintChapterDropdownConfig: DropDownConfig = {
     isBackground: false,

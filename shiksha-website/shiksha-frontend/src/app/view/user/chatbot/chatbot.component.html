@@ -49,9 +49,11 @@
           <div class="flex gap-2 p-4 bg-primary-40 rounded-lg text-content text-sm max-w-[80%] break-words items-start">
             <div
             [innerHTML]="transformText(message.answer)"
+            *ngIf="message?.version === 1"
           ></div>
+          <markdown class="chat-markdown" *ngIf="!message.version || message?.version === 2" [data]="message.answer"></markdown>
           <div class="min-w-5 max-w-5">
-          <button  title="{{'Copy to clipboard' | translate}}" (click)="utilityService.copyToClipboard(message.answer)"><img src="../../../../assets/icons/copy-clipboard.svg" alt=""> </button>
+          <button  title="{{'Copy to clipboard' | translate}}" (click)="utilityService.copyToClipboard(message.answer, message?.version || 0)"><img src="../../../../assets/icons/copy-clipboard.svg" alt=""> </button>
           </div>
           </div>
         </div>
@@ -62,8 +64,8 @@
         >
           <div
             class="p-4 bg-primary-40 rounded-lg text-content text-sm border border-primary max-w-[80%] break-words"
-            [innerHTML]="transformText(message.question)"
           >
+          <markdown [data]="message.question"></markdown>
         </div>
         <app-profile-image [profileImage]="this.sidebarService.profileImg()" [size]="'c-md'" ></app-profile-image>
 
@@ -112,7 +114,7 @@
         </button>
       </div>
       <div class="flex items-center justify-center gap-1 py-1 mt-1" >
-      <small class="text-content-60" >{{'Daily chat limit: 20 messages per day.' | translate }} <span class="underline cursor-pointer text-warn" (click)="modalService.showChatbotSampleDialog = true; showInstructions=true"> Sample Instructions</span> </small>
+      <small class="text-content-60" >{{'Daily chat limit: 20 messages per day' | translate }}. <span class="underline cursor-pointer text-warn" (click)="modalService.showChatbotSampleDialog = true; showInstructions=true"> {{'Sample Instructions' | translate}}</span> </small>
       </div>
     </div>
   </div>

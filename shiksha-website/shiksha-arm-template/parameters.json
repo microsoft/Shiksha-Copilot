@@ -1,0 +1,15 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_shikshana_production_name": {
+            "value": null
+        },
+        "disks_shikshana_production_OsDisk_1_8dbe5095835347e2abc249e683f0f8ac_externalid": {
+            "value": null
+        },
+        "networkInterfaces_shikshana_production246_z1_externalid": {
+            "value": null
+        }
+    }
+}

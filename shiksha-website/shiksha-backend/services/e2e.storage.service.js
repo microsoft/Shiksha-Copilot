@@ -65,4 +65,22 @@ async function getPreSignedProfileImageUrl(userId) {
 	return fileUrl;
 }
 
-module.exports = { uploadToStorage, getPreSignedProfileImageUrl };
+async function getPreSignedFileUrl(filePath) {
+	const parsedUrl = new URL(filePath);
+	const pathname = decodeURIComponent(parsedUrl.pathname);
+	const blobPath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+	const filename = blobPath.split('/').pop();
+	const linkExpiry = 7 * 24 * 60 * 60;
+	const destinationObject = filename;
+
+	let fileUrl = await minioClient.presignedUrl(
+		"GET",
+		bucket,
+		destinationObject,
+		linkExpiry
+	);
+
+	return fileUrl;
+}
+
+module.exports = { uploadToStorage, getPreSignedProfileImageUrl, getPreSignedFileUrl };

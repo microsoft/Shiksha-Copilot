@@ -142,10 +142,11 @@ class MasterLessonController extends BaseController {
 
 	async getLessonOutcomes(req, res) {
 		try {
-			const { chapterId } = req.params;
+			const { chapterId,templateIds } = req.body;
 			const { filters = {} } = req.query;
 			const result = await this.masterLessonManager.getLessonOutcomes(
 				chapterId,
+				templateIds,
 				filters
 			);
 
@@ -238,6 +239,41 @@ class MasterLessonController extends BaseController {
 			return;
 		} catch (err) {
 			console.log("Error --> MasterLessonController -> scriptLpDump()", err);
+			return res.status(400).json(err);
+		}
+	}
+
+
+	async uploadMasterLesson(req, res) {
+		try {
+			let result = await this.masterLessonManager.uploadMasterLesson(req);
+
+			if (result.success) {
+				return res.status(200).json(result);
+			}
+
+			handleError(result, res);
+
+			return;
+		} catch (err) {
+			console.log("Error --> MasterLessonController -> uploadMasterLesson()", err);
+			return res.status(400).json(err);
+		}
+	}
+
+	async uploadMasterLessonOlderVersion(req, res) {
+		try {
+			let result = await this.masterLessonManager.uploadMasterLessonOlderVersion(req);
+
+			if (result.success) {
+				return res.status(200).json(result);
+			}
+
+			handleError(result, res);
+
+			return;
+		} catch (err) {
+			console.log("Error --> MasterLessonController -> uploadMasterLessonOlderVersion()", err);
 			return res.status(400).json(err);
 		}
 	}

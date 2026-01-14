@@ -28,6 +28,9 @@ class AdminUserDao extends BaseDao {
 						address: data?.address,
 						role: data?.role,
 						isDeleted: data?.isDeleted,
+						state: data?.state,
+						zones: data?.zones,
+						districts: data?.districts,
 						otp : data?.otp,
 						isLoginAllowed: data?.isLoginAllowed,
 						rememberMeToken:data?.rememberMeToken

@@ -19,7 +19,7 @@ export class PptUtilityService{
           [`${this.translateService.instant('Subject')}`, `${this.utilityService.getSubjectDisplayName(formValues?.subjects)}`],
           [
             `${this.translateService.instant('Chapter')}`,
-            `${formValues.chapter.orderNumber}.${formValues.chapter.topics}`,
+            `${formValues.orderNumber}.${formValues.topics}`,
           ],
           [this.translateService.instant('SubTopic'), `${formValues.subTopics.join(', ')}`],
         ];
@@ -56,4 +56,29 @@ export class PptUtilityService{
           autoPage: true,
         });
       }
+
+      parseText(text: string): string {
+        if (!text) return '';
+        text = text.replace(/^\s*(#{1,6})\s*(.+)$/gm, (_, __, content) => content);
+        text = text.replace(/\*\*(.*?)\*\*|\*(.*?)\*/g, (_, bold, italic) => bold || italic);
+        text = text.replace(/"([^"]*)"/g, (_, content) => content);
+        return text;
+      }
+
+      parseTextForMarkdown(text: string): string {
+        text = text.replace(
+          /^\s*(#{1,6})\s*(.+)$/gm,
+          (match, hash, content) => content
+        );
+    
+        text = text.replace(
+          /\*\*(.*?)\*\*|\*(.*?)\*/g,
+          (match, p1, p2) => p1 || p2
+        );
+    
+        text = text.replace(/"([^"]*)"/g, (match, content) => content);
+    
+        return text;
+      }
+      
 }

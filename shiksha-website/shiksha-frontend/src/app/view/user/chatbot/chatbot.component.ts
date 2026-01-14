@@ -12,12 +12,14 @@ import { Subscription } from 'rxjs';
 import { InstructionsPopupComponent } from 'src/app/shared/components/instructions-popup/instructions-popup.component';
 import { ModalComponent } from 'src/app/shared/components/modal/modal.component';
 import { ModalService } from 'src/app/shared/components/modal/modal.service';
+import { ChatMarkdownModule } from './chat-markdown.module';
 
 interface ChatMessages {
   answer?: string;
   question?: string;
   createdAt?: string;
   _id?: string;
+  version?:number
 }
 
 @Component({
@@ -25,7 +27,7 @@ interface ChatMessages {
   templateUrl: './chatbot.component.html',
   styleUrls: ['./chatbot.component.scss'],
   standalone:true,
-  imports:[CommonModule, FormsModule, TranslateModule, ProfileImageComponent,InstructionsPopupComponent, ModalComponent]
+  imports:[CommonModule, FormsModule, TranslateModule, ProfileImageComponent,InstructionsPopupComponent, ModalComponent,ChatMarkdownModule]
 })
 export class ChatbotComponent implements OnInit, OnDestroy {
   @ViewChild('textArea') textArea!: ElementRef<any>;

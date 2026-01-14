@@ -42,12 +42,13 @@ class MasterResourceAggregation {
 		}
 	}
 
-	async getSubtopicResourceListByChapterId(chapterId) {
+	async getSubtopicResourceListByChapterId(chapterId,templateIds) {
 		try {
 			let pipeline = [
 				{
 					$match: {
 						chapterId: new ObjectId(chapterId),
+						templateId: { $in: templateIds.map(id => new ObjectId(id)) },
 					},
 				},
 				{
@@ -125,7 +126,7 @@ class MasterResourceAggregation {
 												$filter: {
 													input: {
 														$map: {
-															input: "$$resource.data",
+															input: "$$resource.content",
 															as: "dataItem",
 															in: {
 																$cond: {
@@ -170,7 +171,7 @@ class MasterResourceAggregation {
 												$filter: {
 													input: {
 														$map: {
-															input: "$$additionalResource.data",
+															input: "$$additionalResource.content",
 															as: "dataItem",
 															in: {
 																$cond: {
@@ -207,6 +208,231 @@ class MasterResourceAggregation {
 				},
 			];
 
+			// const newLevelFilter =  [
+			// 	{
+			// 	  $addFields: {
+			// 		resources: {
+			// 		  $filter: {
+			// 			input: "$resources",
+			// 			as: "resource",
+			// 			cond: { $gt: [{ $size: "$$resource.content" }, 0] }
+			// 		  }
+			// 		},
+			// 		additionalResources: {
+			// 		  $filter: {
+			// 			input: "$additionalResources",
+			// 			as: "additionalResource",
+			// 			cond: { $gt: [{ $size: "$$additionalResource.content" }, 0] }
+			// 		  }
+			// 		}
+			// 	  }
+			// 	},
+			// 	{
+			// 	  $addFields: {
+			// 		resources: {
+			// 			$map: {
+			// 				input: "$resources",
+			// 				as: "resource",
+			// 				in: {
+			// 				  id: "$$resource.id",
+			// 				  title: "$$resource.title",
+			// 				  outputFormat: "$$resource.outputFormat",
+			// 				  content: {
+			// 					$filter: {
+			// 					  input: {
+			// 						$map: {
+			// 						  input: "$$resource.content",
+			// 						  as: "dataItem",
+			// 						  in: {
+			// 							$cond: {
+			// 							  if: { $ifNull: ["$$dataItem.difficulty", false] },
+			// 							  then: {
+			// 								$cond: {
+			// 								  if: { $in: ["$$dataItem.difficulty", filters.levels] },
+			// 								  then: "$$dataItem",
+			// 								  else: null
+			// 								}
+			// 							  },
+			// 							  else: "$$dataItem"
+			// 							}
+			// 						  }
+			// 						}
+			// 					  },
+			// 					  as: "filteredDataItem",
+			// 					  cond: { $ne: ["$$filteredDataItem", null] }
+			// 					}
+			// 				  }
+			// 				}
+			// 			  }
+						  
+			// 		},
+			// 		additionalResources: {
+			// 		  $map: {
+			// 			input: "$additionalResources",
+			// 			as: "additionalResource",
+			// 			in: {
+			// 			  $mergeObjects: [
+			// 				"$$additionalResource",
+			// 				{
+			// 				  data: {
+			// 					$filter: {
+			// 					  input: {
+			// 						$map: {
+			// 						  input: "$$additionalResource.content",
+			// 						  as: "dataItem",
+			// 						  in: {
+			// 							$cond: {
+			// 							  if: { $ifNull: ["$$dataItem.difficulty", false] },
+			// 							  then: {
+			// 								$cond: {
+			// 								  if: { $in: ["$$dataItem.difficulty", filters.levels] },
+			// 								  then: "$$dataItem",
+			// 								  else: null
+			// 								}
+			// 							  },
+			// 							  else: "$$dataItem"
+			// 							}
+			// 						  }
+			// 						}
+			// 					  },
+			// 					  as: "filteredDataItem",
+			// 					  cond: { $ne: ["$$filteredDataItem", null] }
+			// 					}
+			// 				  }
+			// 				}
+			// 			  ]
+			// 			}
+			// 		  }
+			// 		}
+			// 	  }
+			// 	}
+			//   ];
+			  
+
+			const newLevelFilter = [
+  // Step 1: Filter out empty contents
+  {
+    $addFields: {
+      resources: {
+        $filter: {
+          input: "$resources",
+          as: "resource",
+          cond: {
+            $or: [
+              { $and: [{ $isArray: "$$resource.content" }, { $gt: [{ $size: "$$resource.content" }, 0] }] },
+              { $and: [{ $not: { $isArray: "$$resource.content" } }, { $ne: ["$$resource.content", ""] }] }
+            ]
+          }
+        }
+      },
+      additionalResources: {
+        $filter: {
+          input: "$additionalResources",
+          as: "additionalResource",
+          cond: {
+            $or: [
+              { $and: [{ $isArray: "$$additionalResource.content" }, { $gt: [{ $size: "$$additionalResource.content" }, 0] }] },
+              { $and: [{ $not: { $isArray: "$$additionalResource.content" } }, { $ne: ["$$additionalResource.content", ""] }] }
+            ]
+          }
+        }
+      }
+    }
+  },
+
+  // Step 2: Apply difficulty filtering if content is array, else pass content as-is
+  {
+    $addFields: {
+      resources: {
+        $map: {
+          input: "$resources",
+          as: "resource",
+          in: {
+            id: "$$resource.id",
+            title: "$$resource.title",
+            outputFormat: "$$resource.outputFormat",
+            content: {
+              $cond: {
+                if: { $isArray: "$$resource.content" },
+                then: {
+                  $filter: {
+                    input: {
+                      $map: {
+                        input: "$$resource.content",
+                        as: "dataItem",
+                        in: {
+                          $cond: {
+                            if: { $ifNull: ["$$dataItem.difficulty", false] },
+                            then: {
+                              $cond: {
+                                if: { $in: ["$$dataItem.difficulty", filters.levels] },
+                                then: "$$dataItem",
+                                else: null
+                              }
+                            },
+                            else: "$$dataItem"
+                          }
+                        }
+                      }
+                    },
+                    as: "filteredDataItem",
+                    cond: { $ne: ["$$filteredDataItem", null] }
+                  }
+                },
+                else: "$$resource.content"
+              }
+            }
+          }
+        }
+      },
+      additionalResources: {
+        $map: {
+          input: "$additionalResources",
+          as: "additionalResource",
+          in: {
+            $mergeObjects: [
+              "$$additionalResource",
+              {
+                data: {
+                  $cond: {
+                    if: { $isArray: "$$additionalResource.content" },
+                    then: {
+                      $filter: {
+                        input: {
+                          $map: {
+                            input: "$$additionalResource.content",
+                            as: "dataItem",
+                            in: {
+                              $cond: {
+                                if: { $ifNull: ["$$dataItem.difficulty", false] },
+                                then: {
+                                  $cond: {
+                                    if: { $in: ["$$dataItem.difficulty", filters.levels] },
+                                    then: "$$dataItem",
+                                    else: null
+                                  }
+                                },
+                                else: "$$dataItem"
+                              }
+                            }
+                          }
+                        },
+                        as: "filteredDataItem",
+                        cond: { $ne: ["$$filteredDataItem", null] }
+                      }
+                    },
+                    else: "$$additionalResource.content"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+]
+
 			let pipeline = [
 				{
 					$match: { _id: new ObjectId(resourceId) },
@@ -234,30 +460,21 @@ class MasterResourceAggregation {
 					$unwind: "$subjects",
 				},
 				{
-					$lookup:{
-					  from: "masterlessons",
-									localField: "lessonId",
-									foreignField: "_id",
-									as: "lesson",
-					}
-				  },
-				  {
-					$unwind:"$lesson"
-				  },
-				  {
-					$addFields:{
-					  videos:"$lesson.videos"
-					}
-				  },
-				  {
-					$project:{
-					  lesson:0
-					}
-				  }
+					$lookup: {
+						from: "lessonplantemplates",
+						localField: "templateId",
+						foreignField: "_id",
+						as: "template",
+					},
+				},
+				{
+					$unwind: "$template",
+				},
+				
 			];
 
 			if (filters.levels?.length > 0) {
-				pipeline = [...pipeline, ...levelFilter];
+				pipeline = [...pipeline, ...newLevelFilter];
 			}
 
 			let resources = await MasterResource.aggregate(pipeline);

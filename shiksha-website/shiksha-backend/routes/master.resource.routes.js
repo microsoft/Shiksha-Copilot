@@ -1,11 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const asyncMiddleware = require("../middlewares/asyncMiddleware.js");
-const { isAuthenticated } = require("../middlewares/auth.js");
+const { isAuthenticated, isAdmin } = require("../middlewares/auth.js");
 const MasterResourceController = require("../controllers/master.resource.controller.js");
 const {
 	validateMasterResource,
 } = require("../validations/master.resource.validation.js");
+const MulterUploadMiddleware = require("../middlewares/multerUploadMiddleware.js");
 
 const masterResourceController = new MasterResourceController();
 
@@ -47,8 +48,8 @@ router.post(
 	)
 );
 
-router.get(
-	"/resource-plan/list/:chapterId",
+router.post(
+	"/resource-plan/learning-outcomes",
 	isAuthenticated,
 	asyncMiddleware(
 		masterResourceController.getSubtopicResourceList.bind(
@@ -64,5 +65,26 @@ router.get(
 		masterResourceController.generateResourcePlan.bind(masterResourceController)
 	)
 );
+
+router.post(
+	"/master-resource/upload",
+	isAuthenticated,
+	isAdmin,
+	MulterUploadMiddleware,
+	asyncMiddleware(
+		masterResourceController.uploadMasterResource.bind(masterResourceController)
+	)
+);
+
+router.post(
+	"/master-resource/old-version-upload",
+	isAuthenticated,
+	isAdmin,
+	MulterUploadMiddleware,
+	asyncMiddleware(
+		masterResourceController.uploadOldMasterResource.bind(masterResourceController)
+	)
+);
+
 
 module.exports = router;

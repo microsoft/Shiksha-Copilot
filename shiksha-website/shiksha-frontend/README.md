@@ -1,27 +1,105 @@
-# ShikshaFrontend
+# Shiksha Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.14.
+_A modern Angular frontend for the Shiksha Co-Pilot — a generative AI assistant designed to support teachers in planning lessons, creating activities, and transforming classroom experiences._
 
-## Development server
+## Description
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+The **Shiksha Co-Pilot** project is developed by **VeLLM (Microsoft Research India)** in collaboration with the **Shikshana Foundation**. It is a next-generation generative AI tool that empowers **school teachers** by assisting them in:
 
-## Code scaffolding
+- Drafting lesson plans  
+- Designing interactive classroom activities  
+- Enhancing their teaching strategies with AI-driven support  
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+This repository contains the **Angular-based frontend** of the Shiksha Co-Pilot platform. The frontend offers a clean, intuitive user interface that enables teachers to interact with the AI assistant effectively and efficiently.
 
-## Build
+---
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Project Structure
 
-## Running unit tests
+```
+shiksha-frontend/
+├── src/
+│   ├── app/
+│   │   ├── auth/             # Authentication module
+│   │   ├── components/       # General-purpose components
+│   │   ├── core/             # Singleton services, interceptors, directives, guards
+│   │   ├── layout/           # Layout components (header, sidebar, content layout)
+│   │   ├── shared/           # Shared components, pipes, interfaces, utils, services
+│   │   ├── types/            # Global TypeScript interfaces and types
+│   │   └── view/             # Feature modules
+│   │       ├── admin/        # Admin module: components, routes, services
+│   │       └── user/         # User module: components, routes, services
+│   ├── assets/               # Static assets (images, icons, fonts)
+│   ├── environments/
+│   │   ├── environment.ts    # Development environment variables
+│   │   └── environment.prod.ts # Production environment variables
+│   ├── index.html            # Application entry point
+│   ├── main.ts               # Main bootstrap file
+│   ├── styles.scss           # Global styles
+├── angular.json              # Angular CLI configuration
+├── package.json              # NPM dependencies and scripts
+├── palette.js                # Color palette
+├── tailwind.config.js        # Tailwind configuration
+├── tsconfig.json             # TypeScript configuration
+└── README.md                 # Project documentation
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+---
 
-## Running end-to-end tests
+## Setup
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+### Prerequisites
 
-## Further help
+Make sure you have the following installed before starting:
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- [Node.js](https://nodejs.org/) (v18 or above recommended)
+- [Angular CLI](https://angular.io/cli) (v16)
+
+To install Angular CLI globally:
+
+```bash
+npm install -g @angular/cli
+```
+
+---
+
+## Installation
+
+Clone the repo and install dependencies:
+
+```bash
+cd shiksha-frontend
+npm install
+```
+
+---
+
+## Environment Setup
+
+After installing dependencies, configure your environment variables.
+
+Open the file:  
+`src/environments/environment.dev.ts`
+`src/environments/environment.ts`
+
+Update it with your API endpoint and secret values:
+
+```ts
+export const environment = {
+  production: false,
+  apiUrl: 'https://your-api-endpoint.com/api',
+  CRYPTO_SECRET: 'your-secure-secret-key'
+};
+```
+
+---
+
+## Running the Application
+
+```bash
+ng serve
+```
+
+Then open your browser and navigate to:  
+[http://localhost:4200]
+

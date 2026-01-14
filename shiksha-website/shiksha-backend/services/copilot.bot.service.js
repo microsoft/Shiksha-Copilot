@@ -2,8 +2,8 @@ const axios = require("axios");
 const axiosRetry = require('axios-retry').default;
 const logger = require('../config/loggers'); 
 require("dotenv").config();
-const llmBaseUrl = process.env.LLM_API_BASE_URL
 const checkListUrl = process.env.LLM_CHECKLIST_URL
+const workflowUrl = process.env.LLM_WORKFLOW_URL
 
 try{
 axiosRetry(axios, {
@@ -26,7 +26,8 @@ catch (configError) {
   }
 
 async function postToCopilotBot(payload) {
-  const apiUrl = `${llmBaseUrl}/lp`;
+  const apiUrl = `${workflowUrl}/api/v2/lesson-plans`;
+
   try {
     const response = await axios.post(apiUrl, payload);
     return response;
@@ -39,6 +40,7 @@ async function postToCopilotBot(payload) {
 async function post5ETables(payload)
 {
   const apiUrl = checkListUrl;
+
   try {
     const response = await axios.post(apiUrl, payload);
     return response;

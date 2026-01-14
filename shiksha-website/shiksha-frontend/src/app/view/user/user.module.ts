@@ -19,7 +19,7 @@ import { ProfileImageComponent } from 'src/app/shared/components/profile-image/p
 @NgModule({
   declarations: [
     ProfileComponent,
-    DashboardComponent,
+    DashboardComponent
   ],
   imports: [
     CommonModule,

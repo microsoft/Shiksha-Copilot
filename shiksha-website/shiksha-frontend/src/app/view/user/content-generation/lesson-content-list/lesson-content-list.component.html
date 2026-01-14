@@ -124,11 +124,8 @@
             </div>
             <div class="flex flex-col items-end">
               <h6 class="text-xs font-normal text-content-70">
-                {{
-                  (!item.isCompleted ? "Drafted on" : "Generated on")
-                    | translate
-                }}:
-                <span>{{ (item.isGenerated ? item.regeneratedcreatedAt :  item.createdAt) | date : "MMM dd,yyyy" }}</span>
+                {{'Modified On' | translate}}:
+                <span>{{ item.updatedAt | date : "MMM dd,yyyy" }}</span>
               </h6>
               <div
                 class="bg-warn mt-2 px-4 py-1 rounded-2xl"
@@ -265,7 +262,7 @@
                     : "Last updated On"
                   ) | translate
                 }}:
-                <span>{{ item.regeneratedcreatedAt | date : "MMM dd,yyyy" }}</span>
+                <span>{{ (item.status === "running" ? item.regeneratedcreatedAt : item.regeneratedupdatedAt )| date : "MMM dd,yyyy" }}</span>
               </h6>
               <div
                 class="mt-2 px-2 py-1 rounded-2xl"
@@ -374,18 +371,17 @@
             </h6>
           </ng-template>
         </button>
-        <button
+        <!-- <button
           *ngIf="item.status === 'failed'"
           class="mt-7 w-full py-2 rounded bg-red-500"
-          (click)="retry(item._id, item.regeneratedId)"
         >
           <h6
             *ngIf="item.status === 'failed'"
             class="text-white text-sm font-semibold"
           >
-            {{ "Retry" | translate }}
+            {{ "Failed" | translate }}
           </h6>
-        </button>
+        </button> -->
       </ng-template>
     </div>
   </div>

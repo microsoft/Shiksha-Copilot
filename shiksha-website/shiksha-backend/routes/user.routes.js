@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const asyncMiddleware = require("../middlewares/asyncMiddleware.js");
-const { isAuthenticated ,isAdmin } = require("../middlewares/auth.js");
+const { isAuthenticated ,isAdmin, isAdminOrManager } = require("../middlewares/auth.js");
 const uploadMiddleware = require("../middlewares/uploadMiddleware.js");
 const UserController = require("../controllers/user.controller.js");
 const {
@@ -45,13 +45,14 @@ router.patch(
 
 router.get(
 	"/user/list",
+	isAuthenticated,
 	asyncMiddleware(userController.getAll.bind(userController))
 );
 
 router.get(
 	"/user/export",
 	isAuthenticated,
-	isAdmin,
+	isAdminOrManager,
 	asyncMiddleware(userController.export.bind(userController))
 );
 

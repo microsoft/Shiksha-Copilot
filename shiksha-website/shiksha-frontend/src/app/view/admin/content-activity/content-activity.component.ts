@@ -169,13 +169,28 @@ export class ContentActivityComponent implements OnInit {
    * @param selectedStateValue
    */
   setZoneDropdownValues(selectedStateValue: any) {
+    const loggedInUser = this.utilityService.loggedInUserData;
     if (selectedStateValue) {
       this.selectedStateObj = this.utilityService.filterDropdownValues(
         this.regionsData,
         'state',
         selectedStateValue
       );
-      this.zoneDropdownOptions = this.selectedStateObj.zones;
+      if (
+        loggedInUser &&
+        loggedInUser.role.includes('manager') &&
+        loggedInUser.zones &&
+        loggedInUser.zones.length > 0
+      ) {
+        // Only show manager's zones
+        this.zoneDropdownOptions = this.selectedStateObj.zones.filter((zone: any) =>
+          loggedInUser.zones.includes(zone.name)
+        );
+      } else {
+        this.zoneDropdownOptions = this.selectedStateObj.zones;
+      }
+    } else {
+      this.zoneDropdownOptions = [];
     }
   }
 

@@ -49,12 +49,18 @@ class ChapterManager extends BaseManager {
 
 
                 if (!subject) {
-                    subject = await this.masterSubejectDao.create({
-                        subjectName,
-                        boards: [board],
-                        sem:getSemester(subjectName),
-                        name:formatSubject(subjectName)
+                  let subjectData = await this.masterSubejectDao.getOne({subjectName})
+                  if (subjectData && !subjectData.boards.includes(board)) {
+                    subjectData.boards.push(board);
+                    subject = await subjectData.save(); 
+                    }else{
+                    subject = await this.masterSubjectDao.create({
+                      subjectName,
+                      boards: [board],
+                      sem:getSemester(subjectName),
+                      name:formatSubject(subjectName)
                     });
+                    }
                     subjectCount+=1;
                 }
  
@@ -120,11 +126,13 @@ class ChapterManager extends BaseManager {
 
               let topicsLearningOutcomes = chapters[i].topics.map(item => {
                 return {
-                  title: item.title,
+                  title: item.title.trim(),
                   learningOutcomes: item.learning_outcomes 
                 };
               })
-        
+              
+              let subtopics = chapters[i].topics.map(e=>e.title.trim());
+
               let updatedChapter = await Chapter.findOneAndUpdate(
                 {
                   board,
@@ -137,7 +145,8 @@ class ChapterManager extends BaseManager {
                   $set: {
                     indexPath: chapters[i].index_path,
                     learningOutcomes:chapters[i].learning_outcomes,
-                    topicsLearningOutcomes
+                    topicsLearningOutcomes,
+                    subTopics:subtopics
                   },
                 },
                 { new: true }

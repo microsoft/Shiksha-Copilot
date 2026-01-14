@@ -54,7 +54,7 @@
             >{{ "Language" | translate }}</label
           >
           <app-language-switcher
-            [preferedLanguage]="loggedInUser?.preferredLanguage"
+            [loggedInUser]="loggedInUser"
             (languageChange)="languageChanged($event)"
           ></app-language-switcher>
         </div>

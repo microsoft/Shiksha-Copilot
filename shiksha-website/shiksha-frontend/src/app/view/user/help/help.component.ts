@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { UtilityService } from 'src/app/core/services/utility.service';
 
 @Component({
   selector: 'app-help',
   templateUrl: './help.component.html',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
 })
 export class HelpComponent {
   videos = [
@@ -16,15 +17,15 @@ export class HelpComponent {
     },
     {
       title: 'Content Generation',
-      link: this.utilityService.trustUrl('https://youtu.be/hgeW856iFt4'),
+      link: this.utilityService.trustUrl('https://youtu.be/qlma8Ah08MY'),
     },
     {
       title: 'Learning Outcomes',
-      link: this.utilityService.trustUrl('https://youtu.be/e0mzHDjPhjQ'),
+      link: this.utilityService.trustUrl('https://youtu.be/1pSDq3UMFk4'),
     },
     {
       title: 'Lesson Resources',
-      link: this.utilityService.trustUrl('https://youtu.be/s7bLeyHY75E'),
+      link: this.utilityService.trustUrl('https://youtu.be/GgRNcouN7GU'),
     },
     {
       title: 'My Schedules',
@@ -44,7 +45,7 @@ export class HelpComponent {
     },
     {
       title: 'Question Paper Generation',
-      link:this.utilityService.trustUrl('https://youtu.be/J9y6GOj-6CQ')
+      link:this.utilityService.trustUrl('https://youtu.be/CS7hr4j4w6Y')
     }
   ];
 

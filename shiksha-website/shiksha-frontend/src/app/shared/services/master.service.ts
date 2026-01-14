@@ -26,6 +26,50 @@ export class MasterService {
   }
 
   /**
+   * Function to get states data
+   * @returns 
+   */
+  getStates(): Observable<any> {
+    return this.http.get(`${this.baseurl}/regions/states`);
+  }
+
+  /**
+   * Function to get zones data for a state
+   * @param state State name
+   * @returns 
+   */
+  getZones(state: string): Observable<any> {
+    return this.http.get(`${this.baseurl}/regions/zones?state=${state}`);
+  }
+
+  /**
+   * Function to get districts data for a zone
+   * @param zone Zone name
+   * @returns 
+   */
+  getDistricts(zone: string): Observable<any> {
+    return this.http.get(`${this.baseurl}/regions/districts?zone=${zone}`);
+  }
+
+  /**
+   * Function to get taluks data for a district
+   * @param district District name
+   * @returns 
+   */
+  getTaluks(district: string): Observable<any> {
+    return this.http.get(`${this.baseurl}/regions/taluks?district=${district}`);
+  }
+
+  /**
+   * Function to get schools data for a taluk
+   * @param taluk Taluk name
+   * @returns 
+   */
+  getSchools(taluk: string): Observable<any> {
+    return this.http.get(`${this.baseurl}/regions/schools?taluk=${taluk}`);
+  }
+
+  /**
    * Function to get board data
    * @returns 
    */
