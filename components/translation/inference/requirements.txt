@@ -101,7 +101,7 @@ safetensors==0.4.4
 scikit-learn==1.5.1
 scipy==1.13.1
 sentence-transformers==3.0.1
-sentencepiece==0.2.0
+sentencepiece==0.2.1
 shellingham==1.5.4
 six==1.16.0
 smart-open==7.0.4
