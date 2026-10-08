@@ -70,9 +70,10 @@ class MasterResourceController extends BaseController {
 
 	async getSubtopicResourceList(req, res) {
 		try {
-			const { chapterId } = req.params;
+			const { chapterId, templateIds } = req.body;
 			const result = await this.masterResourceManager.getSubtopicResourceList(
-				chapterId
+				chapterId,
+				templateIds
 			);
 			if (result) {
 				return res.status(200).json(result);
@@ -111,6 +112,40 @@ class MasterResourceController extends BaseController {
 				"Error --> MasterResourceController -> generateResourcePlan()",
 				err
 			);
+			return res.status(400).json(err);
+		}
+	}
+
+	async uploadMasterResource(req, res) {
+		try {
+			let result = await this.masterResourceManager.uploadMasterResources(req);
+
+			if (result.success) {
+				return res.status(200).json(result);
+			}
+
+			handleError(result, res);
+
+			return;
+		} catch (err) {
+			console.log("Error --> MasterResourceController -> uploadMasterResource()", err);
+			return res.status(400).json(err);
+		}
+	}
+
+	async uploadOldMasterResource(req, res) {
+		try {
+			let result = await this.masterResourceManager.uploadOldMasterResources(req);
+
+			if (result.success) {
+				return res.status(200).json(result);
+			}
+
+			handleError(result, res);
+
+			return;
+		} catch (err) {
+			console.log("Error --> MasterResourceController -> uploadOldMasterResource()", err);
 			return res.status(400).json(err);
 		}
 	}

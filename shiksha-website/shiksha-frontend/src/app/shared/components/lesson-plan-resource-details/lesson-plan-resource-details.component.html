@@ -37,6 +37,22 @@
 									</div>
 							</div>
 
+							<div class="grid gap-4" [ngClass]="lpTemplatedownOptions.length > 1 ? 'lg:grid-cols-2':''">
+								<div class="cursor-pointer mt-7" *ngIf="lpTemplatedownOptions.length > 1">
+										<app-form-dropdown [dropDownControlName]="'template'" (valueChange)="onTemplateChange($event)"
+												[dropDownCtrl]="convertToFormControl(f['template'])" [dropDownValues]="lpTemplatedownOptions"
+												[config]="lpTemplatedownconfig" [submitted]="submitted"></app-form-dropdown>
+								</div>
+								<div *ngIf="templateDetails" class="px-4 py-2 bg-primary-50 rounded mt-7 w-[84vw] md:w-full">
+									<div class="flex gap-2 items-start">
+										<img class="w-5" src="../../../../assets/icons/info-primary.svg" alt="">
+									<div>
+									<p title="{{templateDetails}}" class="text-content text-sm overflow-hidden text-ellipsis" [ngClass]="lpTemplatedownOptions.length > 1 ? 'w-full md-w-96':'w-full md-w-[48rem]'">{{templateDetails}}</p>
+									</div>
+									</div>
+								</div>
+						</div>
+
 							<div class="grid lg:grid-cols-1 gap-4 mt-7">                    
 									<div class="w-[84vw] md:w-full">
 											<app-form-dropdown [dropDownControlName]="'topics'" (valueChange)="onTopicSelected($event)"
@@ -54,7 +70,7 @@
 							</div>                
 					</div>
 					<hr class="border-b-[3px] mt-7 border-shade-80">
-					<div class="mt-7">
+					<div class="mt-7" *ngIf="getLessonType()?.type !== 'plan'">
 							<div class="flex items-center">
 									<img class="me-4" src="../../../../../assets/icons/level_Button.svg" alt="">
 									<h3 class="font-bold text-base md:text-[24px] text-content-100">
@@ -106,7 +122,7 @@
 									</div>
 									<textarea *ngIf="isEditable" class="form-text-area w-full h-60" [(ngModel)]="combinedLearningOutcomes" [ngModelOptions]="{ standalone: true }"></textarea>
 									<small class="form-control-error" *ngIf="learningOutcomes?.length === 0 && !isEditable">{{ 'Learning Outcomes cannot be empty' | translate }}</small>
-									<div class="mt-3 flex items-center gap-2" *ngIf="selectedMedium === 'english'">
+									<!-- <div class="mt-3 flex items-center gap-2" *ngIf="selectedMedium === 'english'">
 										<button type="button" [hasPermission]="['power']" *ngIf="!isEditable && getLessonType()?.type === 'plan'" (click)="isEditable=true" class="btn-primary" [disabled]="regenerationLimitReached">
 											<div class="flex items-center gap-2">
 												<img src="../../../../../assets/icons/edit_light.svg" alt="" />
@@ -120,10 +136,10 @@
 										<button type="button" [hasPermission]="['power']" *ngIf="isEditable"  (click)="resetLearningOutcomes()" class="btn-outline-primary">
 											<span class="ms-1">{{'Reset' | translate}}</span>
 										</button>
-									</div>
+									</div> -->
 								</div>
 
-								<div class="flex items-center gap-2 bg-warn-50 p-2 mt-4"  *ngIf="regenerationLimitReached">
+								<div class="flex items-center gap-2 bg-warn-50 p-2 mt-4"  *ngIf="regenerationLimitReached && getLessonType()?.type === 'plan'">
 									<img src="../../../../../assets/icons/Info 2.svg" alt="">
 								<small>{{ 'You have reached the daily limit of 3 attempts to regenerating the lesson plan. Please try tomorrow' | translate }}</small>
 								</div>

@@ -1,0 +1,63 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <ng-container *ngFor="let doc of docTypeValues">
+    <div
+      [ngClass]="{ 'disable-download': mode !== 'view' }"
+      class="bg-white shadow rounded-lg p-5 flex flex-col md:flex-row items-left md:items-center gap-5 md:gap-0 justify-between border border-primary-50 hover:shadow-md transition"
+      *ngIf="doc.type !== 'ppt'"
+    >
+      <div class="flex items-center space-x-4">
+        <div>
+          <div class="text-white p-3 rounded-full bg-primary-30">
+            <img
+              class="w-8"
+              *ngIf="doc.type === 'docx'"
+              src="../../../../../assets/icons/docx-original.svg"
+              alt=""
+            />
+            <img
+              class="w-7"
+              *ngIf="doc.type === 'ppt'"
+              src="../../../../../assets/icons/ppt-solid.svg"
+              alt=""
+            />
+            <img
+              class="w-8"
+              *ngIf="doc.type === 'pdf'"
+              src="../../../../../assets/icons/pdf-original.svg"
+              alt=""
+            />
+          </div>
+        </div>
+        <div>
+          <p
+            class="font-semibold text-gray-800 max-w-52 text-nowrap overflow-hidden text-ellipsis !mb-0"
+          >
+            {{ doc.name }}
+          </p>
+          <p class="text-sm text-gray-500">{{ doc.type.toUpperCase() }} file</p>
+        </div>
+      </div>
+      <button
+        (click)="downloadDocument(doc.downloadType)"
+        class="md:hidden btn-outline-primary"
+      >
+        Download
+      </button>
+      <button
+        (click)="downloadDocument(doc.downloadType)"
+        class="hidden md:block btn-primary"
+      >
+        Download
+      </button>
+    </div>
+  </ng-container>
+</div>
+<div class="bg-warn-50 p-2 my-4" *ngIf="mode !== 'view'">
+  <div class="flex items-center gap-2">
+    <img src="../../../../../assets/icons/Info 2.svg" alt="" />
+    <small>{{
+      "Documents will be available for download once the lesson plan has been saved."
+        | translate
+    }}</small>
+  </div>
+</div>

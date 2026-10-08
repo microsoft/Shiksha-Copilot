@@ -391,10 +391,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   filterSubjects(standard:any,subjects:any[]){
-    if(standard === 5){
-      return subjects.filter((e)=> e._id !== 'Science');
-    }
-    return subjects.filter((e)=> e._id !== 'Evs');
+    return subjects.filter((e)=> {
+      if(e?.subjects[0]?.applicableClasses?.length){
+        return e.subjects[0].applicableClasses.includes(standard)
+      }else{
+        return e
+      }
+    })
   }
 
 

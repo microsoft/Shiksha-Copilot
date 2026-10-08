@@ -196,7 +196,10 @@ export class LessonContentListComponent implements OnInit, AfterViewInit, OnDest
       this.selectedSubject = this.subjectDropdownOptions[0].subject;
     }
 
-
+const today = new Date();
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const year = today.getFullYear();
+    this.selectedMonth = `${year}-${month}`;
     const param = this.getListParams();
    
     

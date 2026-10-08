@@ -298,6 +298,34 @@ function capitalizeFirstLetter(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+
+function getTemplateWorkflowId(subjectName, type){
+	const scienceMathSubject = ["science_1","science_2","mathematics_1","mathematics_2","evs_1","evs_2"]
+	const socialSubject = ["social_science_1","social_science_2"]
+
+	if(scienceMathSubject.includes(subjectName)){
+		if(type ==='CHAPTER'){
+			return 'karnataka-science-math-chapter-lesson-plan'
+		}else{
+			return 'karnataka-science-math-subtopic-lesson-plan'
+		}
+	} else if(socialSubject.includes(subjectName)){
+		if(type ==='CHAPTER'){
+			return 'karnataka-social-chapter-lesson-plan'
+		}else{
+			return 'karnataka-social-subtopic-lesson-plan'
+		}
+	}else{
+		if(type === 'PROSE'){
+			return 'english-prose-lesson-plan'
+		}else{
+			return 'karnataka-english-poem-lesson-plan'
+		}
+	}
+
+
+}
+
 module.exports = {
 	createData,
 	subjectRegex,
@@ -308,6 +336,7 @@ module.exports = {
 	mediumRegex,
 	capitalizeFirstLetter,
 	semRegex,
-	nameRegex
+	nameRegex,
+	getTemplateWorkflowId
 };
 

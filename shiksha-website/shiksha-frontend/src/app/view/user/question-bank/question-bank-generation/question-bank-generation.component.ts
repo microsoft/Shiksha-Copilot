@@ -14,6 +14,7 @@ import {
   CORE_OBJECTIVE_MAPPER_10,
   CORE_SUBJECTS,
   LANGUAGE_OBJECTIVE_MAPPER,
+  TELANGANA_OBJECTIVE_MAPPER,
 } from 'src/app/shared/utility/constant.util';
 import { QuestionBankService } from '../question-bank.service';
 import { Router } from '@angular/router';
@@ -310,12 +311,17 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
     this.resetSubjectChange();
     if (val) {
       let standard = this.f.grade.value;
-      if (CORE_SUBJECTS.includes(val.name)) {
+      let board = this.f.board.value
+     if(board === "KSEEB"){
+       if (CORE_SUBJECTS.includes(val.name)) {
         this.questionBankObjectives =
           standard === 10 ? structuredClone(CORE_OBJECTIVE_MAPPER_10) : structuredClone(CORE_OBJECTIVE_MAPPER);
       } else {
         this.questionBankObjectives = structuredClone(LANGUAGE_OBJECTIVE_MAPPER);
       }
+     }else if(board === "BSE-TG"){
+      this.questionBankObjectives = structuredClone(TELANGANA_OBJECTIVE_MAPPER)
+     }
 
       const filter = {
         board: this.f.board.value,
@@ -472,7 +478,7 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
   }
 
   backNavigation() {
-    this.router.navigate(['/user/question-bank']);
+    this.router.navigate(['/user/question-paper']);
   }
 
   onSubmit(step: any) {
@@ -602,7 +608,16 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
     const payload = this.getTemplatePayload();
     this.questionBankService.generateQuestionBankTemplate(payload).subscribe({
       next: (res: any) => {
-        this.templateData = res.data;
+        this.templateData = res?.data.map((e:any)=>
+          {
+            return {
+            marks_per_question:e.marks_per_question,
+            number_of_questions:e.number_of_questions,
+            type:e.type,
+            question_distribution:e.question_distribution
+          }
+          });
+        
         this.totalTemplateMarks = this.totalMarks;
         if (this.currentStep < this.totalSteps) {
           this.currentStep++;
@@ -663,7 +678,15 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
 
     this.questionBankService.generateQuestionBankBluePrint(payload).subscribe({
       next: (res) => {
-        this.questionBankBluePrintData = res.data;
+        this.questionBankBluePrintData = res?.data.map((e:any)=>
+          {
+            return {
+            marks_per_question:e.marks_per_question,
+            number_of_questions:e.number_of_questions,
+            type:e.type,
+            question_distribution:e.question_distribution
+          }
+          });
         const mapper = this.questionBankObjectives;
         mapper.forEach((ele) => {
           this.objectiveChartMapper[ele.objective] = 0;

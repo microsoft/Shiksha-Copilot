@@ -90,4 +90,24 @@ const isLeapYear = (year) => {
   
 	return value;
   }
-module.exports = { getStartDate, getNumMonths, uniqueSubsets , validateIsoDate };
+
+// Advanced filter helpers for multi-value fields (zone, district, etc.)
+function normalizeMultiValueFilter(filter, fields) {
+  fields.forEach(field => {
+    if (filter[field] && !Array.isArray(filter[field])) {
+      filter[field] = [filter[field]];
+    }
+  });
+  return filter;
+}
+
+function buildMongoInQuery(filter, fields) {
+  fields.forEach(field => {
+    if (filter[field] && Array.isArray(filter[field])) {
+      filter[field] = { $in: filter[field] };
+    }
+  });
+  return filter;
+}
+
+module.exports = { getStartDate, getNumMonths, uniqueSubsets , validateIsoDate, normalizeMultiValueFilter, buildMongoInQuery };

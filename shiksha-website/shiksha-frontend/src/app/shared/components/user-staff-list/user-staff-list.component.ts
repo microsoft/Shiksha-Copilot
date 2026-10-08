@@ -42,11 +42,14 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   @ViewChild('dropdownContent') dropdownContent !: ElementRef;
   dropdownSubscription!: Subscription;
   
+  usersList: any[] = [];
   schoolNamesDropdownOptions: any[]=[];
 
   userRolesDropdownOptions!: any[];
 
   userStatusDropdownOptions: any[]=[{ name: 'Active', value: 'active' },{ name: 'Inactive', value: 'inactive' }];
+
+  trainingStatusDropdownOptions: any[] = [{ name: 'Trained', value: 'trained' }, { name: 'Untrained', value: 'untrained' }];
 
   districtDropdownOptions: any[] = [];
 
@@ -85,6 +88,15 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
     bindLabel:'name',
     bindValue:'value',
     labelTxt:'Status of user'
+  };
+
+  trainingStatusDropdownconfig: DropDownConfig = {
+    isBackground: true,
+    placeHolderTxt: 'Training Status',
+    height: 'auto',
+    bindLabel:'name',
+    bindValue:'value',
+    labelTxt:'Training Status'
   };
 
   stateDropdownconfig: DropDownConfig = {
@@ -145,7 +157,6 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   isEditing: boolean = false;
   userId!: string;
   @ViewChild('dropdownContainer') dropdownContainer!: ElementRef;
-  usersList!: any[];
   usersListWithoutPg!:any[];
   isOpen: boolean[] = [];
   searchText: any = "";
@@ -163,7 +174,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
     "/admin/user-management/list": {
       type:'user',
       router: '/admin/user-management/',
-      table_headers: ['Teacher Name', 'Mobile Number', 'School Name', 'Type of Teacher', 'Status of Teacher', ''],
+      table_headers: ['Teacher Name', 'Mobile Number', 'School Name', 'Type of Teacher', 'Status of Teacher', 'Training Status', ''],
       download_file:'user-management'
 
     },
@@ -198,7 +209,8 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
     block: '',
     school: '',
     search: '',
-    includeDeleted:''
+    includeDeleted:'',
+    trainingStatus: ''
   };
 
   schoolListData!: [SchoolList];
@@ -223,11 +235,28 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   }
 
   ngOnInit(): void {  
-    this.onFilterChange('includeDeleted', this.includeDeleted)
+    this.onFilterChange('includeDeleted', this.includeDeleted);
 
-    if(this.getType()?.type === 'user'){
+    if (this.getType()?.type === 'user') {
       this.getRegionsData();
     }  
+
+    const loggedInUser = this.utility.loggedInUserData;
+
+    if (loggedInUser && loggedInUser.role.includes('manager')) {
+      if (loggedInUser.state) {
+        this.filterObj.state = loggedInUser.state;
+      }
+      if (loggedInUser.zones && loggedInUser.zones.length > 0) {
+        this.filterObj.zone = loggedInUser.zones;
+      }
+      if (loggedInUser.districts && loggedInUser.districts.length > 0) {
+        this.filterObj.district = loggedInUser.districts;
+      }
+    }
+
+    this.getUsersList(this.filterObj);
+
     this.searchSubscription = this.searchTerms.pipe(
       debounceTime(1000),
       distinctUntilChanged()
@@ -265,8 +294,8 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   
 
   ngAfterViewInit(): void {
-    if(this.getType()?.type === 'user'){
-      this.schoolDropdown.selectedItem = this.schoolId
+    if(this.getType()?.type === 'user' && this.schoolDropdown){
+      this.schoolDropdown.selectedItem = this.schoolId;
     }
   }
 
@@ -352,6 +381,11 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
     this.getUsersList();
   }
 
+  onTrainingStatusChange(trainingStatus:any){
+    this.currentPage=1;
+    this.onFilterChange('trainingStatus', trainingStatus);
+  }
+
   onStatusChange(status: any): void {
     this.currentPage = 1;
     if (status) {
@@ -367,8 +401,6 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   }
   
   toggleFilter(){
-    console.log(this.filterObj);
-    
     if(this.showAdditionalFilters && this.filterObj?.state){
       this.onFilterChange('state',null)
     }
@@ -399,11 +431,18 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   
     this.paginationSubscription = observable.subscribe({
       next: (res: any) => {
+        if (res?.data?.results) {
         this.usersList = res.data['results'];
         this.totalItems = res.data.totalItems;
+        } else {
+          this.usersList = [];
+          this.totalItems = 0;
+        }
       },
       error: (err) => {
         console.error('Error while fetching list', err);
+        this.usersList = [];
+        this.totalItems = 0;
       }
     });
   }
@@ -495,11 +534,11 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
         this.utility.handleError(err)
       }
     })
-
-    
   }
 
- 
+  navigateToTraining() {
+    this.router.navigate(['/training']);
+  }
   
   toTitleCase(str: string): string {
     return str
@@ -650,7 +689,14 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
           'state',
           selectedStateValue
         );
-        this.zoneDropdownOptions = this.selectedStateObj.zones;
+        // Only show manager's zones if role is manager
+        const loggedInUser = this.utility.loggedInUserData;
+        const role = loggedInUser && loggedInUser.role;
+        if (role && (Array.isArray(role) ? role.includes('manager') : role === 'manager') && loggedInUser && loggedInUser.zones) {
+          this.zoneDropdownOptions = this.utility.getZonesForManager(this.regionsData, loggedInUser);
+        } else {
+          this.zoneDropdownOptions = this.selectedStateObj.zones;
+        }
       }
     }
   

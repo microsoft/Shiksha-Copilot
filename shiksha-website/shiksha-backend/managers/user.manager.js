@@ -12,6 +12,7 @@ const ExcelJS = require("exceljs");
 const { sendWelcomeSMS } = require("../helper/worker.helper");
 const { MESSAGES } = require("../config/constants");
 const ClassDao = require("../dao/school.class.dao");
+const { normalizeMultiValueFilter, buildMongoInQuery } = require("../helper/filter.helper.js");
 
 class UserManager extends BaseManager {
   constructor() {
@@ -497,6 +498,34 @@ class UserManager extends BaseManager {
       );
     } catch (err) {
       return formatApiReponse(false, err.message, e);
+    }
+  }
+
+  async getAll(
+    page = 1,
+    limit,
+    filters = {},
+    sort = {},
+    status,
+    userId
+  ) {
+    try {
+      // Only for User: advanced filter normalization for zone/district
+      let processedFilters = { ...filters, ...status };
+      processedFilters = normalizeMultiValueFilter(processedFilters, ["zone", "district"]);
+      processedFilters = buildMongoInQuery(processedFilters, ["zone", "district"]);
+      // Call DAO getAll with processed filters
+      let data = await this.dao.getAll(
+        page,
+        limit,
+        processedFilters,
+        sort,
+        {}, // status already merged
+        userId
+      );
+      return formatApiReponse(true, "", data);
+    } catch (err) {
+      return formatApiReponse(false, err.message, err);
     }
   }
 

@@ -34,9 +34,36 @@ class UserDao extends BaseDao {
 				if (key === "school") {
 					processedFilters["school._id"] = new ObjectId(filters[key]);
 					delete processedFilters["school"];
+				} else if (key === "role") {
+					if (Array.isArray(filters[key])) {
+						processedFilters[key] = { $in: filters[key] };
+					} else {
+					processedFilters[key] = { $in: [filters[key]] };
+					}
+				} else if (key === "zone") {
+					if (Array.isArray(filters[key])) {
+						processedFilters[key] = { $in: filters[key] };
+					} else {
+						processedFilters[key] = filters[key];
+					}
+				} else if (key === "district") {
+					if (Array.isArray(filters[key])) {
+						processedFilters[key] = { $in: filters[key] };
+					} else {
+						processedFilters[key] = filters[key];
+					}
+				} else if (key === "$or") {
+					// Special case: $or operator should be left as-is
+					processedFilters[key] = filters[key];
+				} else if (Array.isArray(filters[key])) {
+					if (filters[key].length > 0) {
+						processedFilters[key] = { $in: filters[key] };
+					} else {
+						delete processedFilters[key]; // Remove if array is empty
+					}
 				}
 			}
-	
+
 			let results = await userAggregation.getUserList(page,
 				limit,
 				processedFilters,
@@ -45,13 +72,14 @@ class UserDao extends BaseDao {
 				const totalItems =
 				results[0].totalCount.length > 0 ? results[0].totalCount[0].count : 0;
 
-	
-			return {
+			const result = {
 				page,
 				totalItems,
 				limit: limit > 0 ? limit : totalItems,
 				results: results[0].data,
 			};
+	
+			return result;
 		} catch (err) {
 			console.log("Error --> UserDao -> getAll()", err);
 			throw err;

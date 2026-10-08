@@ -119,12 +119,29 @@ class ChapterAggregation {
 					}
 				},
 				{
+					$addFields: {
+					learning_outcomes: {
+						$cond: {
+						if: { $eq: [{ $size: "$learningOutcomes" }, 0] },
+						then: {
+							$reduce: {
+							input: "$topicsLearningOutcomes",
+							initialValue: [],
+							in: { $concatArrays: ["$$value", "$$this.learningOutcomes"] }
+							}
+						},
+						else: "$learningOutcomes"
+						}
+					}
+					}
+				},
+				{
 				  $project:
 					{
 					  _id: 0,
 					  title: "$topics",
 					  index_path: "$indexPath",
-					  learning_outcomes: "$learningOutcomes"
+					  learning_outcomes: 1
 					}
 				}
 			  ]

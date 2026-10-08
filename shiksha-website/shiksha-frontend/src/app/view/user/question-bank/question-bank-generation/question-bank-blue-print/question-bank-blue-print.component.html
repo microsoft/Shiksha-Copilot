@@ -47,7 +47,7 @@
     >
       <div class="flex items-start justify-between mt-6">
         <p class="font-bold w-[60vw] md:w-[40vw] text-sm md:text-base">
-          {{ i + 1 }}. {{ questionBankBluePrint.type }}
+          {{ i + 1 }}. {{ questionTypeMapper[questionBankBluePrint.type] }}
         </p>
         <p class="font-bold text-sm md:text-base min-w-[15vw] md:min-w-[7vw] text-end">
           {{ questionBankBluePrint.number_of_questions }} X

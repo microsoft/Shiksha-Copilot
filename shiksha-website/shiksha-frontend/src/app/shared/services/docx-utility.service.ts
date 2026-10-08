@@ -186,7 +186,7 @@ export class DocxUtilityService {
                   new TableCell({
                     children: [
                       new Paragraph({
-                        text: `${formData.chapter.orderNumber}. ${formData.chapter.topics}`,
+                        text: `${formData.orderNumber}. ${formData.topics}`,
                         ...this.cellSpace,
                       }),
                     ],

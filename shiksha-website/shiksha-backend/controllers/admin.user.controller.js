@@ -72,6 +72,14 @@ class AdminUserController extends BaseController {
 				search = "",
 			} = req.query;
 
+			// Ensure zones and districts in filter are arrays
+			if (filter.zones && !Array.isArray(filter.zones)) {
+				filter.zones = [filter.zones];
+			}
+			if (filter.districts && !Array.isArray(filter.districts)) {
+				filter.districts = [filter.districts];
+			}
+
 			const sortOrderObject =
 				sortOrder === "desc" ? { [sortBy]: -1 } : { [sortBy]: 1 };
 

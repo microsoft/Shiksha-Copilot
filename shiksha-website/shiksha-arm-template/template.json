@@ -1,0 +1,111 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_shikshana_production_name": {
+            "defaultValue": "shikshana-production",
+            "type": "String"
+        },
+        "disks_shikshana_production_OsDisk_1_8dbe5095835347e2abc249e683f0f8ac_externalid": {
+            "defaultValue": "/subscriptions/3d015b01-4da7-481a-a0d9-60448622bf7d/resourceGroups/SHIKSHANA-RG/providers/Microsoft.Compute/disks/shikshana-production_OsDisk_1_8dbe5095835347e2abc249e683f0f8ac",
+            "type": "String"
+        },
+        "networkInterfaces_shikshana_production246_z1_externalid": {
+            "defaultValue": "/subscriptions/3d015b01-4da7-481a-a0d9-60448622bf7d/resourceGroups/Shikshana-RG/providers/Microsoft.Network/networkInterfaces/shikshana-production246_z1",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-11-01",
+            "name": "[parameters('virtualMachines_shikshana_production_name')]",
+            "location": "centralindia",
+            "tags": {
+                "env": "prod"
+            },
+            "zones": [
+                "1"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B4ms"
+                },
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "canonical",
+                        "offer": "ubuntu-24_04-lts",
+                        "sku": "server",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[concat(parameters('virtualMachines_shikshana_production_name'), '_OsDisk_1_8dbe5095835347e2abc249e683f0f8ac')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS",
+                            "id": "[parameters('disks_shikshana_production_OsDisk_1_8dbe5095835347e2abc249e683f0f8ac_externalid')]"
+                        },
+                        "deleteOption": "Delete",
+                        "diskSizeGB": 30
+                    },
+                    "dataDisks": [],
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_shikshana_production_name')]",
+                    "adminUsername": "azureuser",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "/home/azureuser/.ssh/authorized_keys",
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGN5/JiAPjI4ipml4nQRnnCX+tHkKtjPKAZ2pwq/issC4YuNZqGetZxw+1Qvj5ZKJkK7n3w4d3phyYal35/iuaY4rTuj7d8IQBcFnv8LtwfxIp1FFGyY5WatUASYyAMfSuPaxZiNlwJUfr5QBwDwpajnlrasjgUTMq6BZ51iieN+6vqLhdHSteR8y2vt2E0yLEcl1YKafSE0cjzP5C/mBeesGYgVKFB/IhzOl753y6Tyxl1WU31paHb6VFzCTgQ8X/7YlfSjcG5YYZJQsf/V4LyrgTJ9Q9fDCQWsPyteZMfIac5rkFx7RXGL0WJ2/cZcenelsj3FhqlYEhmyxgUH+e+zEQQbRbcRT95RvcfjTl4Y0nA+3crhgR569yvmsG1AJu2tTZYwobpLRzGr8xZIIR7F32SkjcPdXHdLngFPO7bD3l5xPNWJRbRPto7axfllDkddLWzbWkLrs+2bQpWXhFQ303/uQ1NnPHSBZ4egNRux16e77h2VsRgvTeZu46HYE= generated-by-azure"
+                                }
+                            ]
+                        },
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "securityProfile": {
+                    "uefiSettings": {
+                        "secureBootEnabled": true,
+                        "vTpmEnabled": true
+                    },
+                    "securityType": "TrustedLaunch"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('networkInterfaces_shikshana_production246_z1_externalid')]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+            }
+        }
+    ]
+}

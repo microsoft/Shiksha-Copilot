@@ -28,6 +28,9 @@ const lessonChatSchema = new Schema(
 				type: Date,
 				default: Date.now,
 			},
+			version:{
+				type:Number
+			}
 		},
 	},
 	{

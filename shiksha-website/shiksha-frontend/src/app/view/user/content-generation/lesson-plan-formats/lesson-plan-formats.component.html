@@ -1,0 +1,287 @@
+<ng-container *ngIf="sections.length">
+  <div
+    *ngFor="let section of sections; let i = index"
+    class="px-4 md:px-8"
+    [ngClass]="i + 1 === sections.length ? 'min-h-[80vh]' : ''"
+  >
+    <div
+      class="flex justify-between items-center rounded mb-4 mt-4 md:mt-8"
+      [attr.id]="section.id"
+    >
+      <h2 class="text-2xl font-semibold text-primary">
+        {{ section.title | translate}}
+      </h2>
+      <div
+        class="flex items-center gap-4 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+      >
+        <div
+          class="flex gap-1 items-center cursor-pointer"
+          (click)="setEditMode(i)"
+          *ngIf="!editMode[i] && section.editable"
+        >
+          <img
+            class="w-4"
+            src="../../../../../assets/icons/edit-pen.svg"
+            alt=""
+          />
+          <small>Edit</small>
+        </div>
+
+        <div
+          class="flex gap-1 items-center cursor-pointer"
+          (click)="saveEdited(i)"
+          *ngIf="editMode[i]"
+        >
+          <img class="w-4" src="../../../../../assets/icons/save.svg" alt="" />
+          <small>Save</small>
+        </div>
+      </div>
+    </div>
+    <ng-container *ngIf="section.outputFormat === 'plain_text'">
+      <markdown [data]="section.content" *ngIf="!editMode[i]" katex></markdown>
+      <textarea
+        class="form-text-area h-[28rem]"
+        [(ngModel)]="section.content"
+        *ngIf="editMode[i]"
+      >
+            {{ section.content }}
+    </textarea
+      >
+    </ng-container>
+
+    <ng-container *ngIf="section.outputFormat === 'json_1'">
+      <div *ngFor="let level of section.content">
+        <h3 class="font-bold text-xl mt-4 text-primary">
+          {{ level.difficulty | titlecase }}
+        </h3>
+
+        <div *ngFor="let item of level.content">
+          <h4 class="font-bold mb-1 mt-2 text-content">
+            {{ item.type | uppercase }}
+          </h4>
+
+          <div
+            *ngFor="let question of item.questions; let j = index"
+            class="mt-2"
+          >
+            <div *ngIf="!editMode[i]">
+              <p class="font-semibold text-content">
+                {{ j + 1 }}. {{ question.question }}
+              </p>
+
+              <div *ngIf="question.options">
+                <div *ngFor="let option of question.options">
+                  {{ option }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit mode -->
+            <div *ngIf="editMode[i]">
+              <label>{{ j + 1 }}. Question:</label>
+              <textarea
+                class="mt-2 border p-2 w-full"
+                [(ngModel)]="question.question"
+              ></textarea>
+
+              <div *ngIf="question.options">
+                <label>Options:</label>
+                <div
+                  *ngFor="
+                    let option of question.options;
+                    let j = index;
+                    trackBy: trackByIndex
+                  "
+                >
+                  <input
+                    class="mt-2 border p-2 w-full"
+                    type="text"
+                    [(ngModel)]="question.options[j]"
+                    placeholder="Option {{ j + 1 }}"
+                  />
+                </div>
+
+                <!-- Optional: Add/Remove Option Buttons -->
+                <!-- <button type="button" (click)="question.options.push('')">+ Add Option</button>
+                    <button
+                      type="button"
+                      *ngIf="question.options.length > 1"
+                      (click)="question.options.pop()"
+                    >
+                      − Remove Option
+                    </button> -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="section.outputFormat === 'json_2'">
+      <div *ngFor="let level of section.content">
+        <h3 class="font-bold text-xl mt-4 text-primary">
+          {{ level.difficulty | titlecase }}
+        </h3>
+        <p *ngIf="level.content.length === 0">
+          No data available for this section!
+        </p>
+
+        <div *ngFor="let scenario of level.content">
+          <div *ngIf="!editMode[i]">
+            <h4>{{ scenario.title }}</h4>
+            <p>
+              <span class="font-bold text-content">Question:</span>
+              {{ scenario.question }}
+            </p>
+            <p>
+              <span class="font-bold text-content">Description:</span>
+              {{ scenario.description }}
+            </p>
+          </div>
+          <div *ngIf="editMode[i]">
+            <label>Title:</label>
+            <input
+              type="text"
+              [(ngModel)]="scenario.title"
+              class="border p-2 w-full mb-2"
+            />
+
+            <label>Question:</label>
+            <textarea
+              [(ngModel)]="scenario.question"
+              class="border p-2 w-full mb-2"
+            ></textarea>
+
+            <label>Description:</label>
+            <textarea
+              [(ngModel)]="scenario.description"
+              class="border p-2 w-full"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="section.outputFormat === 'json_3'">
+      <div *ngFor="let activity of section.content">
+        <div *ngIf="!editMode[i]">
+          <h3 class="text-primary font-bold text-xl mt-4 mb-2">
+            {{ activity.title }}
+          </h3>
+          <p>
+            <span class="font-bold text-content">Preparation:</span>
+            {{ activity.preparation }}
+          </p>
+          <p>
+            <span class="font-bold text-content">Required Materials:</span>
+            {{ activity.required_materials }}
+          </p>
+          <p>
+            <span class="font-bold text-content">Obtaining Materials:</span>
+            {{ activity.obtaining_materials }}
+          </p>
+
+          <p>
+            <span class="font-bold text-content">Recap:</span>
+            {{ activity.recap }}
+          </p>
+        </div>
+        <div *ngIf="editMode[i]">
+          <label>Title:</label>
+          <input
+            type="text"
+            [(ngModel)]="activity.title"
+            class="border p-2 w-full mb-2"
+          />
+
+          <label>Preparation:</label>
+          <textarea
+            [(ngModel)]="activity.preparation"
+            class="border p-2 w-full mb-2"
+          ></textarea>
+
+          <label>Required Materials:</label>
+          <textarea
+            [(ngModel)]="activity.required_materials"
+            class="border p-2 w-full mb-2"
+          ></textarea>
+
+          <label>Obtaining Materials:</label>
+          <textarea
+            [(ngModel)]="activity.obtaining_materials"
+            class="border p-2 w-full mb-2"
+          ></textarea>
+
+          <label>Recap:</label>
+          <textarea
+            [(ngModel)]="activity.recap"
+            class="border p-2 w-full"
+          ></textarea>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="section.outputFormat === 'json_5E_checklist'">
+      <div class="overflow-x-auto">
+        <table
+          class="min-w-full table-auto border-collapse border border-gray-300"
+        >
+          <thead class="bg-gray-100">
+            <tr>
+              <th
+                class="border border-gray-300 px-4 py-2 text-left text-sm font-semibold"
+              >
+                {{'Phase' | translate}}
+              </th>
+              <th
+                class="border border-gray-300 px-4 py-2 text-left text-sm font-semibold"
+              >
+                {{ 'Classroom Process' | translate }}
+              </th>
+              <th
+                class="border border-gray-300 px-4 py-2 text-left text-sm font-semibold"
+              >
+                {{'TLM' | translate}}
+              </th>
+              <th
+                class="border border-gray-300 px-4 py-2 text-left text-sm font-semibold"
+              >
+                {{'CCE Tools and Techniques'| translate}}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of section.content">
+              <td
+                class="border border-gray-300 px-4 py-2 align-top text-sm font-medium text-gray-800"
+              >
+                {{ item.type | translate}}
+              </td>
+              <td
+                class="border border-gray-300 px-4 py-2 align-top text-sm text-gray-700"
+              >
+                {{ item.activity }}
+              </td>
+              <td
+                class="border border-gray-300 px-4 py-2 align-top text-sm text-gray-700"
+              >
+                {{ item.materials }}
+              </td>
+              <td
+                class="border border-gray-300 px-4 py-2 align-top text-sm text-gray-700"
+              >
+                {{ item.cceTools }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <div class="flex justify-end">
+      <button class="btn-primary" (click)="saveEdited(i)" *ngIf="editMode[i]">
+        Save
+      </button>
+    </div>
+  </div>
+</ng-container>

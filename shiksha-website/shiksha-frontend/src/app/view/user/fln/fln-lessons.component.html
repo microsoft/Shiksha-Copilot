@@ -1,0 +1,59 @@
+<div class="fln-lessons-container" *ngIf="grades.length">
+    <!-- Heading section -->
+    <div class="fln-header">
+      <h2 title="Foundational Literacy and Numeracy">
+        📘 FLN Teacher Resources <span class="abbr">(Foundational Literacy & Numeracy)</span>
+      </h2>
+    </div>
+  
+    <!-- Control panel -->
+    <div class="fln-lessons-controls">
+      <label>
+        Select Grade:
+        <select [(ngModel)]="selectedGrade" (change)="onGradeChange()">
+          <option *ngFor="let grade of grades" [value]="grade">{{ grade }}</option>
+        </select>
+      </label>
+  
+      <button (click)="prevDay()" [disabled]="selectedDay === days[0]">← Previous Day</button>
+      <button (click)="nextDay()" [disabled]="selectedDay === days[days.length-1]">Next Day →</button>
+  
+      <span>
+        Jump to Day:
+        <input type="number" [min]="days[0]" [max]="days[days.length-1]"
+               [(ngModel)]="selectedDay" (keyup.enter)="jumpToDay(selectedDay)">
+        <button (click)="jumpToDay(selectedDay)">Go</button>
+      </span>
+  
+      <button (click)="downloadExcel()" [disabled]="!selectedGrade">⬇️ Download Excel</button>
+    </div>
+  
+    <!-- Loading state -->
+    <div *ngIf="loading" class="fln-loading">Loading...</div>
+  
+    <!-- Lesson details -->
+    <div *ngIf="lesson && !loading" class="fln-lesson-details">
+      <h3>Day {{ lesson.day }} - {{ lesson.grade }}</h3>
+      <p><strong>Learning Outcome:</strong> {{ lesson.learning_outcome }}</p>
+      <p><strong>Concept:</strong> {{ lesson.concept }}</p>
+      <p><strong>Teaching Strategy:</strong> {{ lesson.teaching_strategy }}</p>
+      <p><strong>Activity:</strong> {{ lesson.activity }}</p>
+  
+      <div>
+        <strong>Assessment Questions:</strong>
+        <ul>
+          <li *ngFor="let q of lesson.assessment_questions">{{ q }}</li>
+        </ul>
+      </div>
+  
+      <div *ngIf="lesson.practice_questions && lesson.practice_questions.length">
+        <strong>Practice Questions:</strong>
+        <ul>
+          <li *ngFor="let pq of lesson.practice_questions">{{ pq }}</li>
+        </ul>
+      </div>
+  
+      <p><strong>Teacher Notes:</strong> {{ lesson.teacher_notes }}</p>
+    </div>
+  </div>
+  

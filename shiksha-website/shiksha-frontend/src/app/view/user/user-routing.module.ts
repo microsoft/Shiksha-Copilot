@@ -6,6 +6,7 @@ import { IsProfileCompleteGuard } from 'src/app/core/guards/isProfileComplete.gu
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { LessonContentListComponent } from './content-generation/lesson-content-list/lesson-content-list.component';
 import { ChatbotComponent } from './chatbot/chatbot.component';
+import { BaselineSurveyGuard } from 'src/app/core/guards/baseline-survey.guard';
 
 const routes: Routes = [
   {
@@ -19,7 +20,7 @@ const routes: Routes = [
     data: {
       permissions: ['standard', 'power'],
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard, BaselineSurveyGuard],
   },
   {
     path: 'content-generation',
@@ -30,7 +31,7 @@ const routes: Routes = [
     data: {
       permissions: ['standard', 'power'],
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard,BaselineSurveyGuard],
   },
   {
     path: 'generation-status',
@@ -39,7 +40,7 @@ const routes: Routes = [
       permissions: ['power'],
       type:'status'
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard,BaselineSurveyGuard],
   },
   {
     path: 'profile',
@@ -56,7 +57,7 @@ const routes: Routes = [
       permissions: ['power'],
       type:'general'
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard,BaselineSurveyGuard],
   },
   {
     path: 'question-paper',
@@ -64,7 +65,7 @@ const routes: Routes = [
     data: {
       permissions: ['standard', 'power'],
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard,BaselineSurveyGuard],
   },
   {
     path: 'schedule',
@@ -73,10 +74,10 @@ const routes: Routes = [
     data: {
       permissions: ['standard', 'power'],
     },
-    canActivate: [PermissionGuard, IsProfileCompleteGuard],
+    canActivate: [PermissionGuard, IsProfileCompleteGuard,BaselineSurveyGuard],
   },
   {
-    path:'help',
+    path: 'help',
     loadComponent:()=> import('./help/help.component').then((c)=>c.HelpComponent),
     data: {
       permissions: ['standard', 'power'],

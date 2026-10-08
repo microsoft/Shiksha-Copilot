@@ -190,6 +190,10 @@ class QuestionBankManager extends BaseManager {
         if (!response.data) {
           throw new Error("Something went wrong with copilot! Please try later");
         }
+
+        if (response?.data?.questions?.length === 0) {
+          throw new Error("Something went wrong with copilot! Please try later");
+        }
   
         let newQuestions = response.data;
   

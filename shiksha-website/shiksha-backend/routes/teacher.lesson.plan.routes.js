@@ -79,6 +79,57 @@ router.post(
     )
 );
 
+router.post(
+    "/teacher-lesson-plan/lesson/:lessonPlanId/media",
+	isAuthenticated,
+    asyncMiddleware(
+        teacherLessonPlanController.lessonMediaUploads.bind(
+            teacherLessonPlanController
+        )
+    )
+);
+
+router.delete(
+    "/teacher-lesson-plan/lesson/:lessonPlanId/media",
+	isAuthenticated,
+    asyncMiddleware(
+        teacherLessonPlanController.deleteLessonMediaUploads.bind(
+            teacherLessonPlanController
+        )
+    )
+);
+
+router.post(
+    "/teacher-lesson-plan/resource/:resourcePlanId/media",
+	isAuthenticated,
+    asyncMiddleware(
+        teacherLessonPlanController.resourceMediaUploads.bind(
+            teacherLessonPlanController
+        )
+    )
+);
+
+router.delete(
+    "/teacher-lesson-plan/resource/:resourcePlanId/media",
+	isAuthenticated,
+    asyncMiddleware(
+        teacherLessonPlanController.deleteResourceMediaUploads.bind(
+            teacherLessonPlanController
+        )
+    )
+);
+
+router.post(
+    "/teacher-lesson-plan/resource/:resourcePlanId/rating",
+	isAuthenticated,
+    asyncMiddleware(
+        teacherLessonPlanController.resourceActivityRating.bind(
+            teacherLessonPlanController
+        )
+    )
+);
+
+
 router.get(
 	"/teacher-lesson-plan/exists/:lessonPlanId",
 	isAuthenticated,

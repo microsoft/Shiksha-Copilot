@@ -40,7 +40,12 @@ export class SchoolManagementService extends BaseRestService {
             if(key === 'search'){
               params = params.set(`${key}`, filters[key]);
 
-            }else{
+            }else if (Array.isArray(filters[key])) {
+              filters[key].forEach((item: any) => {
+                params = params.append(`filter[${key}]`, item);
+              });
+            }
+            else{
               params = params.set(`filter[${key}]`, filters[key]);
 
             }

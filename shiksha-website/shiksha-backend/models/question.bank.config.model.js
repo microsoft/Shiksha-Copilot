@@ -130,6 +130,4 @@ const QuestionBankConfiguration = mongoose.model(
   questionBankConfigurationSchema
 );
 
-QuestionBankConfiguration.createIndexes()
-
 module.exports = QuestionBankConfiguration;

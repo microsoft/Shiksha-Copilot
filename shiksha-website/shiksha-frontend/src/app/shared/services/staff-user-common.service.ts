@@ -42,6 +42,11 @@ export class StaffUserCommonService extends BaseRestService {
             
             params = params.set(`${key}`, filters[key]);
           }
+          else if (Array.isArray(filters[key])) {
+            filters[key].forEach((item: any) => {
+              params = params.append(`filter[${key}]`, item);
+            });
+          }
           else{
             params = params.set(`filter[${key}]`, filters[key]);
 

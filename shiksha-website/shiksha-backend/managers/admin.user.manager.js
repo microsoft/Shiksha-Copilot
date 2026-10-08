@@ -23,6 +23,18 @@ class AdminUserManager extends BaseManager {
 
 	async create(req) {
 		try {
+			if (!req.body) {
+				return { success: false, message: "Request body is missing" };
+			}
+			
+			if (!req.body.phone) {
+				return { success: false, message: "Phone number is required" };
+			}
+
+			if (!req.body.name) {
+				return { success: false, message: "Name is required" };
+			}
+
 			const existingAdminUser = await this.adminUserDao.getByPhone(
 				req.body.phone
 			);
@@ -32,13 +44,16 @@ class AdminUserManager extends BaseManager {
 
 			const result = await this.adminUserDao.create(req.body);
 
-			sendWelcomeSMS(req.body.phone, req.body.name).catch((error) => {
-				console.error("Error sending welcome SMS:", error);
-			});
+			// Only send SMS if both phone and name are available
+			if (req.body.phone && req.body.name) {
+				sendWelcomeSMS(req.body.phone, req.body.name).catch((error) => {
+					console.error("Error sending welcome SMS:", error);
+				});
+			}
 
 			return { success: true, data: result, message: "Admin user created" };
 		} catch (err) {
-			return { success: false, data: false, message: "Something went wrong" };
+			return { success: false, data: false, message: err.message || "Something went wrong" };
 		}
 	}
 
@@ -270,5 +285,23 @@ class AdminUserManager extends BaseManager {
 			return { success: false, error: err.message };
 		}
 	}
+
+	async getAll(page, limit, filters = {}, sort = {}, status = {}, loggedInUserId) {
+		try {
+			let result = await this.adminUserDao.getAll(
+				page,
+				limit,
+				filters,
+				sort,
+				status,
+				loggedInUserId
+			);
+
+			return formatApiReponse(true, "", result);
+		} catch (err) {
+			return formatApiReponse(false, err?.message, err);
+		}
+	}
 }
+
 module.exports = AdminUserManager;

@@ -162,12 +162,30 @@ export class SchoolListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.getRegionsData();
 
-    this.searchSubscription = this.searchTerms
-      .pipe(debounceTime(1000), distinctUntilChanged())
-      .subscribe(() => {
-        this.onFilterChange('search', this.searchText);
-      });
-    this.getShcoolList();
+    const loggedInUser = this.utilityService.loggedInUserData;
+    if (loggedInUser && loggedInUser.role.includes('manager')) {
+      if (loggedInUser.state) {
+        this.filterObj.state = loggedInUser.state;
+      }
+      if (loggedInUser.zones && loggedInUser.zones.length > 0) {
+        this.filterObj.zone = loggedInUser.zones;
+      }
+      if (loggedInUser.districts && loggedInUser.districts.length > 0) {
+        this.filterObj.district = loggedInUser.districts;
+      }
+      // Only show manager's zones in dropdown
+      setTimeout(() => this.setZoneDropdownOptionsForManager(), 0);
+      this.getShcoolList(this.filterObj);
+    } else {
+      this.getShcoolList();
+    }
+
+    this.searchSubscription = this.searchTerms.pipe(
+      debounceTime(1000),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.onFilterChange('search', this.searchText);
+    });
   }
 
   /**
@@ -187,13 +205,28 @@ export class SchoolListComponent implements OnInit, OnDestroy {
    * @param selectedStateValue
    */
   setZoneDropdownValues(selectedStateValue: any) {
+    const loggedInUser = this.utilityService.loggedInUserData;
     if (selectedStateValue) {
       this.selectedStateObj = this.utilityService.filterDropdownValues(
         this.regionsData,
         'state',
         selectedStateValue
       );
-      this.zoneDropdownOptions = this.selectedStateObj.zones;
+      if (
+        loggedInUser &&
+        loggedInUser.role.includes('manager') &&
+        loggedInUser.zones &&
+        loggedInUser.zones.length > 0
+      ) {
+        // Only show manager's zones
+        this.zoneDropdownOptions = this.selectedStateObj.zones.filter((zone: any) =>
+          loggedInUser.zones.includes(zone.name)
+        );
+      } else {
+        this.zoneDropdownOptions = this.selectedStateObj.zones;
+      }
+    } else {
+      this.zoneDropdownOptions = [];
     }
   }
 
@@ -248,7 +281,13 @@ export class SchoolListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange(type: any, value: any) {
-    this.filterObj[type] = value;
+    if (type === 'zone' && value !== undefined && value !== null && !Array.isArray(value)) {
+      this.filterObj[type] = [value];
+    } else if (type === 'district' && value !== undefined && value !== null && !Array.isArray(value)) {
+      this.filterObj[type] = [value];
+    } else {
+      this.filterObj[type] = value;
+    }
     if (value) {
       switch (type) {
         case 'state': this.setZoneDropdownValues(value);
@@ -527,6 +566,22 @@ export class SchoolListComponent implements OnInit, OnDestroy {
         this.userManagementService.getSchoolList(true,filters).subscribe((res: any) => {
           this.schoolDropdownOptions = res?.data?.results
         });
+    }
+
+    setZoneDropdownOptionsForManager() {
+      const loggedInUser = this.utilityService.loggedInUserData;
+      if (loggedInUser && loggedInUser.zones && this.regionsData) {
+        // Find the state object
+        const stateObj = this.regionsData.find(
+          (state: any) => state.state === loggedInUser.state
+        );
+        if (stateObj) {
+          // Only include zones assigned to the manager
+          this.zoneDropdownOptions = stateObj.zones.filter((zone: any) =>
+            loggedInUser.zones.includes(zone.name)
+          );
+        }
+      }
     }
 
     ngOnDestroy(): void {

@@ -105,9 +105,7 @@ class MasterLessonDao extends BaseDao {
 				},
 				{
 					$set: {
-						instructionSet : data?.instructionSet,
-						extractedResources : data?.extractedResources,
-						checkList: data?.checkList
+						sections:data?.sections
 					},
 				},
 				{ new: true, useFindAndModify: false, session: session }
@@ -124,7 +122,7 @@ class MasterLessonDao extends BaseDao {
 			const result = await MasterLesson.findOneAndUpdate(
 				filter,
 				{ $set: updateData },
-				{ new: true }
+				{ new: true, timestamps:true }
 			);
 
 			return result;
@@ -134,10 +132,11 @@ class MasterLessonDao extends BaseDao {
 		}
 	}
 
-	async getLessonOutcomes(chapterId, filters = {}) {
+	async getLessonOutcomes(chapterId,templateIds, filters = {}) {
 		try {
 			const result = await masterLessonAggregation.getLessonOutcomes(
 				chapterId,
+				templateIds,
 				filters
 			);
 

@@ -101,32 +101,41 @@
       >
         <div class="flex items-start justify-between gap-2">
           <h2 class="font-bold text-content">
-            {{utilityService.intToRoman(q+1)}}. {{questionTypeMapper[questionBankData.type]}}
+            {{utilityService.intToRoman(q+1)}}. {{questionBankData.type}}
           </h2>
           <b class="text-content flex items-center justify-end gap-1 min-w-[15vw] md:min-w-[7vw]"
             >{{ questionBankData.numberOfQuestions }} X {{ questionBankData.marksPerQuestion }} = {{questionBankData.numberOfQuestions * questionBankData.marksPerQuestion }}
             </b
           >
         </div>
+        <div *ngIf="questionBankData.type !== 'Match the following'">
         <div
           *ngFor="let questionData of questionBankData.questions;
             let i = index
           "
         >
-          <div class="flex justify-between items-start mt-2 gap-2" *ngIf="questionBankData.type !== 'Match the following'">
+          <div class="flex justify-between items-start mt-2 gap-2" >
             <p class="text-content">
               {{ i + 1 }}. {{ questionData.question }}
             </p>
           </div>
 
-          <div *ngIf="questionBankData.type === 'Match the following'">
+
+          <ul *ngIf="questionBankData.type === 'Four alternatives are given for each of the following questions, choose the correct alternative'" class="list-alpha">
+            <li *ngFor="let option of questionData.options">
+              {{ option }}
+            </li>
+          </ul>
+        </div>
+        </div>
+                  <div *ngIf="questionBankData.type === 'Match the following'">
             <table
             class="min-w-full table-auto border-collapse"
           >
             <tbody>
-              <tr *ngFor="let columnOneValue of questionData.columnOneValues; let i=index">
+              <tr *ngFor="let val of questionBankData.questions; let i=index">
               <td class="border px-2 py-2 text-sm">
-                {{ columnOneValue }}
+                {{ primaryColumn[i] }}
               </td>
                 <td class="border px-2 py-2 text-sm">
                   {{ shuffledColumns[i] }}
@@ -135,12 +144,7 @@
             </tbody>
           </table>
           </div>
-          <ul *ngIf="questionBankData.type === 'Four alternatives are given for each of the following questions, choose the correct alternative'" class="list-alpha">
-            <li *ngFor="let option of questionData.options">
-              {{ option }}
-            </li>
-          </ul>
-        </div>
+
       </div>
     </div>
   </div>
@@ -194,32 +198,16 @@
     </div>
 
     <h2 class="font-semibold text-content mt-4">
-      {{ "Download Question Paper" | translate }}
+      {{ "Download Documents" | translate }}
     </h2>
-    <div
-      class="bg-shade-80 border rounded cursor-pointer min-w-[150px]"
-      (click)="downloadQp()"
-    >
-      <div class="flex justify-center">
-        <img
-          class="px-10 py-8"
-          src="../../../../../assets/images/docx.svg"
-          alt=""
-        />
-        <div></div>
-      </div>
-      <div class="bg-white p-2 flex items-center gap-2 justify-between">
-        <div class="flex items-center gap-1">
-          <div class="p-1 rounded-lg bg-primary-60">
-            <img src="../../../../../assets/icons/docx-file.svg" alt="" />
-          </div>
-          <span class="max-w-52 text-nowrap overflow-hidden text-ellipsis">{{
-            questionBankDetails?.examinationName
-          }}</span>
+    <div *ngFor="let doc of docTypes">
+      <div class="flex bg-primary-50 p-4 rounded items-center mt-2">
+        <div class="flex items-center justify-center bg-primary p-2 rounded-full">
+          <img class="w-10" src="../../../../../assets/icons/white-docx.svg" alt="">
         </div>
-
-        <div class="p-1 rounded-lg bg-primary-60">
-          <img src="../../../../../assets/icons/download.svg" alt="" />
+        <div class="ml-4 w-full">
+          <p class="text-content text-sm font-semibold">{{doc.name}}</p>
+          <button class="btn-outline-primary mt-2 w-full h-8 text-xs hover:text-white hover:bg-primary transition-all font-semibold" (click)="download(doc.type)">Download {{doc.name}}</button>
         </div>
       </div>
     </div>

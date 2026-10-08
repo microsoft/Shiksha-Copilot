@@ -1,0 +1,191 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #e9f5ff, #ffffff);
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.fln-top-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #0077cc;
+}
+
+.fln-lessons-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 1400px;
+  width: 95%;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 2rem clamp(1rem, 5vw, 4rem);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.fln-header {
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.fln-header h2 {
+  font-size: 2.4rem;
+  font-weight: bold;
+  color: #0077cc;
+  margin: 0;
+}
+
+.fln-header h2 .abbr {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 0.3rem;
+  display: block;
+  font-weight: normal;
+}
+
+.fln-lessons-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  padding: 1rem 0;
+  z-index: 10;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.fln-lessons-controls label {
+  font-weight: 600;
+  color: #333;
+}
+
+.fln-lessons-controls select,
+.fln-lessons-controls input[type='number'] {
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 140px;
+  font-size: 1rem;
+  background: #fdfdfd;
+}
+
+.fln-lessons-controls button {
+  padding: 0.5rem 1rem;
+  background: #0077cc;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.fln-lessons-controls button:hover:not(:disabled) {
+  background-color: #005fa3;
+}
+
+.fln-lessons-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.fln-lessons-controls span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fln-loading {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #888;
+  margin-top: 2rem;
+}
+
+.fln-lesson-details {
+  background: #f9f9f9;
+  padding: 2rem;
+  border-radius: 12px;
+  border-top: 6px solid #0077cc;
+  border-right: 6px solid #0077cc;
+  border-bottom: 6px solid #0077cc; 
+  border-left: 6px solid #0077cc;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s;
+  margin-top: 2rem;
+}
+
+.fln-lesson-details h3 {
+  font-size: 1.8rem;
+  color: #0077cc;
+  margin-bottom: 1.5rem;
+}
+
+.fln-lesson-details p,
+.fln-lesson-details div {
+  margin-bottom: 1.2rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.fln-lesson-details p strong,
+.fln-lesson-details div strong {
+  font-weight: 600;
+  color: #222;
+}
+
+.fln-lesson-details ul {
+  padding-left: 1.5rem;
+  list-style-type: disc;
+  margin-top: 0.5rem;
+}
+
+.fln-lesson-details ul li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  color: #444;
+}
+
+@media (max-width: 768px) {
+  .fln-lessons-container {
+    padding: 1.5rem;
+  }
+
+  .fln-lessons-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fln-lesson-details {
+    padding: 1.5rem;
+  }
+}
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fln-lesson-details {
+  animation: fadeSlideIn 0.5s ease-out;
+}
+.fln-lessons-controls button {
+  transition: all 0.2s ease;
+}
+
+.fln-lessons-controls button:hover {
+  transform: scale(1.05);
+}

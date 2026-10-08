@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ModalService } from '../modal/modal.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -11,9 +11,10 @@ import { InstructionsPopupComponent } from '../instructions-popup/instructions-p
   standalone: true,
   imports: [CommonModule, FormsModule,InstructionsPopupComponent],
 })
-export class RegeneratePopupComponent {
+export class RegeneratePopupComponent implements OnInit {
   @Output() regenerate = new EventEmitter<any>();
   @Input() regenerateReason: any;
+  @Input() sections:any;
 
   instructions = [
     {
@@ -47,30 +48,20 @@ export class RegeneratePopupComponent {
 
   showInstructions=false
 
-  regenFeedback = [
-    {
-      type: 'engage',
-      feedback: '',
-    },
-    {
-      type: 'explore',
-      feedback: '',
-    },
-    {
-      type: 'explain',
-      feedback: '',
-    },
-    {
-      type: 'elaborate',
-      feedback: '',
-    },
-    {
-      type: 'evaluate',
-      feedback: '',
-    },
-  ];
+  regenFeedback:any[]=[];
+
+  nonFeedbackSections = ['Learning Outcomes','Lesson Summary']
 
   constructor(private modalService: ModalService) {}
+
+  ngOnInit(): void {
+    const titles = this.sections.map((e:any)=> e.title);
+    titles.forEach((t:any) => {
+      if(!this.nonFeedbackSections.includes(t)){
+     this.regenFeedback.push({type:t,feedback:''})
+      }
+    });
+  }
 
   feedbackUpdated() {
     this.disabled = !this.regenFeedback.some(

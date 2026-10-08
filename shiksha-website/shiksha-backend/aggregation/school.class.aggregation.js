@@ -101,6 +101,30 @@ class ClassAggregation {
 									$expr: { $in: ["$$boardId", "$boards"] },
 								},
 							},
+							{
+						$addFields: {
+							applicableClasses: {
+							$let: {
+								vars: {
+								matched: {
+									$filter: {
+									input: { $ifNull: ["$applicableClasses", []] }, // safe default
+									as: "item",
+									cond: { $eq: ["$$item.board", "$$boardId"] }
+									}
+								}
+								},
+								in: {
+								$cond: [
+									{ $gt: [{ $size: "$$matched" }, 0] },
+									{ $arrayElemAt: ["$$matched.classes", 0] },
+									[]
+								]
+								}
+							}
+							}
+						}
+						},
 							{ 
 								$group: {
 								  _id:"$name",
@@ -108,6 +132,7 @@ class ClassAggregation {
 									$push: {
 									  subjectName: "$subjectName",
 									  boards: "$boards",
+									  applicableClasses:"$applicableClasses",
 									  isDeleted: "$isDeleted",
 									  createdAt: "$createdAt",
 									  updatedAt: "$updatedAt",

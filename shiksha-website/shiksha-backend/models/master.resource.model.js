@@ -53,6 +53,10 @@ const lessonResourceMasterSchema = new mongoose.Schema({
 			default: [],
 		},
 	],
+	templateId:{
+		type:ObjectId,
+		ref:"LessonPlanTemplate"
+	  }
 });
 
 const MasterResource = mongoose.model(

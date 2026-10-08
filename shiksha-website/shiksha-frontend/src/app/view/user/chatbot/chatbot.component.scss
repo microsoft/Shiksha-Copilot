@@ -26,6 +26,31 @@
     &::-webkit-scrollbar-thumb:hover {
       background: var(--primary-DEFAULT);
     }
+
+    .chat-markdown {
+      ::ng-deep ul {
+        list-style-type: disc;
+        padding-left: theme("padding.4");
+        margin-bottom: 0.5em;
+        line-height: 1.5;
+      }
+
+      ::ng-deep ol {
+        list-style-type: decimal;
+        padding-left: theme("padding.4");
+        margin-bottom: 0.5em;
+        line-height: 1.5;
+      }
+
+      ::ng-deep p {
+        margin-bottom: 0.5em;
+        line-height: 1.5;
+      }
+
+      ::ng-deep h3 {
+        margin-bottom: 1em;
+      }
+    }
   }
   .chat-input {
     height: 36px;

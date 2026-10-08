@@ -86,6 +86,15 @@ const masterLessonSchema = new mongoose.Schema(
 			default: {},
 		},
 	],
+  sections: [
+    {
+      type: Object,
+    },
+  ],
+  templateId:{
+    type:ObjectId,
+    ref:"LessonPlanTemplate"
+  }
   },
   { timestamps: true }
 );

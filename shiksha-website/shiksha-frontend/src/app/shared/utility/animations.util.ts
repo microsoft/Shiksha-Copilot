@@ -19,15 +19,36 @@ export const slideInOutAnimation = trigger('slideInOut', [
       animate('300ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 })),
     ]),
   ]);
+
+
+  export const slideLeftRightAnimation = trigger('slideLeftRight', [
+    transition(':enter', [
+      style({ transform: 'translateX(-100%)', opacity: 0 }),
+      animate('300ms ease-in', style({ transform: 'translateX(0)', opacity: 1 })),
+    ]),
+    transition(':leave', [
+      animate('300ms ease-out', style({ transform: 'translateX(-100%)', opacity: 0 })),
+    ]),
+  ]);
+
+  export const containerAnimation = trigger('containerAnimation', [
+    transition(':enter', [
+      style({ transform: 'translateX(-100%)', opacity: 0 }),
+      animate('300ms ease-in', style({ transform: 'translateX(0)', opacity: 1 })),
+    ]),
+    transition(':leave', [
+      animate('1800ms ease-out', style({ transform: 'translateX(-100%)', opacity: 0 })),
+    ]),
+  ]);
   
   export const listAnimation = trigger('listAnimation', [
     transition('* => *', [
       query(':enter', [
         style({ opacity: 0, transform: 'translateY(-20px)' }),
-        stagger('100ms', animate('300ms ease-out', style({ opacity: 1, transform: 'none' }))),
+        stagger('100ms', animate('400ms ease-out', style({ opacity: 1, transform: 'none' }))),
       ], { optional: true }),
       query(':leave', [
-        stagger('50ms', animate('200ms ease-in', keyframes([
+        stagger('50ms', animate('300ms ease-in', keyframes([
           style({ opacity: 1, transform: 'none', offset: 0 }),
           style({ opacity: 0, transform: 'translateY(-10px)', offset: 1 }),
         ]))),

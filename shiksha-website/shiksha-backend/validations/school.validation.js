@@ -82,10 +82,10 @@ const schoolSchema = Joi.object({
   boards: Joi.array()
   .items(
 	Joi.string()
-	  .valid('CBSE', 'ICSE', 'KSEEB')
+	  .valid('CBSE', 'ICSE', 'KSEEB', 'BSE-TG')
 	  .required()
 	  .messages({
-		'any.only': 'Each board must be either "CBSE", "ICSE", or "KSEEB".',
+		'any.only': 'Each board must be either "CBSE", "ICSE","BSE-TG" or "KSEEB".',
 	  })
   )
   .unique() 
@@ -102,10 +102,10 @@ const schoolSchema = Joi.object({
   mediums: Joi.array()
   .items(
 	Joi.string()
-	  .valid('kannada', 'english')
+	  .valid('kannada', 'english', 'telugu')
 	  .required()
 	  .messages({
-		'any.only': 'Each medium must be either "kannada" or "english".',
+		'any.only': 'Each medium must be either "kannada", "english" or telugu.',
 	  })
   )
   .unique()  

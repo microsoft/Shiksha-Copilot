@@ -22,15 +22,48 @@ import { ToastrModule } from 'ngx-toastr';
 import { DatePipe } from '@angular/common';
 import { NgIdleModule } from '@ng-idle/core';
 import { DeleteDetailComponent } from './shared/components/delete-detail/delete-detail.component';
+import { ReactiveFormsModule } from '@angular/forms';
+
+
+// Material
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
+
+// Components
+import { BaselineSurveyComponent } from './shared/components/baseline-survey/baseline-survey.component';
+
+// Services
+import { BaselineSurveyDialogService } from './core/services/baseline-survey-dialog.service';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent,BaselineSurveyComponent,],
   imports: [
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     NgxSpinnerModule,
     HttpClientModule,
+    ReactiveFormsModule,
+// Material
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    MatRadioModule,
+    MatSelectModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatIconModule,
+
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
@@ -52,7 +85,8 @@ import { DeleteDetailComponent } from './shared/components/delete-detail/delete-
       useClass:HttpConfigInterceptor,
       multi:true
     },
-    DatePipe
+    DatePipe,
+    BaselineSurveyDialogService
 
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
