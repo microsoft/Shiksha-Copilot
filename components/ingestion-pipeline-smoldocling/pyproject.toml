@@ -15,7 +15,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.10"
 ingestion-pipeline = { path = "../ingestion-pipeline", develop = true }
-docling-core = "^2.24.0"
+docling-core = "^2.48.4"
 torch = "^2.6.0"
 transformers = "^4.50.2"
 pdf2image = "^1.17.0"
