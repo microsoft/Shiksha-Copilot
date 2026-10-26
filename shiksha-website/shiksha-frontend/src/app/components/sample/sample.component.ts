@@ -4,6 +4,7 @@ import { fadeInOutAnimation, scaleAnimation } from 'src/app/shared/utility/anima
 import { SampleService } from './sample.service';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 @Component({
   selector: 'app-sample',
@@ -96,7 +97,7 @@ export class SampleComponent {
     public lineChartType = 'bar';
     public lineChartPlugins = [];
 
-  constructor(private sampleService:SampleService){}
+  constructor(private sampleService:SampleService, private logger: LoggerService){}
 
   todoData:any;
 
@@ -104,12 +105,12 @@ export class SampleComponent {
     this.sampleService.getData().
     subscribe({
       next:(val)=>{
-        console.log(val);
+        this.logger.debug('Sample data received:', val);
         
         this.todoData=val
       },
       error:(err)=>{
-        console.log(err);
+        this.logger.error('Error fetching sample data:', err);
         
       }
     })

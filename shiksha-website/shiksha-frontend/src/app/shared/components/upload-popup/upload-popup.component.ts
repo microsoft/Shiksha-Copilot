@@ -7,6 +7,7 @@ import { ModalService } from '../modal/modal.service';
 import { MAX_FILE_SIZE } from '../../utility/constant.util';
 import { ExcelDownloadService } from '../../services/excel_download.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-upload-popup',
@@ -36,7 +37,8 @@ export class UploadPopupComponent implements OnInit{
   constructor(
     private utilityService: UtilityService,
     private modalService: ModalService,
-    private excelDownloadService: ExcelDownloadService
+    private excelDownloadService: ExcelDownloadService,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -120,7 +122,7 @@ export class UploadPopupComponent implements OnInit{
 
   
   ngOnInit(): void {
-    console.log('contxt', this.context);
+    this.logger.debug('Upload popup context:', this.context);
     
   }
 }

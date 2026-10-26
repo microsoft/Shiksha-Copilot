@@ -6,6 +6,7 @@ import { FormDropDownConfig } from 'src/app/shared/interfaces/form-dropdown.inte
 import { UserManagementService } from '../user-management.service';
 import { MasterService } from 'src/app/shared/services/master.service';
 import { StaffUserCommonService } from 'src/app/shared/services/staff-user-common.service';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 @Component({
   selector: 'app-add-edit-user',
@@ -109,7 +110,7 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
 
   savedSchoolId:any;
 
-  constructor(private fb: FormBuilder, private route: ActivatedRoute, private utilityService: UtilityService, private userManagementService: UserManagementService, private router: Router, private masterService: MasterService,private commonStaffUserService:StaffUserCommonService) { }
+  constructor(private fb: FormBuilder, private route: ActivatedRoute, private utilityService: UtilityService, private userManagementService: UserManagementService, private router: Router, private masterService: MasterService,private commonStaffUserService:StaffUserCommonService, private logger: LoggerService) { }
 
   ngOnInit(): void {
     this.userRolesDropdownOptions = this.userManagementService.userRoleDropdownOptions;
@@ -305,7 +306,7 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
               this.utilityService.handleResponse(res);
             },
             error: (err) => {
-              console.error(err);
+              this.logger.error('Error editing user details:', err);
               this.utilityService.handleError(err);
             }
           });
@@ -317,7 +318,7 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
               this.utilityService.handleResponse(res);
             },
             error: (err) => {
-              console.error(err);
+              this.logger.error('Error editing user details (fallback):', err);
               this.utilityService.handleError(err);
             }
           });
@@ -332,7 +333,7 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
             this.utilityService.handleResponse(res);
           },
           error: (err) => {
-            console.error(err);
+            this.logger.error('Error adding user:', err);
             this.utilityService.handleError(err);
           }
         });
@@ -391,7 +392,7 @@ export class AddEditUserComponent implements OnInit, AfterViewInit {
         this.patchStatus();
       },
       error: (err) => {
-        console.error(err);
+        this.logger.error('Error fetching user details:', err);
         this.utilityService.handleError(err);
       }
     });

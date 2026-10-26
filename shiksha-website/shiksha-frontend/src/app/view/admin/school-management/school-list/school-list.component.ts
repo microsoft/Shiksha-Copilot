@@ -15,6 +15,7 @@ import { BULK_UPLOAD_FILE_TYPES } from 'src/app/shared/utility/constant.util';
 import { Observable, Subject, Subscription, debounceTime, distinctUntilChanged} from 'rxjs';
 import { MasterService } from 'src/app/shared/services/master.service';
 import { UserManagementService } from '../../user-management/user-management.service';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 @Component({
   selector: 'app-school-list',
@@ -153,7 +154,8 @@ export class SchoolListComponent implements OnInit, OnDestroy {
     public modalService: ModalService,
     private utilityService: UtilityService,
     private masterService: MasterService,
-    private userManagementService:UserManagementService
+    private userManagementService:UserManagementService,
+    private logger: LoggerService
   ) {}
 
   /**
@@ -353,7 +355,7 @@ export class SchoolListComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error('Error while fetching list', err);
+        this.logger.error('Error while fetching school list', err);
       },
     });
   }

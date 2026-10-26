@@ -10,6 +10,7 @@ import {
 } from '../utility/constant.util';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +50,8 @@ export class IdleService {
     private idle: Idle,
     private router: Router,
     private timerService: TimerService,
-    private httpClient: HttpClient
+    private httpClient: HttpClient,
+    private logger: LoggerService
   ) {
     this.initializeIdleTracking();
 
@@ -215,7 +217,7 @@ export class IdleService {
           this.isCompleted = false;
         },
         error: (err) => {
-          console.log(err);
+          this.logger.error('Error logging user activity:', err);
         },
       });
   }

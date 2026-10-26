@@ -18,6 +18,7 @@ import {
 import { QuestionBankService } from '../question-bank.service';
 import { Router } from '@angular/router';
 import { IdleService } from 'src/app/shared/services/idle.service';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 import { distinctUntilChanged } from 'rxjs';
 import { fadeInOutAnimation } from 'src/app/shared/utility/animations.util';
 
@@ -155,7 +156,8 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
     private translateService: TranslateService,
     private questionBankService: QuestionBankService,
     private router: Router,
-    private idleService: IdleService
+    private idleService: IdleService,
+    private logger: LoggerService
   ) {}
 
   ngOnInit(): void {
@@ -329,7 +331,7 @@ export class QuestionBankGenerationComponent implements OnInit, OnDestroy {
           this.chapterDropdownOptions = val.data;
         },
         error: (err) => {
-          console.log(err);
+          this.logger.error('Error fetching chapters by semester:', err);
         },
       });
     }

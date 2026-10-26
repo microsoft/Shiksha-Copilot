@@ -18,6 +18,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { HasPermissionDirective } from 'src/app/core/directives/has-permission.directive';
 import { UploadErrorPopupComponent } from '../upload-error-popup/upload-error-popup.component';
+import { LoggerService } from '../../services/logger.service';
 import { MasterService } from '../../services/master.service';
 import { SchoolManagementService } from 'src/app/view/admin/school-management/school-management.service';
 import { SchoolList } from '../../interfaces/school-list.interface';
@@ -209,7 +210,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   @ViewChild('schoolDropdown') schoolDropdown: any;
 
 
-  constructor(private elRef:ElementRef, private route: ActivatedRoute, private router: Router, public modalService: ModalService, private userManagementService: UserManagementService, public utility: UtilityService, private commonStaffUserService: StaffUserCommonService, private masterService:MasterService, private schoolManagementService:SchoolManagementService) {
+  constructor(private elRef:ElementRef, private route: ActivatedRoute, private router: Router, public modalService: ModalService, private userManagementService: UserManagementService, public utility: UtilityService, private commonStaffUserService: StaffUserCommonService, private masterService:MasterService, private schoolManagementService:SchoolManagementService, private logger: LoggerService) {
     this.lessonContentType = this.router.url.split('?')[0];
     if (this.getType()?.type === 'user') {
       this.userRolesDropdownOptions = [{ name: 'Standard', value: 'standard' }, { name: 'Power', value: 'power' }];
@@ -335,7 +336,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
         this.getUsersList();
       },
       error: (err) => {
-        console.error(err);
+        this.logger.error('Error in user operation:', err);
         this.utility.handleError(err);
       }
     });
@@ -367,7 +368,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
   }
   
   toggleFilter(){
-    console.log(this.filterObj);
+    this.logger.debug('Filter object:', this.filterObj);
     
     if(this.showAdditionalFilters && this.filterObj?.state){
       this.onFilterChange('state',null)
@@ -403,7 +404,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
         this.totalItems = res.data.totalItems;
       },
       error: (err) => {
-        console.error('Error while fetching list', err);
+        this.logger.error('Error while fetching list', err);
       }
     });
   }
@@ -633,7 +634,7 @@ export class UserStaffListComponent implements OnInit,AfterViewInit{
         }
       },
       error: (err) => {
-        console.error('Error while fetching list', err);
+        this.logger.error('Error while fetching list', err);
       },
     });
   }

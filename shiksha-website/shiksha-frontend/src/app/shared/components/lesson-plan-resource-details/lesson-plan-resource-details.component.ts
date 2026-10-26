@@ -18,6 +18,7 @@ import { CommonModule } from '@angular/common';
 import { FormDropdownComponent } from '../form-dropdown/form-dropdown.component';
 import { Observable } from 'rxjs';
 import { DeleteDetailComponent } from '../delete-detail/delete-detail.component';
+import { LoggerService } from '../../services/logger.service';
 import { HttpParams } from '@angular/common/http';
 import { HasPermissionDirective } from 'src/app/core/directives/has-permission.directive';
 import { IdleService } from '../../services/idle.service';
@@ -195,7 +196,8 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
     private router: Router,
     private utilityservice: UtilityService,
     private translateService:TranslateService,
-    private idleService:IdleService
+    private idleService:IdleService,
+    private logger: LoggerService
   ) {
     this.lessonType = this.router.url;
   }
@@ -216,7 +218,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
         this.regenerationLimitReached = val?.data?.regenerationLimitReached
       },
       error:(err)=>{
-        console.log(err);
+        this.logger.error('Error fetching regeneration limit:', err);
       }
     })
   }
@@ -466,7 +468,7 @@ export class LessonPlanResourceDetailsComponent implements OnInit, OnDestroy {
             this.utilityservice.formatChapterDropdown(res.data['results']);
         },
         error: (err) => {
-          console.error(err);
+          this.logger.error('Error fetching topics dropdown options:', err);
         },
       });
   }

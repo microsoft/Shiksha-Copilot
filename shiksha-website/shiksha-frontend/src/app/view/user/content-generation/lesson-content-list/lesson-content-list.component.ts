@@ -4,6 +4,7 @@ import { ContentGenerationService } from '../content-generation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilityService } from 'src/app/core/services/utility.service';
 import { Subject, Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 interface ListParams {
   currentPage: number;
   pageSize: number;
@@ -134,7 +135,7 @@ export class LessonContentListComponent implements OnInit, AfterViewInit, OnDest
     };
   }
 
-  constructor(private contentGenService: ContentGenerationService, private router: Router, private cdr: ChangeDetectorRef, public utilityservice: UtilityService,private activatedRoute: ActivatedRoute) {
+  constructor(private contentGenService: ContentGenerationService, private router: Router, private cdr: ChangeDetectorRef, public utilityservice: UtilityService,private activatedRoute: ActivatedRoute, private logger: LoggerService) {
    this.typeSubscription = this.activatedRoute.data.subscribe((data: any) => {
       this.type = data.type;
     });
@@ -334,7 +335,7 @@ export class LessonContentListComponent implements OnInit, AfterViewInit, OnDest
         this.totalItems = res.data?.totalItems;
       },
       error: (err) => {
-        console.error(err);
+        this.logger.error('Error fetching lesson content list:', err);
         this.utilityservice.handleError(err);
       }
     });
@@ -346,7 +347,7 @@ export class LessonContentListComponent implements OnInit, AfterViewInit, OnDest
 
     this.boardDropdownOptions = classList;
     if(this.boardDropdownOptions.length === 1){
-      console.log(this.boardDropdownOptions[0].board);
+      this.logger.debug('Single board option:', this.boardDropdownOptions[0].board);
       
       this.boarddropdown.selectedItem = this.boardDropdownOptions[0].board;
     }

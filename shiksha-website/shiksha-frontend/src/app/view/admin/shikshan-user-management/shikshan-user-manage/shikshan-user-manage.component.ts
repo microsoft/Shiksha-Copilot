@@ -6,6 +6,7 @@ import { FormDropDownConfig } from 'src/app/shared/interfaces/form-dropdown.inte
 import { ShikshanService } from '../shikshan-user.service';
 import { MasterService } from 'src/app/shared/services/master.service';
 import { StaffUserCommonService } from 'src/app/shared/services/staff-user-common.service';
+import { LoggerService } from 'src/app/shared/services/logger.service';
 
 @Component({
   selector: 'app-shikshan-user-manage',
@@ -38,7 +39,7 @@ export class ShikshanUserManageComponent implements OnInit {
   mode!: any;
   userId!: string;
 
-  constructor(private fb: FormBuilder, private route: ActivatedRoute, private utilityService: UtilityService, private shikshanaUserService: ShikshanService, private router: Router, private masterService: MasterService,private commonStaffUserService:StaffUserCommonService) { }
+  constructor(private fb: FormBuilder, private route: ActivatedRoute, private utilityService: UtilityService, private shikshanaUserService: ShikshanService, private router: Router, private masterService: MasterService,private commonStaffUserService:StaffUserCommonService, private logger: LoggerService) { }
 
   ngOnInit(): void {
     this.userRolesDropdownOptions = this.shikshanaUserService.userRoleDropdownOptions;
@@ -82,7 +83,7 @@ export class ShikshanUserManageComponent implements OnInit {
             this.utilityService.handleResponse(res);
           },
           error: (err) => {
-            console.error(err);
+            this.logger.error('Error editing user details:', err);
             this.utilityService.handleError(err);
           }
         });
@@ -137,7 +138,7 @@ export class ShikshanUserManageComponent implements OnInit {
         this.patchStatus();
       },
       error: (err) => {
-        console.error(err);
+        this.logger.error('Error fetching user details:', err);
         this.utilityService.handleError(err);
       }
     });
