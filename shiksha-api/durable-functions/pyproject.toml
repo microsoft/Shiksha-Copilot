@@ -21,7 +21,7 @@ vellm-rag-wrapper = { path = "core/rag-wrapper", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
-black = "24.3.0"
+black = "26.10.1"
 flake8 = "^6.0"
 
 [build-system]
